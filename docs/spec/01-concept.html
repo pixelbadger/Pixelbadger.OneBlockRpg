@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Block Concept</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<nav class="top">
+  <a href="index.html">Overview</a>
+  <a href="01-concept.html" aria-current="page">1 · Concept</a>
+  <a href="02-pillars.html">2 · Design pillars</a>
+  <a href="03-architecture.html">3 · Architecture</a>
+  <a href="04-world-model.html">4 · World model</a>
+  <a href="05-llm-layer.html">5 · LLM layer</a>
+  <a href="06-open-questions.html">6 · Open questions</a>
+</nav>
+<main>
+<h1>1 · Concept &amp; research</h1>
+<p class="subtitle">The one city block RPG: origin, definition, attempts, and why an LLM-backed text engine is a plausible form of it.</p>
+
+<h2>1.1 The idea</h2>
+<p>Warren Spector is the designer and producer behind <em>Ultima Underworld</em>, <em>System Shock</em>,
+<em>Thief</em> and, as director, <em>Deus Ex</em>. For more than a decade he has described one "dream game": an RPG that takes place
+within a <strong>single city block</strong>, simulated in exhaustive detail. The idea is usually told like this:</p>
+<ul>
+  <li>Take one US-style city block and simulate <strong>every building</strong> on it.</li>
+  <li>Simulate the <strong>shops and apartments</strong> inside those buildings and <strong>every object and appliance</strong> inside them.</li>
+  <li>Simulate the <strong>infrastructure</strong> that connects them, such as power and water supplies.</li>
+  <li>Simulate the <strong>people</strong> who live and work there, with their personalities, routines, relationships and even their pets.</li>
+</ul>
+<p>Spector's own framing contrasts the two directions a game can scale in. Most open-world games go
+<em>"miles wide and an inch deep"</em>. He wants to go <em>"an inch wide and a mile deep, so you can really do anything you
+can think of"</em>. He puts the emphasis on <strong>non-combat AI</strong> and on NPCs "who all have their own stories".
+Physics and systemic interaction matter too, but they are secondary to the people.</p>
+
+<h2>1.2 Lineage</h2>
+<table>
+<thead><tr><th>When</th><th>What</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>1990s</td><td>"The Cheese Shop" at Looking Glass</td><td>Reportedly the idea's earliest form: a single, deeply simulated shop. It was never made. There were no engines, no indie scene and no publisher appetite for it.</td></tr>
+<tr><td>~1997–2000</td><td><em>Deus Ex</em></td><td>Reportedly planned with three deeply simulated city blocks (New York, Hong Kong, Paris). The technology wasn't there, and the shipped game kept only a flavour of this in its hub areas.</td></tr>
+<tr><td>~2012</td><td>Public articulation</td><td>Spector names the one city block RPG as his dream game in interviews and talks. From then on it circulates as a design touchstone.</td></tr>
+<tr><td>2018</td><td>E3-era interviews</td><td>Reiterated in an interview with Kotaku, which is the source of the "inch wide and a mile deep" and deep non-combat AI framing.</td></tr>
+<tr><td>2019</td><td><em>Disco Elysium</em></td><td>Often called the closest shipped realisation. Its playable area is barely larger than a city block. It replaces depth of <em>simulation</em> with depth of <em>conversation</em> and interconnection. Every object and person leads into a web of dialogue, internal voices and history.</td></tr>
+<tr><td>2023</td><td>Stanford/Google "Generative Agents" (Smallville)</td><td>Research, not a game. Twenty-five LLM-driven agents in a small town, each with a memory stream, reflection and planning. They showed emergent social behaviour, such as spontaneously organising a party. This is the closest technical precedent for LLM-driven residents.</td></tr>
+<tr><td>2024</td><td><em>Edge</em> #395, "One City Block"</td><td>A feature asking whether the idea is getting closer to reality. It describes the idea as a branch of the immersive sim tree.</td></tr>
+</tbody>
+</table>
+
+<h2>1.3 Why it has never shipped</h2>
+<p>Three costs scale badly with depth:</p>
+<ol>
+  <li><strong>Simulation cost.</strong> Every object must behave plausibly under any use. In 3D this means physics, animation,
+  rendering and interaction affordances for thousands of things.</li>
+  <li><strong>Authoring cost.</strong> Every resident needs a history, voice and reactions to anything the player might say
+  or do. Branching dialogue grows combinatorially.</li>
+  <li><strong>Coherence cost.</strong> Emergent stories from deep systems are usually noise rather than narrative. Something has to
+  shape what happens into plot without scripting it.</li>
+</ol>
+
+<h2>1.4 Why a text engine with LLMs changes the equation</h2>
+<table>
+<thead><tr><th>Cost</th><th>How this project attacks it</th></tr></thead>
+<tbody>
+<tr><td>Simulation</td><td><strong>Text removes the rendering and physics tax.</strong> An object needs a state and some rules, not a mesh and a collider.
+A kettle can be <code>{filled, powered, temperature}</code> in a few lines. This makes "every object and appliance" tractable.</td></tr>
+<tr><td>Authoring</td><td><strong>LLMs voice the residents.</strong> Authors (human or LLM-assisted, at world-generation time) define who a character
+<em>is</em>: identity, history, secrets, goals and relationships. The model produces what they <em>say</em> in response to anything, grounded in what they know.</td></tr>
+<tr><td>Coherence</td><td><strong>An LLM "director" reads the simulation and nudges it.</strong> It proposes plot beats that exploit existing tensions, such as a debt, an affair,
+a leaking pipe or a power outage. It never invents facts outside the rules.</td></tr>
+</tbody>
+</table>
+<p>The central risk runs the other way. LLMs are <em>too</em> willing to invent. A model that freely makes up objects, facts and
+outcomes gives you improv theatre, not a simulation, and the "mile deep" promise collapses because nothing is consistent. So the
+design constraint that runs through this spec is <strong>the simulation is authoritative; the model is a voice and an advisor</strong>
+(see <a href="02-pillars.html">§2</a>).</p>
+
+<h2>1.5 Kieron Gillen</h2>
+<div class="open">
+<p><strong><span class="tag">open</span> Attribution to confirm.</strong> My research confirmed that Kieron Gillen is a long-standing
+advocate of Spector's work. He is a former <em>PC Gamer</em> writer, co-founded <em>Rock Paper Shotgun</em>, wrote notable pieces on
+<em>Deus Ex</em> and <em>Thief: Deadly Shadows</em>, and designed the <em>DIE</em> tabletop RPG with Grant Howitt. I could not
+find a specific source for Gillen's own framing of or contribution to the "one block RPG" concept. Many primary sources (Edge,
+Kotaku, RPS, Wikipedia) were unreachable from this environment. Which Gillen piece or idea do you want this spec to build on? It may
+change the pillars, for example if his framing emphasises player-authored story or a tabletop-style GM.</p>
+</div>
+
+<h2>1.6 What we take from each precedent</h2>
+<ul>
+  <li><strong>Immersive sims (Looking Glass, Ion Storm):</strong> systemic objects, multiple solutions and player expression over designer intent.</li>
+  <li><strong><em>Disco Elysium</em>:</strong> a small place made dense through conversation and history. Every noun is a door into story.</li>
+  <li><strong>Generative Agents:</strong> memory stream → retrieval → reflection → planning as a model for resident minds, and cheap
+  offscreen behaviour versus expensive on-stage behaviour.</li>
+  <li><strong>Classic parser IF (Infocom, Inform):</strong> a world model of rooms, objects and containment, and a turn loop. The parser is the part the LLM improves.</li>
+</ul>
+
+<h2>Sources</h2>
+<ul>
+  <li><a href="https://kotaku.com/the-director-of-deus-ex-and-epic-mickey-has-plenty-more-1826928185">Kotaku: The Director of Deus Ex and Epic Mickey Has Plenty More Wild Video Game Ideas</a></li>
+  <li><a href="https://pocketmags.com/us/edge-magazine/april-2024/articles/one-city-block">Edge #395: One City Block</a></li>
+  <li><a href="https://www.youtube.com/watch?v=1x6EZ5jd9Bk">Warren Spector describes the One City Block RPG (video)</a></li>
+  <li><a href="https://www.vice.com/en/article/disco-elysium-is-a-landmark-rpg-about-the-politics-of-our-broken-world/">Vice: Disco Elysium is a landmark RPG…</a></li>
+  <li><a href="http://vgbeyonder.blogspot.com/2012/11/one-city-block-futuro-degli-rpg-o-beata.html">Videogames BeYonder: "One City Block": the future of RPGs or a far flung utopia? (2012)</a></li>
+  <li><a href="https://arxiv.org/abs/2304.03442">Park et al., Generative Agents: Interactive Simulacra of Human Behavior (2023)</a></li>
+  <li><a href="https://en.wikipedia.org/wiki/Kieron_Gillen">Wikipedia: Kieron Gillen</a></li>
+</ul>
+<p class="subtitle">Most of the claims above come from search-result summaries of these sources. The primary pages were blocked from the research environment,
+so direct quotes should be re-checked against the originals before we quote them publicly.</p>
+
+<footer>§1 of the One Block CRPG specification</footer>
+</main>
+</body>
+</html>

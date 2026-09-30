@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Block Pillars</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<nav class="top">
+  <a href="index.html">Overview</a>
+  <a href="01-concept.html">1 · Concept</a>
+  <a href="02-pillars.html" aria-current="page">2 · Design pillars</a>
+  <a href="03-architecture.html">3 · Architecture</a>
+  <a href="04-world-model.html">4 · World model</a>
+  <a href="05-llm-layer.html">5 · LLM layer</a>
+  <a href="06-open-questions.html">6 · Open questions</a>
+</nav>
+<main>
+<h1>2 · Design pillars</h1>
+<p class="subtitle">The principles every feature is tested against. If a feature violates a pillar, it needs an explicit exception.</p>
+
+<h2>P1 · Bounded space, unbounded depth</h2>
+<p>The playable world <span class="req">MUST</span> be one city block: its buildings, interiors, the street frontage and
+anything reachable from them, such as roofs, basements and back alleys. The world <span class="req">MUST NOT</span> grow outward. It grows
+<em>inward</em>, through more detail, more history and more state. The edge of the block is a hard boundary. Leaving is either
+impossible or an ending. <span class="tag">open</span> which of the two.</p>
+
+<h2>P2 · The simulation is the source of truth</h2>
+<p>All world state lives in a typed, deterministic model owned by the engine. LLM output <span class="req">MUST NOT</span>
+mutate state directly. The model <em>proposes</em> typed intents, actions or facts. The engine <em>validates</em> them against
+the rules and <em>applies</em> them, or rejects them with a reason the model can react to.</p>
+<blockquote><p>The LLM proposes; the simulation disposes.</p></blockquote>
+
+<h2>P3 · Everything is something</h2>
+<p>Any noun the game shows the player <span class="req">SHOULD</span> exist as an entity the player can examine and act on.
+Prose <span class="req">MUST NOT</span> mention interactable things that don't exist in the model. If the narrator says there's a
+kettle, there is a kettle. Two mechanisms keep this honest:</p>
+<ul>
+  <li><strong>Grounded narration.</strong> The narrator is given the entities in scope and told to describe only those.</li>
+  <li><strong>Lazy concretisation.</strong> <span class="tag">open</span> When the player examines something plausible but
+  unmodelled, like the drawer of a desk, the engine <span class="req">MAY</span> let the model propose its contents from a
+  constrained schema. The engine validates the proposal against budgets and plausibility rules, commits it, and it is then permanent.
+  Detail is created on demand but never changes once observed.</li>
+</ul>
+
+<h2>P4 · Residents are people, not quest-givers</h2>
+<p>Every resident has identity, history, personality, needs, a daily routine, relationships, knowledge, secrets and goals.
+Residents pursue their goals whether or not the player is present. Dialogue is generated from the resident's
+own knowledge. A character <span class="req">MUST NOT</span> reveal facts they don't know. This is <em>epistemic grounding</em>, and it is what
+makes investigation, deception and gossip mechanically meaningful.</p>
+
+<h2>P5 · The block does not wait for you</h2>
+<p>Time advances with player actions. Residents follow schedules and act on goals off-stage using cheap, rule-based
+simulation. LLM calls are reserved for what is on stage or dramatically salient, following the Generative Agents
+split between routine and reflective behaviour.</p>
+
+<h2>P6 · Consequences persist</h2>
+<p>Every state change is an event in an append-only log. Residents remember what they witnessed or were told, and memories can
+spread as gossip. Nothing is silently forgotten. When context has to be compressed for the model, the <em>record</em> stays
+complete and only the <em>prompt</em> gets a summary.</p>
+
+<h2>P7 · Player expression over designer intent</h2>
+<p>Input is free text. There are no predetermined solutions. Problems <span class="req">SHOULD</span> be solvable through any
+approach the simulation supports, such as talking, sneaking, buying, breaking or cutting the power. The engine judges <em>feasibility</em>,
+not <em>whether this is the intended solution</em>.</p>
+
+<h2>P8 · Emergent plot, lightly directed</h2>
+<p>Stories come from the collision of residents' goals, secrets and the player's actions. A <strong>director</strong> watches
+for dramatic potential and <span class="req">MAY</span> nudge the story. It can advance a resident's plan, surface a rumour or trigger a
+plausible incident such as a fuse blowing. It <span class="req">MUST</span> do so only through the same validated actions available to
+everything else. The director doesn't author facts from nothing.</p>
+
+<h2>P9 · Deterministic and replayable</h2>
+<p>Given the same seed, event log and recorded LLM responses, a session <span class="req">MUST</span> replay identically. This
+powers save/load, debugging, regression tests and offline development without a model.</p>
+
+<h2>P10 · Model-agnostic</h2>
+<p>The engine <span class="req">MUST</span> run against any provider that implements the provider interface, including a scripted fake.
+Claude via subscription is the default and gets no special treatment in core code. Provider-specific features like prompt caching
+are optional capabilities.</p>
+
+<footer>§2 of the One Block CRPG specification</footer>
+</main>
+</body>
+</html>

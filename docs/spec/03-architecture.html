@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Block Architecture</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<nav class="top">
+  <a href="index.html">Overview</a>
+  <a href="01-concept.html">1 · Concept</a>
+  <a href="02-pillars.html">2 · Design pillars</a>
+  <a href="03-architecture.html" aria-current="page">3 · Architecture</a>
+  <a href="04-world-model.html">4 · World model</a>
+  <a href="05-llm-layer.html">5 · LLM layer</a>
+  <a href="06-open-questions.html">6 · Open questions</a>
+</nav>
+<main>
+<h1>3 · Engine architecture</h1>
+<p class="subtitle">Layers, the turn loop, persistence and testing strategy.</p>
+
+<h2>3.1 Layers</h2>
+<pre><code>┌────────────────────────────────────────────────────────┐
+│ Frontend        CLI REPL first · web UI later          │
+├────────────────────────────────────────────────────────┤
+│ Session         turn loop · save/load · replay         │
+├──────────────────────────────┬─────────────────────────┤
+│ Narrative layer              │ Simulation core         │
+│  Interpreter (text→intent)   │  World state (§4)       │
+│  Narrator (outcome→prose)    │  Rules &amp; actions        │
+│  Character minds (dialogue,  │  Clock &amp; schedules      │
+│    decisions, reflection)    │  Utilities propagation  │
+│  Director (plot pressure)    │  Knowledge &amp; memory     │
+│                              │  Event log              │
+├──────────────────────────────┴─────────────────────────┤
+│ LLM provider interface (§5)                            │
+│  claude-subscription · anthropic-api · scripted · …    │
+└────────────────────────────────────────────────────────┘</code></pre>
+<p>Dependency rule: the <strong>simulation core has no dependency on the LLM layer</strong>. It is plain, pure,
+deterministic TypeScript and can be tested with no model at all. The narrative layer depends on both the simulation core and the
+provider interface. Frontends depend only on the session.</p>
+
+<h2>3.2 The turn loop</h2>
+<ol>
+  <li><strong>Input.</strong> The player types free text.</li>
+  <li><strong>Interpret.</strong> A classic fast-path parser handles unambiguous commands (<code>n</code>, <code>look</code>,
+      <code>take lamp</code>). Anything else goes to the <em>Interpreter</em> role, which returns a typed <code>Intent</code> from a closed set
+      (move, examine, take, use, say-to, attack, wait…) with entity references resolved against what is in scope. It can also return a
+      clarification question.</li>
+  <li><strong>Validate.</strong> The rules check preconditions: reachability, locks, possession, power and so on. Failure produces a
+      structured reason and no state change.</li>
+  <li><strong>Resolve.</strong> Apply effects as events. Dialogue intents call the <em>Character</em> role for the addressee. That role
+      returns an utterance plus any proposed actions or knowledge transfers, and those are validated in turn.</li>
+  <li><strong>Advance time.</strong> The clock ticks according to the action's cost. Scheduled resident behaviour runs off-stage using rules only.
+      Utility networks propagate.</li>
+  <li><strong>Direct.</strong> Every N ticks or on salient events, the <em>Director</em> may propose a beat. Proposed beats are validated like any other action.</li>
+  <li><strong>Narrate.</strong> The <em>Narrator</em> turns this turn's events and the perceivable scene into prose. It is constrained to entities in scope.</li>
+  <li><strong>Persist.</strong> Append events and recorded LLM exchanges, and snapshot periodically.</li>
+</ol>
+
+<h2>3.3 State &amp; persistence</h2>
+<ul>
+  <li><strong>Event-sourced.</strong> The authoritative record is an append-only event log. The current world is a fold over it, with periodic snapshots.</li>
+  <li><strong>Save file</strong> = world seed + snapshot + event tail + LLM exchange log. <span class="tag">open</span> JSON files or SQLite.</li>
+  <li><strong>Serialisable everything.</strong> World state is plain data with no class instances holding hidden state, so snapshots are
+      <code>structuredClone</code>-able and diffable.</li>
+</ul>
+
+<h2>3.4 Determinism</h2>
+<ul>
+  <li>All randomness comes from a seeded PRNG carried in state. <code>Math.random</code> and wall-clock time are banned in the core.</li>
+  <li>LLM calls are recorded as <code>(role, request hash, response)</code>. Replay mode serves responses from the log. This is the
+      "cassette" pattern, and it makes the non-deterministic part reproducible.</li>
+</ul>
+
+<h2>3.5 Testing strategy</h2>
+<table>
+<thead><tr><th>Level</th><th>What</th><th>Model?</th></tr></thead>
+<tbody>
+<tr><td>Unit</td><td>Rules, actions, utility propagation, schedules, knowledge transfer</td><td>No</td></tr>
+<tr><td>Scenario</td><td>Scripted command sequences against a fixture block, asserting on state</td><td>Scripted provider</td></tr>
+<tr><td>Replay</td><td>Recorded real sessions replayed to catch regressions</td><td>Cassettes</td></tr>
+<tr><td>Eval</td><td>Narrative quality, groundedness (no invented entities, no leaked knowledge)</td><td>Live, opt-in</td></tr>
+</tbody>
+</table>
+
+<h2>3.6 Proposed tooling</h2>
+<p><span class="tag">open</span> This is a suggestion to confirm before scaffolding:
+Node 22+, TypeScript strict and ESM, <code>pnpm</code> or <code>npm</code>, <code>vitest</code>, <code>zod</code> for schemas
+(shared by validation and LLM structured output), and <code>eslint</code> + <code>prettier</code> or <code>biome</code>.
+Repository layout could be a single package with <code>src/{core,narrative,llm,session,cli}</code>. It can be split into packages later if a web frontend arrives.</p>
+
+<footer>§3 of the One Block CRPG specification</footer>
+</main>
+</body>
+</html>

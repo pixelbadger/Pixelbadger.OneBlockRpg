@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Block World Model</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<nav class="top">
+  <a href="index.html">Overview</a>
+  <a href="01-concept.html">1 · Concept</a>
+  <a href="02-pillars.html">2 · Design pillars</a>
+  <a href="03-architecture.html">3 · Architecture</a>
+  <a href="04-world-model.html" aria-current="page">4 · World model</a>
+  <a href="05-llm-layer.html">5 · LLM layer</a>
+  <a href="06-open-questions.html">6 · Open questions</a>
+</nav>
+<main>
+<h1>4 · World model</h1>
+<p class="subtitle">What the simulation knows. The sketches show shape, not final types.</p>
+
+<h2>4.1 Entities</h2>
+<p>Everything addressable is an <code>Entity</code> with a stable id, a kind and a location in the containment tree.
+The kind decides which state components it carries. That could be tagged unions or a light entity-component split. <span class="tag">open</span></p>
+<pre><code>type EntityId = string & { readonly brand: 'EntityId' };
+
+interface EntityBase {
+  id: EntityId;
+  kind: 'block' | 'building' | 'space' | 'portal' | 'item' | 'fixture' | 'character';
+  name: string;              // canonical short name
+  aliases: string[];         // parser/interpreter vocabulary
+  description: string;       // authored or concretised; immutable once observed
+  location: EntityId | null; // containment parent
+  tags: string[];            // e.g. 'flammable', 'container', 'electrical'
+}</code></pre>
+
+<h2>4.2 Space</h2>
+<ul>
+  <li><strong>Block</strong>, the root. It contains buildings and outdoor spaces (sidewalk, alley, courtyard, roofs).</li>
+  <li><strong>Building</strong>, which groups spaces and owns utility connections.</li>
+  <li><strong>Space</strong>, a room or area with light level, noise and a public or private status for trespass rules.</li>
+  <li><strong>Portal</strong>, which connects spaces: a door, window, stairs, fire escape or vent. It has open, locked and lock-key state and
+      <em>visibility/audibility</em> through it, so the model knows who can see or hear what.</li>
+</ul>
+
+<h2>4.3 Things</h2>
+<ul>
+  <li><strong>Item</strong>, portable. It has weight and bulk, is optionally a container, and carries state (<code>lit</code>, <code>filled</code>…).</li>
+  <li><strong>Fixture</strong>, not portable: an appliance, furniture or a utility endpoint. Appliances declare utility needs and behaviours.</li>
+  <li>Objects are driven by small, composable <strong>behaviours</strong> (container, lockable, powered, water-using,
+      flammable, readable, edible…). Rules are written against behaviours, not individual objects. This is the immersive-sim approach and it is what
+      makes unplanned solutions work.</li>
+</ul>
+
+<h2>4.4 Utilities</h2>
+<p>Following Spector's example of power and water supplies, utilities are graphs of <strong>sources → conduits → endpoints</strong>,
+such as mains → building panel → circuit breaker → sockets → kettle. State propagates each tick. Cutting a breaker kills the lights on
+a floor. A burst pipe floods the flat below. <span class="tag">open</span> Scope for v1 could be power and water, with gas, phone/internet
+and heating later.</p>
+
+<h2>4.5 Characters</h2>
+<pre><code>interface Character extends EntityBase {
+  kind: 'character';
+  profile: {            // authored "who they are": stable, cacheable prompt material
+    identity: string; background: string; personality: string[]; voice: string;
+  };
+  needs: Record&lt;'hunger' | 'rest' | 'social' | 'money' | string, number&gt;;
+  schedule: ScheduleEntry[];            // routine: where/what by time of day
+  goals: Goal[];                        // what they are trying to achieve, with plans
+  relationships: Record&lt;EntityId, Relationship&gt;; // trust, affinity, history notes
+  knowledge: KnowledgeRef[];            // facts this character believes (see 4.6)
+  secrets: FactId[];                    // subset of knowledge they conceal
+  inventory: EntityId[];
+  status: { awake: boolean; activity: string; mood: string; health: number };
+}</code></pre>
+<p>The player character is a <code>Character</code> too. Rules apply symmetrically, and NPCs can do almost anything the player can.</p>
+
+<h2>4.6 Facts, knowledge &amp; memory</h2>
+<p>This is where the design lives or dies. It needs a single ledger of <strong>facts</strong> (true propositions about the world) and a
+per-character layer of <strong>beliefs</strong>:</p>
+<ul>
+  <li><strong>Fact</strong>: a subject/predicate/object triple plus free text. Examples: "Mrs Okafor owes the landlord three months' rent" or "the
+      key to 3B is under the mat". Facts have provenance, meaning the event that established them.</li>
+  <li><strong>Belief</strong>: a character's reference to a fact, or to a <em>false</em> proposition they hold, with source (witnessed, told-by,
+      inferred), confidence and time learned. Lies and rumours are false beliefs.</li>
+  <li><strong>Memory stream</strong>: per character, a timestamped log of observations. Importance scoring and periodic
+      <em>reflection</em> condense it into higher-level beliefs, following the Generative Agents pattern.</li>
+  <li><strong>Perception</strong>: events are delivered to the characters who could perceive them, based on the same space or portal
+      visibility/audibility, awake or asleep, and attention. This is how gossip, witnesses and alibis emerge.</li>
+</ul>
+
+<h2>4.7 Time</h2>
+<ul>
+  <li>A world clock in minutes. Each action has a time cost. <span class="tag">open</span> The default granularity could be 1 turn ≈ 1–5 minutes, with <code>wait</code> and
+      <code>sleep</code> to skip.</li>
+  <li>Off-stage residents are simulated at a coarser granularity, following their schedules. On-stage residents are simulated per turn.</li>
+  <li>Day/night, opening hours and weekly rhythms such as rent day and bin day provide natural pressure.</li>
+</ul>
+
+<h2>4.8 Events</h2>
+<pre><code>interface WorldEvent {
+  seq: number; at: GameTime; kind: string;       // 'moved' | 'took' | 'said' | 'power-cut' | …
+  actor?: EntityId; targets: EntityId[];
+  payload: unknown;                              // kind-specific, schema-validated
+  cause?: { by: 'player' | 'rule' | 'schedule' | 'character-mind' | 'director'; ref?: string };
+}</code></pre>
+
+<h2>4.9 Where the block comes from</h2>
+<div class="open">
+<p><strong><span class="tag">open</span></strong> There are three options:</p>
+<ul>
+<li><strong>(a)</strong> A hand-authored block data file.</li>
+<li><strong>(b)</strong> An LLM-generated block at new-game time. It gets validated, frozen and then treated as authored.</li>
+<li><strong>(c)</strong> A hybrid, where an authored skeleton of layout and key residents gets LLM-filled detail.</li>
+</ul>
+<p>My recommendation is (a) for a first vertical slice, because it gives us a fixed test fixture. Build (b) or (c) later on the same schema.</p>
+</div>
+
+<footer>§4 of the One Block CRPG specification</footer>
+</main>
+</body>
+</html>
