@@ -37,7 +37,7 @@ The model layer is a pluggable provider interface. Planned providers:
 
 The implementation baseline is in [`docs/spec/`](docs/spec/index.html):
 
-1. [Concept & research](docs/spec/01-concept.html): origin, lineage (Looking Glass, Deus Ex, Disco Elysium, Generative Agents)
+1. [Concept & research](docs/spec/01-concept.html): origin, lineage (Looking Glass, Deus Ex, Arkane, Gone Home, Disco Elysium, Generative Agents)
 2. [Design pillars](docs/spec/02-pillars.html)
 3. [Engine architecture](docs/spec/03-architecture.html)
 4. [World model](docs/spec/04-world-model.html)

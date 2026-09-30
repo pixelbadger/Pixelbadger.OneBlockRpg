@@ -23,8 +23,15 @@
 <h2>1.1 The idea</h2>
 <p>Warren Spector is the designer and producer behind <em>Ultima Underworld</em>, <em>System Shock</em>,
 <em>Thief</em> and, as director, <em>Deus Ex</em>. For more than a decade he has described one "dream game": an RPG that takes place
-within a <strong>single city block</strong>, simulated in exhaustive detail. The clearest statement of it comes from Rock Paper
-Shotgun's feature <a href="https://www.rockpapershotgun.com/will-we-ever-get-to-play-one-city-block"><em>Will we ever get to play One City Block?</em></a>:</p>
+within a <strong>single city block</strong>, simulated in exhaustive detail. In his own words:</p>
+<blockquote>
+<p>"My ultimate dream is for someone to be foolish enough to give me the money to make what I call the One Block Role-Playing
+Game, where we simulate one building, one city block perfectly."</p>
+<p>"I really want deep worlds that you can interact with. My ideal game would be one city block – some day I'm going to make that."
+<em>(to The Guardian, 2012)</em></p>
+</blockquote>
+<p>Both quotes appear in Jim Rossignol's 2012 Rock Paper Shotgun feature (§1.3). A later description (<em>Edge</em> #395, 2024)
+spells out what would be simulated:</p>
 <ul>
   <li>Take one US-style city block and simulate <strong>every building</strong> on it.</li>
   <li>Simulate the <strong>shops and apartments</strong> inside those buildings and <strong>every object and appliance</strong> inside them.</li>
@@ -40,9 +47,11 @@ Physics and systemic interaction matter too, but they are secondary to the peopl
 <table>
 <thead><tr><th>When</th><th>What</th><th>Notes</th></tr></thead>
 <tbody>
-<tr><td>1990s</td><td>"The Cheese Shop" at Looking Glass</td><td>The idea's earliest form, dating from when Looking Glass was at the heart of the immersive sim scene. In Spector's words (via RPS): <em>"There was no indie movement, and there were no game engines, and we were all employed by another company – so The Cheese Shop just wasn't gonna happen."</em></td></tr>
+<tr><td>1990s</td><td>"The Cheese Shop" at Looking Glass</td><td>An even tighter version of the idea: <em>"Doug Church talking about … the Cheese Shop game, where everything occurs in one store"</em>, based on an old comedy sketch (Harvey Smith, via RPS). It was never made. <em>Edge</em> #395 reports the reason as <em>"There was no indie movement, and there were no game engines, and we were all employed by another company – so The Cheese Shop just wasn't gonna happen."</em></td></tr>
 <tr><td>~1997–2000</td><td><em>Deus Ex</em></td><td>Reportedly planned with three deeply simulated city blocks (New York, Hong Kong, Paris). The technology wasn't there, and the shipped game kept only a flavour of this in its hub areas.</td></tr>
-<tr><td>~2012</td><td>Public articulation</td><td>Spector names the one city block RPG as his dream game in interviews and talks. From then on it circulates as a design touchstone.</td></tr>
+<tr><td>2002</td><td><em>Arx Fatalis</em> (Arkane)</td><td><em>"Arx Fatalis was this type of game. It's the reason Arkane Studios was born"</em> (Raphael Colantonio).</td></tr>
+<tr><td>2012</td><td>Guardian interview; RPS feature; <em>Dishonored</em></td><td>Spector names the one city block RPG as his dream game. Rossignol's RPS feature canvasses Arkane (<em>Dishonored</em>) and Fullbright, and argues the idea has become "a sort of guiding design principle" rather than one man's dream game.</td></tr>
+<tr><td>2013</td><td><em>Gone Home</em> (Fullbright)</td><td>An NPC-free immersive sim of a single house, where you "mine every drawer, cabinet, and secret panel for meaning". Steve Gaynor says it is only a fragment of the idea (§1.3).</td></tr>
 <tr><td>2018</td><td>E3-era interviews</td><td>Reiterated in an interview with Kotaku, which is the source of the "inch wide and a mile deep" and deep non-combat AI framing.</td></tr>
 <tr><td>2019</td><td><em>Disco Elysium</em></td><td>Often called the closest shipped realisation. Its playable area is barely larger than a city block. It replaces depth of <em>simulation</em> with depth of <em>conversation</em> and interconnection. Every object and person leads into a web of dialogue, internal voices and history.</td></tr>
 <tr><td>2023</td><td>Stanford/Google "Generative Agents" (Smallville)</td><td>Research, not a game. Twenty-five LLM-driven agents in a small town, each with a memory stream, reflection and planning. They showed emergent social behaviour, such as spontaneously organising a party. This is the closest technical precedent for LLM-driven residents.</td></tr>
@@ -50,7 +59,28 @@ Physics and systemic interaction matter too, but they are secondary to the peopl
 </tbody>
 </table>
 
-<h2>1.3 Why it has never shipped</h2>
+<h2>1.3 Designers on the idea (RPS, 2012)</h2>
+<p>Jim Rossignol's <a href="https://www.rockpapershotgun.com/will-we-ever-get-to-play-one-city-block"><em>Will We Ever Get To Play "One City Block"?</em></a>
+(Rock Paper Shotgun, 31 Oct 2012) asked developers from Arkane and Fullbright why the idea keeps its pull. Their answers point directly at design requirements:</p>
+<table>
+<thead><tr><th>Who</th><th>Point</th><th>Implication for us</th></tr></thead>
+<tbody>
+<tr><td>Harvey Smith (Deus Ex, Dishonored)</td><td><em>"It's a clever constraint, like the Twilight Zone episode where everything takes place in one room."</em>
+The key question is whether it would feel like <em>"an emergent narrative in the sense of a game like FTL or … XCOM, or more like an 'insanely scripted' RPG … there's a thrill and some feeling of elegance to game interactions when they arise from systems."</em></td>
+<td>This is the central design choice. We choose <strong>systems first</strong>, with the LLM director shaping rather than scripting (P8). The Smith quote is the best one-line statement of why.</td></tr>
+<tr><td>Christophe Carrier (Dishonored lead level designer)</td><td><em>"Tight and dense with consequences … the tighter the space, the more detail is possible … a world where little things matter and that you leave traces of your influence everywhere."</em>
+He also wants to <em>"use the bathrooms or turn the AC on, even if there's no gameplay implications whatsoever."</em></td>
+<td>Mundane interactions are first-class even with no mechanical payoff (P3). Player actions leave persistent, discoverable traces (P6).</td></tr>
+<tr><td>Steve Gaynor (Gone Home)</td><td><em>"Too many games are much too broad and shallow."</em> But he adds that the full idea <em>"implies a lot more: simulating the people who live and work there, allowing the player to buy equipment and improve their character's skills and attributes."</em></td>
+<td>Being a <strong>CRPG</strong> means character progression and an economy, not just exploration. The draft spec is thin here (Q16).</td></tr>
+<tr><td>Raphael Colantonio (Arkane)</td><td><em>"Ultima Underworld set in a modern mall, blocked off and sealed up after a cataclysm … with rival clans and factional alliances."</em></td>
+<td>A sealed setting justifies the hard boundary (P1). Factions give the director tensions to work with.</td></tr>
+<tr><td>Jim Rossignol</td><td><em>"Would there be a single bullet in a revolver in a drawer somewhere, which would signal the end of the game when it was fired?"</em> It is <em>"not simply a technical challenge … it's a design challenge."</em></td>
+<td>Scarce, significant objects work as dramatic constraints. The hard part is making depth <em>fun</em>, not just making it exist.</td></tr>
+</tbody>
+</table>
+
+<h2>1.4 Why it has never shipped</h2>
 <p>Three costs scale badly with depth:</p>
 <ol>
   <li><strong>Simulation cost.</strong> Every object must behave plausibly under any use. In 3D this means physics, animation,
@@ -61,7 +91,7 @@ Physics and systemic interaction matter too, but they are secondary to the peopl
   shape what happens into plot without scripting it.</li>
 </ol>
 
-<h2>1.4 Why a text engine with LLMs changes the equation</h2>
+<h2>1.5 Why a text engine with LLMs changes the equation</h2>
 <table>
 <thead><tr><th>Cost</th><th>How this project attacks it</th></tr></thead>
 <tbody>
@@ -76,21 +106,22 @@ a leaking pipe or a power outage. It never invents facts outside the rules.</td>
 <p>The central risk runs the other way. LLMs are <em>too</em> willing to invent. A model that freely makes up objects, facts and
 outcomes gives you improv theatre, not a simulation, and the "mile deep" promise collapses because nothing is consistent. So the
 design constraint that runs through this spec is <strong>the simulation is authoritative; the model is a voice and an advisor</strong>
-(see <a href="02-pillars.html">§2</a>).</p>
+(see <a href="02-pillars.html">§2</a>). This is Harvey Smith's systems-over-script choice (§1.3) in modern form.</p>
 
-<h2>1.5 Kieron Gillen</h2>
+<h2>1.6 Kieron Gillen</h2>
 <div class="open">
 <p><strong><span class="tag">open</span> Attribution to confirm.</strong> My research confirmed that Kieron Gillen is a long-standing
 advocate of Spector's work. He is a former <em>PC Gamer</em> writer, co-founded <em>Rock Paper Shotgun</em>, wrote notable pieces on
 <em>Deus Ex</em> and <em>Thief: Deadly Shadows</em>, and designed the <em>DIE</em> tabletop RPG with Grant Howitt. I could not
 find a specific source for Gillen's own framing of or contribution to the "one block RPG" concept. Many primary sources (Edge,
-Kotaku, RPS, Wikipedia) were unreachable from this environment. Which Gillen piece or idea do you want this spec to build on? It may
+Kotaku, Wikipedia) were unreachable from this environment. The 2012 RPS feature was written by Jim Rossignol, Gillen's fellow RPS co-founder, and doesn't mention Gillen. Which Gillen piece or idea do you want this spec to build on? It may
 change the pillars, for example if his framing emphasises player-authored story or a tabletop-style GM.</p>
 </div>
 
-<h2>1.6 What we take from each precedent</h2>
+<h2>1.7 What we take from each precedent</h2>
 <ul>
-  <li><strong>Immersive sims (Looking Glass, Ion Storm):</strong> systemic objects, multiple solutions and player expression over designer intent.</li>
+  <li><strong><em>Gone Home</em>:</strong> every drawer and cabinet carries meaning, and history is discovered through objects.</li>
+  <li><strong>Immersive sims (Looking Glass, Ion Storm, Arkane):</strong> systemic objects, multiple solutions and player expression over designer intent.</li>
   <li><strong><em>Disco Elysium</em>:</strong> a small place made dense through conversation and history. Every noun is a door into story.</li>
   <li><strong>Generative Agents:</strong> memory stream → retrieval → reflection → planning as a model for resident minds, and cheap
   offscreen behaviour versus expensive on-stage behaviour.</li>
@@ -99,7 +130,7 @@ change the pillars, for example if his framing emphasises player-authored story 
 
 <h2>Sources</h2>
 <ul>
-  <li><a href="https://www.rockpapershotgun.com/will-we-ever-get-to-play-one-city-block">Rock Paper Shotgun: Will we ever get to play One City Block?</a> (primary source for §1.1 and the Cheese Shop origin)</li>
+  <li><a href="https://www.rockpapershotgun.com/will-we-ever-get-to-play-one-city-block">Jim Rossignol, Rock Paper Shotgun: Will We Ever Get To Play "One City Block"? (31 Oct 2012)</a>, read in full</li>
   <li><a href="https://kotaku.com/the-director-of-deus-ex-and-epic-mickey-has-plenty-more-1826928185">Kotaku: The Director of Deus Ex and Epic Mickey Has Plenty More Wild Video Game Ideas</a></li>
   <li><a href="https://pocketmags.com/us/edge-magazine/april-2024/articles/one-city-block">Edge #395: One City Block</a></li>
   <li><a href="https://www.youtube.com/watch?v=1x6EZ5jd9Bk">Warren Spector describes the One City Block RPG (video)</a></li>
@@ -108,7 +139,7 @@ change the pillars, for example if his framing emphasises player-authored story 
   <li><a href="https://arxiv.org/abs/2304.03442">Park et al., Generative Agents: Interactive Simulacra of Human Behavior (2023)</a></li>
   <li><a href="https://en.wikipedia.org/wiki/Kieron_Gillen">Wikipedia: Kieron Gillen</a></li>
 </ul>
-<p class="subtitle">Most of the claims above come from search-result summaries of these sources. This includes the RPS feature, which is still to be read in full. The primary pages were blocked from the research environment,
+<p class="subtitle">Most of the claims above come from search-result summaries of these sources. The RPS feature is the exception: it was read in full. The primary pages were blocked from the research environment,
 so direct quotes should be re-checked against the originals before we quote them publicly.</p>
 
 <footer>§1 of the One Block CRPG specification</footer>
