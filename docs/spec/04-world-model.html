@@ -69,14 +69,45 @@ and heating later.</p>
   schedule: ScheduleEntry[];            // routine: where/what by time of day
   goals: Goal[];                        // what they are trying to achieve, with plans
   relationships: Record&lt;EntityId, Relationship&gt;; // trust, affinity, history notes
-  knowledge: KnowledgeRef[];            // facts this character believes (see 4.6)
+  knowledge: KnowledgeRef[];            // facts this character believes (see 4.7)
   secrets: FactId[];                    // subset of knowledge they conceal
+  special: Special;                     // see 4.6
+  skills: Record&lt;SkillId, number&gt;;     // derived from SPECIAL, raised by use/training
   inventory: EntityId[];
   status: { awake: boolean; activity: string; mood: string; health: number };
 }</code></pre>
-<p>The player character is a <code>Character</code> too. Rules apply symmetrically, and NPCs can do almost anything the player can.</p>
+<p>The player character is a <code>Character</code> too. Rules apply symmetrically, and NPCs can do almost anything the player can.
+That includes having SPECIAL attributes.</p>
 
-<h2>4.6 Facts, knowledge &amp; memory</h2>
+<h2>4.6 Character mechanics: SPECIAL</h2>
+<p>Character mechanics use the <strong>SPECIAL</strong> attribute model from the classic turn-based <em>Fallout</em> games:
+seven attributes rated 1–10. It suits this engine because each attribute maps cleanly onto a system we already need, and because it
+was designed for turn-based play, where action cost is explicit.</p>
+<table>
+<thead><tr><th>Attribute</th><th>Drives</th><th>Engine hook</th></tr></thead>
+<tbody>
+<tr><td><strong>S</strong>trength</td><td>Carry capacity, forcing doors and lids, melee</td><td>Rules: inventory limits, <code>force</code> action checks</td></tr>
+<tr><td><strong>P</strong>erception</td><td>What you notice: hidden items, overheard speech, tells</td><td>Perception filter (4.7) and <strong>narrator scope</strong>. Low-PE characters literally get less in their context</td></tr>
+<tr><td><strong>E</strong>ndurance</td><td>Health, fatigue, resistance, how long needs take to bite</td><td>Needs decay rates, health</td></tr>
+<tr><td><strong>C</strong>harisma</td><td>First impressions, persuasion, how fast trust builds</td><td>Relationship deltas and an input to the Character role's disposition</td></tr>
+<tr><td><strong>I</strong>ntelligence</td><td>Reasoning, technical tasks (fixing the fuse box), skill growth</td><td>Skill checks. Interpreter may surface extra options at high IN</td></tr>
+<tr><td><strong>A</strong>gility</td><td>Speed, stealth, fine manipulation</td><td><strong>Action time cost</strong>. This is the analogue of Fallout's AP, expressed as game-minutes per action (4.8)</td></tr>
+<tr><td><strong>L</strong>uck</td><td>Small nudges on uncertain outcomes</td><td>Modifier on the seeded PRNG rolls. Could also bias Director beats slightly</td></tr>
+</tbody>
+</table>
+<ul>
+  <li><strong>Resolution is the engine's job.</strong> Checks are deterministic rolls (seeded PRNG) against attribute + skill, resolved in the
+      simulation core. The LLM narrates outcomes. It <span class="req">MUST NOT</span> decide them (P2).</li>
+  <li><strong>Skills</strong> derive from attributes, as in Fallout, and cover lockpicking, speech, repair, sneak, barter, first aid and so on.
+      Perks and traits are deferred.</li>
+  <li><strong>Residents have SPECIAL too.</strong> This gives the Character role concrete, cacheable personality anchors. A low-IN, high-CH
+      resident talks differently from a high-IN, low-CH one.</li>
+</ul>
+<div class="note"><p>"SPECIAL" is a Bethesda/ZeniMax trademark. The seven-attribute mechanic itself is fine to use, but the
+name and branding shouldn't appear in anything we publish or distribute. Treat the name as internal shorthand. <span class="tag">open</span> Choose a
+public name before any release.</p></div>
+
+<h2>4.7 Facts, knowledge &amp; memory</h2>
 <p>This is where the design lives or dies. It needs a single ledger of <strong>facts</strong> (true propositions about the world) and a
 per-character layer of <strong>beliefs</strong>:</p>
 <ul>
@@ -90,15 +121,15 @@ per-character layer of <strong>beliefs</strong>:</p>
       visibility/audibility, awake or asleep, and attention. This is how gossip, witnesses and alibis emerge.</li>
 </ul>
 
-<h2>4.7 Time</h2>
+<h2>4.8 Time</h2>
 <ul>
-  <li>A world clock in minutes. Each action has a time cost. <span class="tag">open</span> The default granularity could be 1 turn ≈ 1–5 minutes, with <code>wait</code> and
+  <li>A world clock in minutes. Each action has a time cost, scaled by the actor's Agility (4.6). <span class="tag">open</span> The default granularity could be 1 turn ≈ 1–5 minutes, with <code>wait</code> and
       <code>sleep</code> to skip.</li>
   <li>Off-stage residents are simulated at a coarser granularity, following their schedules. On-stage residents are simulated per turn.</li>
   <li>Day/night, opening hours and weekly rhythms such as rent day and bin day provide natural pressure.</li>
 </ul>
 
-<h2>4.8 Events</h2>
+<h2>4.9 Events</h2>
 <pre><code>interface WorldEvent {
   seq: number; at: GameTime; kind: string;       // 'moved' | 'took' | 'said' | 'power-cut' | …
   actor?: EntityId; targets: EntityId[];
@@ -106,7 +137,7 @@ per-character layer of <strong>beliefs</strong>:</p>
   cause?: { by: 'player' | 'rule' | 'schedule' | 'character-mind' | 'director'; ref?: string };
 }</code></pre>
 
-<h2>4.9 Where the block comes from</h2>
+<h2>4.10 Where the block comes from</h2>
 <div class="open">
 <p><strong><span class="tag">open</span></strong> There are three options:</p>
 <ul>

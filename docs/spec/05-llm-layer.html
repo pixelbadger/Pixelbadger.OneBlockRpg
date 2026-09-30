@@ -82,7 +82,7 @@ rebuilt from world state, which keeps calls stateless and replayable.</p>
 <tbody>
 <tr><td>Interpreter</td><td>Player text, entities in scope, recent turns</td><td><code>Intent</code> | <code>Clarify</code></td><td>fast</td></tr>
 <tr><td>Narrator</td><td>This turn's perceivable events, scene entities, style guide</td><td>Prose, plus the ids of entities mentioned (checked against scope)</td><td>smart</td></tr>
-<tr><td>Character</td><td>Profile, beliefs, relationship to interlocutor, mood, goals, the utterance or event</td><td><code>{ say, emotion, proposedActions[], revealedFacts[] }</code></td><td>smart</td></tr>
+<tr><td>Character</td><td>Profile, SPECIAL, beliefs, relationship to interlocutor, mood, goals, the utterance or event</td><td><code>{ say, emotion, proposedActions[], revealedFacts[] }</code></td><td>smart</td></tr>
 <tr><td>Reflector</td><td>A character's recent memory stream</td><td>New higher-level beliefs, and goal or plan updates</td><td>fast, batched</td></tr>
 <tr><td>Director</td><td>Summary of tensions: goals in conflict, secrets at risk, hazards</td><td>Zero or one proposed beat as a validated action</td><td>smart, infrequent</td></tr>
 <tr><td>Concretiser</td><td>Unmodelled examine target, its context and budget</td><td>New entities in a constrained schema (P3)</td><td>fast</td></tr>
