@@ -210,6 +210,8 @@ export function checkPayload(p: Payload, origins: Origins): PayloadIssue[] {
     );
   }
 
+  // Off-stage characters that some spawn or move effect brings on.
+  const staged = new Set([...JSON.stringify(p).matchAll(/"(?:spawn|move)":\{"object":"([^"]+)"/g)].map((m) => m[1]!));
   for (const c of p.characters) {
     for (const k of Object.keys(c.special) as (keyof typeof c.special)[]) {
       if (c.special[k] < 1 || c.special[k] > 10) {
@@ -249,7 +251,7 @@ export function checkPayload(p: Payload, origins: Origins): PayloadIssue[] {
     if (c.goals.join(" ").length > BUDGET.goals) {
       add("warning", ent("characters", c.id, "goals"), `goals exceed ${BUDGET.goals} chars`);
     }
-    if (c.id !== playerId && !c.location) {
+    if (c.id !== playerId && !c.location && !staged.has(c.id)) {
       add("warning", ent("characters", c.id, "location"), "character starts off-stage; make sure something spawns it");
     }
     for (const b of c.beliefs) {
