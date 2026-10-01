@@ -6,6 +6,8 @@ import type { World, WorldEvent } from "./world.js";
 
 export interface ExitView {
   label: string;
+  /** The authored direction (north, up, in…), when there is one. */
+  direction?: string;
   to?: string;
   blocked: boolean;
 }
@@ -20,7 +22,12 @@ export function visibleExits(w: World, room: string): ExitView[] {
   if (!r) return [];
   return r.exits
     .filter((x) => !x.hidden || (x.when ? w.cond(x.when) : false))
-    .map((x) => ({ label: exitLabel(x), ...(x.to ? { to: x.to } : {}), blocked: !!x.blocked }));
+    .map((x) => ({
+      label: exitLabel(x),
+      ...(x.direction ? { direction: x.direction } : {}),
+      ...(x.to ? { to: x.to } : {}),
+      blocked: !!x.blocked,
+    }));
 }
 
 /** Objects the player sees listed in a room: not scenery, not characters, not hidden. */

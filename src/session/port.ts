@@ -41,6 +41,13 @@ export type ViewModel =
       tags: SkillId[];
     }
   | { type: "inventory"; items: string[]; equipped: string[]; money: number }
+  | {
+      /** What the player knows of the block's layout: visited rooms, their visible exits and where those lead. */
+      type: "map";
+      here: string;
+      rooms: { id: string; name: string; visited: boolean }[];
+      exits: { from: string; to?: string; direction: string; label: string; blocked: boolean }[];
+    }
   | { type: "journal"; entries: { day: number; text: string }[] }
   | { type: "conversation"; with: string; options: { index: number; text: string }[] }
   | {
@@ -55,6 +62,9 @@ export type ViewModel =
   | { type: "create"; presets: { name: string; special: Special }[]; points: number; min: number; max: number }
   | { type: "help"; text: string }
   | { type: "ended"; ending: string; title?: string; text: string };
+
+/** The view model of one type, e.g. `ViewOf<"map">`. */
+export type ViewOf<T extends ViewModel["type"]> = Extract<ViewModel, { type: T }>;
 
 export type MetaCommand = "look" | "inventory" | "status" | "journal" | "menu" | "help" | "improve";
 
