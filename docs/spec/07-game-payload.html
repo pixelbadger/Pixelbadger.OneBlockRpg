@@ -150,11 +150,15 @@ endings:
 <p><code>game.yaml</code> declares a <code>schemaVersion</code>. The engine loads matching major versions. Saves record payload id and version,
 and a changed payload invalidates saves unless it is marked compatible.</p>
 
-<h2>7.9 Authoring guide (to write)</h2>
-<p>A guide aimed at a coding agent: how to go from brief to payload, naming conventions, voice and length for flavour text, how many hooks per
-conversation, and a worked example block. It should also ship as a Claude Code skill in this repo, so "make me a game from this story" works.
-The first example story is <strong>The Pier</strong> (Q22), a ghost story set on a Victorian seaside pier. Its brief is in
-<a href="../../examples/the-pier/brief.md"><code>examples/the-pier/brief.md</code></a>, and its payload will live next to it.</p>
+<h2>7.9 Authoring guide</h2>
+<p>The guide is <a href="../authoring-guide.md"><code>docs/authoring-guide.md</code></a>, written for a coding agent. It covers the loop
+from brief to payload to validation to playthrough test, the layout and naming conventions, how each brief section becomes payload, voice and
+length for flavour text, hooks per conversation (1–4), set-piece design, the rule that the critical path never depends on an LLM hook, the
+language's gotchas, budgets, and a worked example. It ships as the Claude Code skill
+<a href="../../.claude/skills/make-game/SKILL.md"><code>make-game</code></a>, so "make me a game from this story" works in this repo.</p>
+<p>The worked example is <strong>The Pier</strong> (Q22), a ghost story set on a Victorian seaside pier. Its brief is
+<a href="../../examples/the-pier/brief.md"><code>examples/the-pier/brief.md</code></a> and its payload is next to it. It is also a
+playthrough fixture (<code>tests/pier.test.ts</code>).</p>
 
 <footer>§7 of the One Block CRPG specification</footer>
 </main>
