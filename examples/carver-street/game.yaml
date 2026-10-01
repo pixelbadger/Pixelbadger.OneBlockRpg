@@ -1,0 +1,29 @@
+# Carver Street: a small demo block built from the examples in the spec (§4.5, §6.2, §6.4, §6.7, §7.6).
+# It doubles as the engine's playthrough fixture.
+id: carver-street
+title: "41 Carver Street"
+schema_version: "1.0"
+version: "0.1.0"
+start: flat-2b
+player:
+  character: player
+  mode: point-buy
+  presets:
+    - name: Talker
+      special: { ST: 4, PE: 6, EN: 5, CH: 8, IN: 7, AG: 5, LK: 5 }
+    - name: Bruiser
+      special: { ST: 8, PE: 5, EN: 7, CH: 4, IN: 4, AG: 7, LK: 5 }
+clock: { time: "08:00" }
+intro: >
+  You wake in 2B with the radiator knocking. Somewhere below, a broom works the lobby tiles.
+  The building has felt wrong all week: new locks on the basement, a man in a good coat
+  measuring the stairwell, envelopes for Dev in 3B that never have stamps.
+style_guide: >
+  Contemporary urban realism with a faint undertow of the uncanny. Short sentences. Dialogue
+  is clipped and specific; people talk around what they want. Nobody explains themselves fully.
+  Never break the fourth wall. British English.
+downed:
+  mode: wake-robbed
+  room: street
+  text: "You come to on the pavement outside, your head ringing. Someone has been through your pockets."
+xp: { check: 5, fight: 25 }

@@ -1,0 +1,72 @@
+synopsis: >
+  The landlord of 41 Carver Street is quietly selling the building. Mrs Okafor, the caretaker, suspects
+  but cannot prove it. Mr Pike, the landlord's agent, is pressuring tenants out with forged paperwork.
+  Dev in 3B has been receiving letters with no stamps: they are from the landlord, who is Dev's estranged
+  father, and they say he is sorry. If nobody stops it, eviction notices arrive on day three and the
+  building is gone by the end of the week. There may be a fire.
+tone: Quiet pressure, neighbourly suspicion, a little strangeness on the stairs at night.
+tensions:
+  - "Okafor protects the tenants but needs this job."
+  - "Dev (3B) and the landlord share a secret older than the building."
+  - "Pike wants everyone out before anyone reads the deed closely."
+beliefs:
+  - { id: landlord-selling, text: "The landlord is selling 41 Carver Street." }
+  - { id: pike-forged-deed, text: "Mr Pike forged the transfer papers for the sale." }
+  - { id: dev-is-landlords-son, text: "Dev is the landlord's son." }
+  - { id: girl-on-the-stairs, text: "There is a girl on the stairs at night whom nobody else sees." }
+triggers:
+  - id: rent-overdue
+    when: { time: "09:00" }
+    do: [ { set_flag: rent_overdue } ]
+    once: true
+  - id: girl-appears
+    when: { all: [ { time_between: { from: "23:00", to: "04:00" } }, { not: { flag: girl_present } } ] }
+    do:
+      - { spawn: { object: girl-on-the-stairs, in: stairwell } }
+      - { set_flag: girl_present }
+  - id: girl-vanishes
+    when: { all: [ { time_between: { from: "04:00", to: "23:00" } }, { flag: girl_present } ] }
+    do:
+      - { remove: girl-on-the-stairs }
+      - { clear_flag: girl_present }
+  - id: eviction-notices
+    when: { all: [ { day: { gte: 3 } }, { not: { flag: sale_stopped } } ] }
+    do:
+      - { narrate: "Envelopes have appeared under every door." }
+      - { spawn: { object: eviction-notice, in: flat-2b } }
+      - { set_flag: act_2 }
+    once: true
+  - id: dream
+    when: { all: [ { event: { kind: slept, target: player } }, { day: { gte: 2 } } ] }
+    do: [ { callout: dream-sequence } ]
+    once: true
+  - id: evacuated
+    when:
+      all:
+        - { in_set_piece: the-fire }
+        - { in_room: { who: player, where: street } }
+        - { in_room: { who: okafor, where: street } }
+        - { in_room: { who: dev, where: street } }
+    do: [ { set_flag: building_evacuated } ]
+    once: true
+  - id: deadline
+    when: { all: [ { day: { gte: 5 } }, { not: { flag: sale_stopped } } ] }
+    do: [ { end_game: the-block-is-sold } ]
+    once: true
+endings:
+  - id: the-block-holds
+    title: "The Block Holds"
+    when: { flag: sale_stopped }
+    text: >
+      Mrs Okafor takes the deed to the council on Monday. By Friday Mr Pike's car is gone from the kerb
+      and the basement locks are hers again. Dev leaves a letter for his father on the hall table,
+      stamped this time.
+  - id: the-block-is-sold
+    title: "Sold"
+    text: >
+      The removal vans come on Saturday. Mrs Okafor sweeps the lobby one last time and leaves the broom
+      leaning by the door, as if someone might still need it.
+  - id: the-block-burns
+    title: "Ash"
+    when: { flag: fire_lost }
+    text: "By morning there is nothing left of 41 Carver Street but its number, painted on the kerb."

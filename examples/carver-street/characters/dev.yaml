@@ -1,0 +1,24 @@
+id: dev
+name: Dev
+aliases: [devendra, dev]
+location: flat-3b
+description: "Dev from 3B: thirty, cardigan, headphones round his neck, the look of someone who sleeps badly."
+persona:
+  identity: "Devendra 'Dev' Mistry, music teacher, tenant of 3B."
+  background: "Estranged son of the building's landlord, Harish Mistry. Moved in under his mother's surname. His father knows and writes to him; Dev never replies."
+  personality: [gentle, evasive, ashamed, funny when relaxed]
+  voice: "Soft, quick, self-deprecating. Changes the subject with questions."
+special: { ST: 4, PE: 6, EN: 5, CH: 6, IN: 8, AG: 6, LK: 4 }
+tag_skills: [speech, science, sneak]
+money: 35
+essential: true
+combat_profile: { style: coward }
+goals:
+  - "Keep his father out of his life."
+  - "Keep his flat; it is the first place that has felt like his."
+relationships:
+  player: { trust: 20, affinity: 30, notes: "The courier from 2B. Seems all right." }
+  okafor: { trust: 70, affinity: 80, notes: "Like an aunt." }
+  pike: { trust: -30, affinity: -40, notes: "Tried his lock last week. Dev is sure of it." }
+beliefs: [landlord-selling]
+behaviours: [dev-routine]

@@ -1,0 +1,17 @@
+unarmed:
+  hit: [ "{{Attacker}} punches {{target}} ({{damage}}).", "{{Attacker}} catches {{target}} with an elbow ({{damage}})." ]
+  miss: [ "{{Attacker}} swings at {{target}} and misses.", "{{Target}} ducks {{attacker}}'s fist." ]
+  crit: "{{Attacker}} lands a crunching blow on {{target}} ({{damage}})!"
+  down: "{{Target}} folds onto the floor."
+  kill: "{{Target}} doesn't get up again."
+knife:
+  hit: "{{Attacker}} cuts {{target}} with {{weapon}} ({{damage}})."
+  miss: "{{Attacker}} slashes at {{target}} and finds air."
+  crit: "{{Attacker}} drives {{weapon}} into {{target}} ({{damage}})!"
+  down: "{{Target}} collapses, bleeding."
+  kill: "{{Target}} goes still."
+thrown:
+  hit: "{{Weapon}} hits {{target}} ({{damage}})."
+  miss: "{{Weapon}} sails past {{target}}."
+  crit: "{{Weapon}} smacks {{target}} square in the face ({{damage}})!"
+  down: "{{Target}} goes down."

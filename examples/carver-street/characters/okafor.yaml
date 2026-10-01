@@ -1,0 +1,26 @@
+id: okafor
+name: Mrs Okafor
+aliases: [okafor, caretaker, mrs okafor]
+location: lobby
+description: "Mrs Okafor, the caretaker: sixties, cardigan over a church dress, eyes that miss nothing."
+persona:
+  identity: "Mrs Adaeze Okafor, caretaker of 41 Carver Street for nineteen years."
+  background: "Came from Enugu in 1987. Widowed. Lives in the caretaker's flat behind the lobby. Knows every tenant's business and keeps most of it to herself."
+  personality: [protective, proud, sharp-tongued, devout]
+  voice: "Brisk, formal English with Nigerian cadence. Calls people 'my dear' when she is about to tell them off."
+special: { ST: 4, PE: 8, EN: 6, CH: 6, IN: 7, AG: 4, LK: 5 }
+tag_skills: [speech, first_aid, repair]
+money: 60
+essential: true
+combat_profile: { style: coward }
+goals:
+  - "Keep the building and its tenants together."
+  - "Keep this job: it is also her home."
+  - "Find out what Mr Pike is really doing."
+relationships:
+  player: { trust: 35, affinity: 40, notes: "Behind on rent, but polite. Carries her shopping sometimes." }
+  dev: { trust: 60, affinity: 70, notes: "A good boy with a secret." }
+  pike: { trust: -40, affinity: -50, notes: "Does not like him. Does not like his coat." }
+beliefs: [landlord-selling]
+behaviours: [okafor-routine, okafor-reactions]
+fallback_line: "Mrs Okafor purses her lips and says nothing."

@@ -1,0 +1,24 @@
+id: the-fire
+starts_when: { all: [ { flag: act_2 }, { time: "02:00" } ] }
+objective: "The building is on fire. Get everyone out."
+stage: [lobby, stairwell, hall-2, hall-3, flat-3b, street]
+cast: [okafor, dev, pike]
+director_brief: >
+  Panic and revelation. Dev should try to go back for the letters; Pike blocks the stairs
+  until someone persuades or forces him. Somebody should see something they shouldn't:
+  Pike with a petrol can, or the girl on the stairs pointing the way out.
+beats:
+  - { id: alarm, description: "Smoke alarms; people wake confused." }
+  - { id: smoke-spreads, description: "The stairwell fills; the way down is uncertain." }
+  - { id: the-letters, description: "Dev turns back for the letters." }
+  - { id: the-way-out, description: "The last push to the street." }
+moves:
+  actions: [go, give, take, use, attack]
+  effects: [narrate, set_property, set_flag, add_belief]
+  hooks: [fire-spreads]
+ends_when: { any: [ { flag: building_evacuated }, { time_after: "03:00" } ] }
+outcomes:
+  - when: { flag: building_evacuated }
+    do: [ { award_xp: 300 }, { set_flag: fire_survived } ]
+  - when: { not: { flag: building_evacuated } }
+    do: [ { set_flag: fire_lost } ]

@@ -1,0 +1,22 @@
+- id: street
+  name: Carver Street
+  tags: [outdoors, public]
+  description:
+    - when: { in_set_piece: the-fire }
+      text: "Carver Street is orange with firelight. Neighbours in dressing gowns stand on the far kerb, phones raised."
+    - when: { time_between: { from: "21:00", to: "06:00" } }
+      text: "Carver Street under sodium light. Number 41 is a dark brick face with one lit window. The corner shop's shutter is half down."
+    - text: "Carver Street: a terrace of tired brick, a bus stop with no timetable, and number 41's green door. The corner shop is on the south side."
+  exits:
+    - { direction: north, to: lobby, via: front-door }
+    - { direction: south, to: corner-shop }
+    - direction: east
+      blocked: "The ring road runs along the end of the street, six lanes that never stop. The block is all there is."
+    - direction: west
+      blocked: "Hoardings close off the west end where the old cinema was. You can hear the river beyond, but you can't get to it."
+- id: corner-shop
+  name: Ravi's Corner Shop
+  tags: [public]
+  description: "Strip lights, a hum from the drinks fridge, a radio on low. Ravi's counter is a fort of scratchcards and chewing gum."
+  exits:
+    - { direction: north, to: street }

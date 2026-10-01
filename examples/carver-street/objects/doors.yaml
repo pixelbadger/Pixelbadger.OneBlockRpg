@@ -1,0 +1,39 @@
+- id: front-door
+  name: green front door
+  aliases: [front door, door, green door]
+  location: lobby
+  scenery: true
+  description: "The front door: green paint, brass letterbox, a lock nobody uses."
+  affordances: [openable]
+  properties: { open: false, mass: 40 }
+- id: door-2b
+  name: door to 2B
+  aliases: [door, 2b door]
+  location: hall-2
+  scenery: true
+  description: "Your door. The number 2 has lost a screw and hangs like a 5."
+  affordances: [openable, lockable]
+  key: key-2b
+  properties: { open: false, locked: false, mass: 30 }
+- id: door-3a
+  name: door to 3A
+  aliases: [door, 3a door, deadlock]
+  location: hall-3
+  scenery: true
+  description: "A cheap door with an expensive new deadlock."
+  affordances: [openable, lockable]
+  key: key-3a
+  lock_tier: hard
+  properties: { open: false, locked: true, mass: 30 }
+- id: door-3b
+  name: door to 3B
+  aliases: [door, 3b door]
+  location: hall-3
+  scenery: true
+  description:
+    - when: { special: { PE: { gte: 7 } } }
+      text: "Dev's door. Fresh scratches around the lock: someone has tried it with something thin."
+    - text: "Dev's door, with a rug outside it."
+  affordances: [openable, lockable]
+  key: key-3b
+  properties: { open: false, locked: false, mass: 30 }

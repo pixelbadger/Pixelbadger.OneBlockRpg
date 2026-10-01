@@ -1,0 +1,4695 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "game": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "version": {
+          "default": "0.0.0",
+          "type": "string"
+        },
+        "compatible_with": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "start": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "player": {
+          "type": "object",
+          "properties": {
+            "character": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            },
+            "mode": {
+              "default": "fixed",
+              "type": "string",
+              "enum": [
+                "fixed",
+                "point-buy"
+              ]
+            },
+            "presets": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "special": {
+                    "type": "object",
+                    "properties": {
+                      "ST": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "PE": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "EN": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "CH": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "IN": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "AG": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "LK": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "ST",
+                      "PE",
+                      "EN",
+                      "CH",
+                      "IN",
+                      "AG",
+                      "LK"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "special"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "character"
+          ],
+          "additionalProperties": false
+        },
+        "clock": {
+          "default": {
+            "time": "08:00"
+          },
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            }
+          },
+          "required": [
+            "time"
+          ],
+          "additionalProperties": false
+        },
+        "intro": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "when": {
+                    "$ref": "#/$defs/__schema0"
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "text"
+                ],
+                "additionalProperties": false
+              }
+            }
+          ]
+        },
+        "style_guide": {
+          "default": "",
+          "type": "string"
+        },
+        "downed": {
+          "default": {
+            "mode": "wake-robbed"
+          },
+          "type": "object",
+          "properties": {
+            "mode": {
+              "default": "wake-robbed",
+              "type": "string",
+              "enum": [
+                "wake-robbed",
+                "end-game"
+              ]
+            },
+            "ending": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            },
+            "room": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            },
+            "text": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "when": {
+                        "$ref": "#/$defs/__schema0"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "text"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "xp": {
+          "default": {
+            "check": 5,
+            "fight": 25
+          },
+          "type": "object",
+          "properties": {
+            "check": {
+              "default": 5,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "fight": {
+              "default": 25,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "additionalProperties": false
+        },
+        "messages": {
+          "default": {},
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "conversation_minutes_per_turn": {
+          "default": 1,
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "schema_version",
+        "start",
+        "player"
+      ],
+      "additionalProperties": false
+    },
+    "story": {
+      "type": "object",
+      "properties": {
+        "synopsis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tone": {
+          "default": "",
+          "type": "string"
+        },
+        "tensions": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "beliefs": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "triggers": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "when": {
+                "$ref": "#/$defs/__schema0"
+              },
+              "do": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/__schema1"
+                }
+              },
+              "once": {
+                "default": false,
+                "type": "boolean"
+              },
+              "wakes": {
+                "default": false,
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "when",
+              "do"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "endings": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "title": {
+                "type": "string"
+              },
+              "when": {
+                "$ref": "#/$defs/__schema0"
+              },
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "when": {
+                          "$ref": "#/$defs/__schema0"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "text"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "synopsis",
+        "endings"
+      ],
+      "additionalProperties": false
+    },
+    "rooms": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "when": {
+                      "$ref": "#/$defs/__schema0"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            ]
+          },
+          "exits": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "direction": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "to": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                },
+                "via": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                },
+                "when": {
+                  "$ref": "#/$defs/__schema0"
+                },
+                "closed_text": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "when": {
+                            "$ref": "#/$defs/__schema0"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  ]
+                },
+                "blocked": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "when": {
+                            "$ref": "#/$defs/__schema0"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  ]
+                },
+                "hidden": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "tags": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "objects": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "aliases": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "when": {
+                      "$ref": "#/$defs/__schema0"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            ]
+          },
+          "room_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "when": {
+                      "$ref": "#/$defs/__schema0"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            ]
+          },
+          "scenery": {
+            "type": "boolean"
+          },
+          "properties": {
+            "default": {},
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            }
+          },
+          "affordances": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "behaviours": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            }
+          },
+          "tags": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "perceived_by": {
+            "type": "string",
+            "const": "player"
+          },
+          "hidden_unless": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "lock_tier": {
+            "type": "string",
+            "enum": [
+              "trivial",
+              "easy",
+              "normal",
+              "hard",
+              "very_hard",
+              "heroic"
+            ]
+          },
+          "break_at": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "uses": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "when": {
+                  "$ref": "#/$defs/__schema0"
+                },
+                "text": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "when": {
+                            "$ref": "#/$defs/__schema0"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  ]
+                },
+                "effects": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                },
+                "minutes": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "consume": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "weapon": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "skill": {
+                "type": "string",
+                "enum": [
+                  "small_guns",
+                  "melee_weapons",
+                  "unarmed",
+                  "throwing"
+                ]
+              },
+              "damage": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                ],
+                "items": false,
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "ap": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "accuracy": {
+                "default": 0,
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "min_st": {
+                "default": 1,
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "ranged": {
+                "default": false,
+                "type": "boolean"
+              },
+              "ammo": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "capacity": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "type",
+                  "capacity"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "type",
+              "skill",
+              "damage",
+              "ap"
+            ],
+            "additionalProperties": false
+          },
+          "armour": {
+            "type": "object",
+            "properties": {
+              "ac": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "dt": {
+                "default": 0,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "dr": {
+                "default": 0,
+                "type": "number",
+                "minimum": 0,
+                "maximum": 90
+              }
+            },
+            "required": [
+              "ac"
+            ],
+            "additionalProperties": false
+          },
+          "consumable": {
+            "type": "object",
+            "properties": {
+              "heal": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "fatigue": {
+                "type": "number",
+                "minimum": 0
+              },
+              "modifiers": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "attribute": {
+                      "type": "string",
+                      "enum": [
+                        "ST",
+                        "PE",
+                        "EN",
+                        "CH",
+                        "IN",
+                        "AG",
+                        "LK"
+                      ]
+                    },
+                    "skill": {
+                      "type": "string",
+                      "enum": [
+                        "small_guns",
+                        "melee_weapons",
+                        "unarmed",
+                        "throwing",
+                        "first_aid",
+                        "doctor",
+                        "speech",
+                        "barter",
+                        "gambling",
+                        "sneak",
+                        "lockpick",
+                        "steal",
+                        "traps",
+                        "science",
+                        "repair"
+                      ]
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "hours": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "amount"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "effects": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/__schema1"
+                }
+              },
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "when": {
+                          "$ref": "#/$defs/__schema0"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "text"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "ammo": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          "messages": {
+            "default": {},
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "when": {
+                        "$ref": "#/$defs/__schema0"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "text"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "characters": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "aliases": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "when": {
+                      "$ref": "#/$defs/__schema0"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            ]
+          },
+          "room_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "when": {
+                      "$ref": "#/$defs/__schema0"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            ]
+          },
+          "scenery": {
+            "type": "boolean"
+          },
+          "properties": {
+            "default": {},
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            }
+          },
+          "affordances": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "behaviours": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            }
+          },
+          "tags": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "perceived_by": {
+            "type": "string",
+            "const": "player"
+          },
+          "hidden_unless": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "lock_tier": {
+            "type": "string",
+            "enum": [
+              "trivial",
+              "easy",
+              "normal",
+              "hard",
+              "very_hard",
+              "heroic"
+            ]
+          },
+          "break_at": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "uses": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "when": {
+                  "$ref": "#/$defs/__schema0"
+                },
+                "text": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "when": {
+                            "$ref": "#/$defs/__schema0"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  ]
+                },
+                "effects": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                },
+                "minutes": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "consume": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "weapon": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "skill": {
+                "type": "string",
+                "enum": [
+                  "small_guns",
+                  "melee_weapons",
+                  "unarmed",
+                  "throwing"
+                ]
+              },
+              "damage": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                ],
+                "items": false,
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "ap": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "accuracy": {
+                "default": 0,
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "min_st": {
+                "default": 1,
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "ranged": {
+                "default": false,
+                "type": "boolean"
+              },
+              "ammo": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "capacity": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "type",
+                  "capacity"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "type",
+              "skill",
+              "damage",
+              "ap"
+            ],
+            "additionalProperties": false
+          },
+          "armour": {
+            "type": "object",
+            "properties": {
+              "ac": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "dt": {
+                "default": 0,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "dr": {
+                "default": 0,
+                "type": "number",
+                "minimum": 0,
+                "maximum": 90
+              }
+            },
+            "required": [
+              "ac"
+            ],
+            "additionalProperties": false
+          },
+          "consumable": {
+            "type": "object",
+            "properties": {
+              "heal": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "fatigue": {
+                "type": "number",
+                "minimum": 0
+              },
+              "modifiers": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "attribute": {
+                      "type": "string",
+                      "enum": [
+                        "ST",
+                        "PE",
+                        "EN",
+                        "CH",
+                        "IN",
+                        "AG",
+                        "LK"
+                      ]
+                    },
+                    "skill": {
+                      "type": "string",
+                      "enum": [
+                        "small_guns",
+                        "melee_weapons",
+                        "unarmed",
+                        "throwing",
+                        "first_aid",
+                        "doctor",
+                        "speech",
+                        "barter",
+                        "gambling",
+                        "sneak",
+                        "lockpick",
+                        "steal",
+                        "traps",
+                        "science",
+                        "repair"
+                      ]
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "hours": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "amount"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "effects": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/__schema1"
+                }
+              },
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "when": {
+                          "$ref": "#/$defs/__schema0"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "text"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "ammo": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          "messages": {
+            "default": {},
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "when": {
+                        "$ref": "#/$defs/__schema0"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "text"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              ]
+            }
+          },
+          "persona": {
+            "type": "object",
+            "properties": {
+              "identity": {
+                "type": "string",
+                "minLength": 1
+              },
+              "background": {
+                "default": "",
+                "type": "string"
+              },
+              "personality": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "voice": {
+                "default": "",
+                "type": "string"
+              }
+            },
+            "required": [
+              "identity"
+            ],
+            "additionalProperties": false
+          },
+          "special": {
+            "type": "object",
+            "properties": {
+              "ST": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "PE": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "EN": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "CH": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "IN": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "AG": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "LK": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "ST",
+              "PE",
+              "EN",
+              "CH",
+              "IN",
+              "AG",
+              "LK"
+            ],
+            "additionalProperties": false
+          },
+          "tag_skills": {
+            "default": [],
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "small_guns",
+                "melee_weapons",
+                "unarmed",
+                "throwing",
+                "first_aid",
+                "doctor",
+                "speech",
+                "barter",
+                "gambling",
+                "sneak",
+                "lockpick",
+                "steal",
+                "traps",
+                "science",
+                "repair"
+              ]
+            }
+          },
+          "skill_points": {
+            "default": {},
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "enum": [
+                "small_guns",
+                "melee_weapons",
+                "unarmed",
+                "throwing",
+                "first_aid",
+                "doctor",
+                "speech",
+                "barter",
+                "gambling",
+                "sneak",
+                "lockpick",
+                "steal",
+                "traps",
+                "science",
+                "repair"
+              ]
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "hp": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "fatigue_hours": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0
+          },
+          "xp": {
+            "default": 0,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "level": {
+            "default": 1,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "money": {
+            "default": 0,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "equipment": {
+            "default": {},
+            "type": "object",
+            "properties": {
+              "weapon": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "armour": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              }
+            },
+            "additionalProperties": false
+          },
+          "combat_profile": {
+            "default": {
+              "style": "defensive"
+            },
+            "type": "object",
+            "properties": {
+              "style": {
+                "default": "defensive",
+                "type": "string",
+                "enum": [
+                  "aggressive",
+                  "defensive",
+                  "coward"
+                ]
+              },
+              "flee_at": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "preferred_weapon": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              }
+            },
+            "additionalProperties": false
+          },
+          "essential": {
+            "default": false,
+            "type": "boolean"
+          },
+          "hostile": {
+            "default": false,
+            "type": "boolean"
+          },
+          "merchant": {
+            "default": false,
+            "type": "boolean"
+          },
+          "goals": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "intent": {
+            "type": "string"
+          },
+          "relationships": {
+            "default": {},
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "trust": {
+                  "default": 0,
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                },
+                "affinity": {
+                  "default": 0,
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                },
+                "notes": {
+                  "default": "",
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "beliefs": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "belief": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "confidence": {
+                      "default": 1,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "source": {
+                      "default": "authored",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "belief"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "talk_when": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "refuse_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "when": {
+                      "$ref": "#/$defs/__schema0"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            ]
+          },
+          "fallback_line": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "persona",
+          "special"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "conversations": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "character": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "when": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "priority": {
+            "default": 0,
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "goals": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "opening": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "when": {
+                      "$ref": "#/$defs/__schema0"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            ]
+          },
+          "options": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "when": {
+                  "$ref": "#/$defs/__schema0"
+                },
+                "check": {
+                  "type": "object",
+                  "properties": {
+                    "who": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "skill": {
+                      "type": "string",
+                      "enum": [
+                        "small_guns",
+                        "melee_weapons",
+                        "unarmed",
+                        "throwing",
+                        "first_aid",
+                        "doctor",
+                        "speech",
+                        "barter",
+                        "gambling",
+                        "sneak",
+                        "lockpick",
+                        "steal",
+                        "traps",
+                        "science",
+                        "repair"
+                      ]
+                    },
+                    "attribute": {
+                      "type": "string",
+                      "enum": [
+                        "ST",
+                        "PE",
+                        "EN",
+                        "CH",
+                        "IN",
+                        "AG",
+                        "LK"
+                      ]
+                    },
+                    "tier": {
+                      "type": "string",
+                      "enum": [
+                        "trivial",
+                        "easy",
+                        "normal",
+                        "hard",
+                        "very_hard",
+                        "heroic"
+                      ]
+                    },
+                    "modifier": {
+                      "type": "number"
+                    },
+                    "opposed": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "pass": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/__schema1"
+                      }
+                    },
+                    "fail": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/__schema1"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "effects": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                },
+                "action": {
+                  "type": "object",
+                  "properties": {
+                    "act": {
+                      "type": "string",
+                      "enum": [
+                        "go",
+                        "take",
+                        "drop",
+                        "put",
+                        "open",
+                        "close",
+                        "lock",
+                        "unlock",
+                        "use",
+                        "throw",
+                        "push",
+                        "give",
+                        "show",
+                        "steal",
+                        "buy",
+                        "sell",
+                        "equip",
+                        "unequip",
+                        "attack",
+                        "sleep",
+                        "talk",
+                        "wait",
+                        "examine",
+                        "look"
+                      ]
+                    },
+                    "item": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "target": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "to": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "from": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "on": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "weapon": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "direction": {
+                      "type": "string"
+                    },
+                    "minutes": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "act"
+                  ],
+                  "additionalProperties": false
+                },
+                "end": {
+                  "type": "boolean"
+                },
+                "once": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "hooks": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            }
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "go",
+                "take",
+                "drop",
+                "put",
+                "open",
+                "close",
+                "lock",
+                "unlock",
+                "use",
+                "throw",
+                "push",
+                "give",
+                "show",
+                "steal",
+                "buy",
+                "sell",
+                "equip",
+                "unequip",
+                "attack",
+                "sleep",
+                "talk",
+                "wait",
+                "examine",
+                "look"
+              ]
+            }
+          },
+          "ends_when": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "fallback_line": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "character"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "hooks": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "guard": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "effects": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/__schema1"
+            }
+          },
+          "once": {
+            "default": false,
+            "type": "boolean"
+          },
+          "params": {
+            "default": {},
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "number",
+                    "string",
+                    "boolean"
+                  ]
+                },
+                "description": {
+                  "type": "string"
+                },
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                },
+                "enum": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "effects"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "behaviours": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "rules": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "when": {
+                  "$ref": "#/$defs/__schema0"
+                },
+                "do": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                },
+                "cooldown": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "once": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "priority": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "when",
+                "do"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "rules"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "callouts": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1
+          },
+          "output": {
+            "default": "text",
+            "type": "string",
+            "const": "text"
+          },
+          "cache": {
+            "default": "per-save",
+            "type": "string",
+            "enum": [
+              "per-save",
+              "none"
+            ]
+          },
+          "fallback": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "prompt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "set_pieces": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "starts_when": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "objective": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stage": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            }
+          },
+          "cast": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            }
+          },
+          "director_brief": {
+            "type": "string",
+            "minLength": 1
+          },
+          "beats": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "description"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "moves": {
+            "default": {
+              "actions": [],
+              "effects": [
+                "narrate"
+              ],
+              "hooks": []
+            },
+            "type": "object",
+            "properties": {
+              "actions": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "go",
+                    "take",
+                    "drop",
+                    "put",
+                    "open",
+                    "close",
+                    "lock",
+                    "unlock",
+                    "use",
+                    "throw",
+                    "push",
+                    "give",
+                    "show",
+                    "steal",
+                    "buy",
+                    "sell",
+                    "equip",
+                    "unequip",
+                    "attack",
+                    "sleep",
+                    "talk",
+                    "wait",
+                    "examine",
+                    "look"
+                  ]
+                }
+              },
+              "effects": {
+                "default": [
+                  "narrate"
+                ],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "set_flag",
+                    "clear_flag",
+                    "set_property",
+                    "move",
+                    "spawn",
+                    "remove",
+                    "act",
+                    "say",
+                    "narrate",
+                    "set_intent",
+                    "start_behaviour",
+                    "stop_behaviour",
+                    "adjust_relationship",
+                    "add_belief",
+                    "remove_belief",
+                    "start_conversation",
+                    "end_conversation",
+                    "check",
+                    "award_xp",
+                    "heal",
+                    "damage",
+                    "modify",
+                    "give_money",
+                    "set_hostile",
+                    "set_combat_profile",
+                    "start_set_piece",
+                    "advance_beat",
+                    "end_set_piece",
+                    "callout",
+                    "end_game"
+                  ]
+                }
+              },
+              "hooks": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "ends_when": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "outcomes": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "when": {
+                  "$ref": "#/$defs/__schema0"
+                },
+                "do": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                }
+              },
+              "required": [
+                "do"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "objective",
+          "stage",
+          "director_brief",
+          "beats",
+          "ends_when"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "combat_text": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "hit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "miss": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "crit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "down": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "kill": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "hit",
+          "miss",
+          "crit",
+          "down"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "game",
+    "story",
+    "rooms",
+    "characters"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "__schema0": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "all": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/__schema0"
+              }
+            }
+          },
+          "required": [
+            "all"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "any": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/__schema0"
+              }
+            }
+          },
+          "required": [
+            "any"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "not": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "required": [
+            "not"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "flag": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "flag"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "flag_eq": {
+              "type": "object",
+              "properties": {
+                "flag": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "value": {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              },
+              "required": [
+                "flag",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "flag_eq"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            }
+          },
+          "required": [
+            "time"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "time_between": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                },
+                "to": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                }
+              },
+              "required": [
+                "from",
+                "to"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "time_between"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "time_after": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            }
+          },
+          "required": [
+            "time_after"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "time_before": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            }
+          },
+          "required": [
+            "time_before"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "day": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "eq": {
+                      "type": "number"
+                    },
+                    "ne": {
+                      "type": "number"
+                    },
+                    "gt": {
+                      "type": "number"
+                    },
+                    "gte": {
+                      "type": "number"
+                    },
+                    "lt": {
+                      "type": "number"
+                    },
+                    "lte": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "day"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "in_room": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "where": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                }
+              },
+              "required": [
+                "who",
+                "where"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "in_room"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "holds": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "what": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                }
+              },
+              "required": [
+                "who",
+                "what"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "holds"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "property": {
+              "type": "object",
+              "properties": {
+                "object": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "op": {
+                  "type": "string",
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte"
+                  ]
+                },
+                "value": {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              },
+              "required": [
+                "object",
+                "key",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "property"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "special": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "ST": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "eq": {
+                          "type": "number"
+                        },
+                        "ne": {
+                          "type": "number"
+                        },
+                        "gt": {
+                          "type": "number"
+                        },
+                        "gte": {
+                          "type": "number"
+                        },
+                        "lt": {
+                          "type": "number"
+                        },
+                        "lte": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "PE": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "eq": {
+                          "type": "number"
+                        },
+                        "ne": {
+                          "type": "number"
+                        },
+                        "gt": {
+                          "type": "number"
+                        },
+                        "gte": {
+                          "type": "number"
+                        },
+                        "lt": {
+                          "type": "number"
+                        },
+                        "lte": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "EN": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "eq": {
+                          "type": "number"
+                        },
+                        "ne": {
+                          "type": "number"
+                        },
+                        "gt": {
+                          "type": "number"
+                        },
+                        "gte": {
+                          "type": "number"
+                        },
+                        "lt": {
+                          "type": "number"
+                        },
+                        "lte": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "CH": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "eq": {
+                          "type": "number"
+                        },
+                        "ne": {
+                          "type": "number"
+                        },
+                        "gt": {
+                          "type": "number"
+                        },
+                        "gte": {
+                          "type": "number"
+                        },
+                        "lt": {
+                          "type": "number"
+                        },
+                        "lte": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "IN": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "eq": {
+                          "type": "number"
+                        },
+                        "ne": {
+                          "type": "number"
+                        },
+                        "gt": {
+                          "type": "number"
+                        },
+                        "gte": {
+                          "type": "number"
+                        },
+                        "lt": {
+                          "type": "number"
+                        },
+                        "lte": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "AG": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "eq": {
+                          "type": "number"
+                        },
+                        "ne": {
+                          "type": "number"
+                        },
+                        "gt": {
+                          "type": "number"
+                        },
+                        "gte": {
+                          "type": "number"
+                        },
+                        "lt": {
+                          "type": "number"
+                        },
+                        "lte": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "LK": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "eq": {
+                          "type": "number"
+                        },
+                        "ne": {
+                          "type": "number"
+                        },
+                        "gt": {
+                          "type": "number"
+                        },
+                        "gte": {
+                          "type": "number"
+                        },
+                        "lt": {
+                          "type": "number"
+                        },
+                        "lte": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "special"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "skill": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "skill": {
+                  "type": "string",
+                  "enum": [
+                    "small_guns",
+                    "melee_weapons",
+                    "unarmed",
+                    "throwing",
+                    "first_aid",
+                    "doctor",
+                    "speech",
+                    "barter",
+                    "gambling",
+                    "sneak",
+                    "lockpick",
+                    "steal",
+                    "traps",
+                    "science",
+                    "repair"
+                  ]
+                },
+                "eq": {
+                  "type": "number"
+                },
+                "ne": {
+                  "type": "number"
+                },
+                "gt": {
+                  "type": "number"
+                },
+                "gte": {
+                  "type": "number"
+                },
+                "lt": {
+                  "type": "number"
+                },
+                "lte": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "skill"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "skill"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "relationship": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "with": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "trust": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "eq": {
+                          "type": "number"
+                        },
+                        "ne": {
+                          "type": "number"
+                        },
+                        "gt": {
+                          "type": "number"
+                        },
+                        "gte": {
+                          "type": "number"
+                        },
+                        "lt": {
+                          "type": "number"
+                        },
+                        "lte": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "affinity": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "eq": {
+                          "type": "number"
+                        },
+                        "ne": {
+                          "type": "number"
+                        },
+                        "gt": {
+                          "type": "number"
+                        },
+                        "gte": {
+                          "type": "number"
+                        },
+                        "lt": {
+                          "type": "number"
+                        },
+                        "lte": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "who",
+                "with"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "relationship"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "believes": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "belief": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "who",
+                "belief"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "believes"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "event": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "actor": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "target": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "actor": {
+              "type": "string",
+              "minLength": 1
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "event"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "turns": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "eq": {
+                      "type": "number"
+                    },
+                    "ne": {
+                      "type": "number"
+                    },
+                    "gt": {
+                      "type": "number"
+                    },
+                    "gte": {
+                      "type": "number"
+                    },
+                    "lt": {
+                      "type": "number"
+                    },
+                    "lte": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "turns"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "hp": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "eq": {
+                  "type": "number"
+                },
+                "ne": {
+                  "type": "number"
+                },
+                "gt": {
+                  "type": "number"
+                },
+                "gte": {
+                  "type": "number"
+                },
+                "lt": {
+                  "type": "number"
+                },
+                "lte": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "hp"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "level": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "eq": {
+                  "type": "number"
+                },
+                "ne": {
+                  "type": "number"
+                },
+                "gt": {
+                  "type": "number"
+                },
+                "gte": {
+                  "type": "number"
+                },
+                "lt": {
+                  "type": "number"
+                },
+                "lte": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "level"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "money": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "eq": {
+                  "type": "number"
+                },
+                "ne": {
+                  "type": "number"
+                },
+                "gt": {
+                  "type": "number"
+                },
+                "gte": {
+                  "type": "number"
+                },
+                "lt": {
+                  "type": "number"
+                },
+                "lte": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "money"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "in_combat": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string",
+                  "minLength": 1
+                }
+              ]
+            }
+          },
+          "required": [
+            "in_combat"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "in_set_piece": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                }
+              ]
+            }
+          },
+          "required": [
+            "in_set_piece"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "beat": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "beat"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "asleep": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "asleep"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "down": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "down"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "dead": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "dead"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "visited": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            }
+          },
+          "required": [
+            "visited"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "__schema1": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "set_flag": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "flag": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "value": {
+                      "type": [
+                        "string",
+                        "number",
+                        "boolean"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "flag",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "set_flag"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "clear_flag": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "clear_flag"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "set_property": {
+              "type": "object",
+              "properties": {
+                "object": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "value": {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              },
+              "required": [
+                "object",
+                "key",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "set_property"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "move": {
+              "type": "object",
+              "properties": {
+                "object": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "to": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "object",
+                "to"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "move"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "spawn": {
+              "type": "object",
+              "properties": {
+                "object": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                },
+                "in": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "object",
+                "in"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "spawn"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "remove": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "remove"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "act": {
+              "type": "string",
+              "enum": [
+                "go",
+                "take",
+                "drop",
+                "put",
+                "open",
+                "close",
+                "lock",
+                "unlock",
+                "use",
+                "throw",
+                "push",
+                "give",
+                "show",
+                "steal",
+                "buy",
+                "sell",
+                "equip",
+                "unequip",
+                "attack",
+                "sleep",
+                "talk",
+                "wait",
+                "examine",
+                "look"
+              ]
+            },
+            "actor": {
+              "type": "string",
+              "minLength": 1
+            },
+            "item": {
+              "type": "string",
+              "minLength": 1
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "to": {
+              "type": "string",
+              "minLength": 1
+            },
+            "from": {
+              "type": "string",
+              "minLength": 1
+            },
+            "on": {
+              "type": "string",
+              "minLength": 1
+            },
+            "weapon": {
+              "type": "string",
+              "minLength": 1
+            },
+            "direction": {
+              "type": "string"
+            },
+            "minutes": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "act"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "say": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "who": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "who",
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "say"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "narrate": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "when": {
+                        "$ref": "#/$defs/__schema0"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "text"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "narrate"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "set_intent": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "who": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "intent": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "who",
+                    "intent"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "set_intent"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "start_behaviour": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "who": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "behaviour": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                    }
+                  },
+                  "required": [
+                    "behaviour"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "start_behaviour"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "stop_behaviour": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "who": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "behaviour": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                    }
+                  },
+                  "required": [
+                    "behaviour"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "stop_behaviour"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "adjust_relationship": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "with": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "trust": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "$arg": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "$arg"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "affinity": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "$arg": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "$arg"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "who",
+                "with"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "adjust_relationship"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "add_belief": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "belief": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "source": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "who",
+                "belief"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "add_belief"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "remove_belief": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "belief": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "who",
+                "belief"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "remove_belief"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "start_conversation": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            }
+          },
+          "required": [
+            "start_conversation"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "end_conversation": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                },
+                {
+                  "type": "boolean",
+                  "const": true
+                }
+              ]
+            }
+          },
+          "required": [
+            "end_conversation"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "check": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "skill": {
+                  "type": "string",
+                  "enum": [
+                    "small_guns",
+                    "melee_weapons",
+                    "unarmed",
+                    "throwing",
+                    "first_aid",
+                    "doctor",
+                    "speech",
+                    "barter",
+                    "gambling",
+                    "sneak",
+                    "lockpick",
+                    "steal",
+                    "traps",
+                    "science",
+                    "repair"
+                  ]
+                },
+                "attribute": {
+                  "type": "string",
+                  "enum": [
+                    "ST",
+                    "PE",
+                    "EN",
+                    "CH",
+                    "IN",
+                    "AG",
+                    "LK"
+                  ]
+                },
+                "tier": {
+                  "type": "string",
+                  "enum": [
+                    "trivial",
+                    "easy",
+                    "normal",
+                    "hard",
+                    "very_hard",
+                    "heroic"
+                  ]
+                },
+                "modifier": {
+                  "type": "number"
+                },
+                "opposed": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "pass": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                },
+                "fail": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "check"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "award_xp": {
+              "anyOf": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "$arg": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "$arg"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "who": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "amount": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "$arg": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "$arg"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "amount"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "award_xp"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "heal": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "amount": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "$arg": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "$arg"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "amount"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "heal"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "damage": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "amount": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "$arg": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "$arg"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "amount"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "damage"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "modify": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "id": {
+                  "type": "string"
+                },
+                "attribute": {
+                  "type": "string",
+                  "enum": [
+                    "ST",
+                    "PE",
+                    "EN",
+                    "CH",
+                    "IN",
+                    "AG",
+                    "LK"
+                  ]
+                },
+                "skill": {
+                  "type": "string",
+                  "enum": [
+                    "small_guns",
+                    "melee_weapons",
+                    "unarmed",
+                    "throwing",
+                    "first_aid",
+                    "doctor",
+                    "speech",
+                    "barter",
+                    "gambling",
+                    "sneak",
+                    "lockpick",
+                    "steal",
+                    "traps",
+                    "science",
+                    "repair"
+                  ]
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "minutes": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "hours": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "amount"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "modify"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "give_money": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "amount": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "$arg": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "$arg"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "amount"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "give_money"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "set_hostile": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "who": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "hostile": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "who"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "set_hostile"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "set_combat_profile": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "profile": {
+                  "type": "object",
+                  "properties": {
+                    "style": {
+                      "default": "defensive",
+                      "type": "string",
+                      "enum": [
+                        "aggressive",
+                        "defensive",
+                        "coward"
+                      ]
+                    },
+                    "flee_at": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    "preferred_weapon": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "who",
+                "profile"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "set_combat_profile"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "start_set_piece": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            }
+          },
+          "required": [
+            "start_set_piece"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "advance_beat": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "advance_beat"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "end_set_piece": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                },
+                {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "end_set_piece"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "callout": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            }
+          },
+          "required": [
+            "callout"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "end_game": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            }
+          },
+          "required": [
+            "end_game"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "$id": "https://github.com/pixelbadger/Pixelbadger.OneBlockRpg/schema/payload.schema.json",
+  "title": "One Block CRPG game payload",
+  "description": "A merged game payload. On disk it is split across game.yaml, story.yaml, rooms/, objects/, characters/, conversations/, hooks.yaml, behaviours/, callouts.yaml, set_pieces/ and combat_text.yaml (spec §7.3)."
+}

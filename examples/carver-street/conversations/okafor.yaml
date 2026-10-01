@@ -1,0 +1,37 @@
+- id: okafor-chat
+  character: okafor
+  goals:
+    - "Find out whether the player has noticed anything odd about Mr Pike."
+    - "Do not gossip about Dev."
+  opening: "Mrs Okafor leans on her broom. 'Good morning, my dear. You look like a person with a question.'"
+  options:
+    - text: "Have you seen the man in the good coat?"
+      once: true
+    - text: "[Show the deed]"
+      when: { holds: { who: player, what: forged-deed } }
+      action: { act: show, item: forged-deed, to: okafor }
+  hooks: [reveal-landlord-sale, adjust-trust, take-up-the-deed]
+  ends_when: { turns: { gte: 10 } }
+- id: okafor-rent
+  character: okafor
+  priority: 1
+  when: { all: [ { flag: rent_overdue }, { not: { flag: promised_rent } } ] }
+  goals:
+    - "Get the player to promise to pay by Friday."
+    - "Do not reveal that the landlord is selling the building unless you trust them."
+  opening: "Mrs Okafor leans on her broom. 'You. Rent.'"
+  options:
+    - text: "[Speech] I can get you the money, but I need to know why the rush."
+      when: { special: { CH: { gte: 6 } } }
+      once: true
+      check:
+        skill: speech
+        tier: hard
+        pass: [ { add_belief: { who: player, belief: landlord-selling } }, { adjust_relationship: { who: okafor, with: player, trust: 5 } } ]
+        fail: [ { adjust_relationship: { who: okafor, with: player, trust: -5 } } ]
+    - text: "I'll pay Friday."
+      effects: [ { set_flag: promised_rent }, { end_conversation: {} } ]
+  hooks: [reveal-landlord-sale, adjust-trust]
+  actions: [go, give, take, use]
+  ends_when: { any: [ { flag: promised_rent }, { turns: { gte: 12 } } ] }
+  fallback_line: "Mrs Okafor sweeps around your feet, pointedly."
