@@ -1,0 +1,105 @@
+- id: kez-bar
+  character: kez
+  goals:
+    - "Sell Liam a pint and take the mick out of him."
+    - "Find out why he's been so quiet; you've known him since you were eleven."
+  opening:
+    - when: { flag: unease }
+      text: "Kez slides a beer mat at you. 'Oi. Earth to Liam. You've been staring at that window five minutes.'"
+    - text: "Kez slides a beer mat at you. 'Look what the tide brought in. Usual?'"
+  options:
+    # One option per pint, so exactly one is on offer while any are left.
+    - text: "[Buy a pint]"
+      when: { holds: { who: kez, what: pint-1 } }
+      action: { act: buy, item: pint-1, from: kez }
+    - text: "[Buy a pint]"
+      when: { all: [ { not: { holds: { who: kez, what: pint-1 } } }, { holds: { who: kez, what: pint-2 } } ] }
+      action: { act: buy, item: pint-2, from: kez }
+    - text: "[Buy a pint]"
+      when: { all: [ { not: { holds: { who: kez, what: pint-1 } } }, { not: { holds: { who: kez, what: pint-2 } } }, { holds: { who: kez, what: pint-3 } } ] }
+      action: { act: buy, item: pint-3, from: kez }
+    - text: "Do you remember the ghost story about the pier?"
+      once: true
+  hooks: [adjust-trust, notice-he-is-changing]
+  ends_when: { turns: { gte: 10 } }
+- id: kez-worried
+  character: kez
+  priority: 1
+  when: { flag: obsession }
+  goals:
+    - "You are frightened for Liam. Drop the jokes. Ask him straight what's going on."
+    - "If he admits he isn't sleeping or is seeing things, give him your mum's sleeping tablets and make him promise to see a doctor."
+  opening: "Kez comes round the bar, which she never does. 'Right. Sit. Talk to me. Properly.'"
+  options:
+    - text: "I keep seeing them. A man and a woman. Victorian."
+      once: true
+      effects: [ { adjust_relationship: { who: kez, with: player, trust: 10, affinity: 10 } } ]
+    - text: "It's nothing. Just tired."
+  hooks: [adjust-trust, notice-he-is-changing, kez-gives-tablets]
+  ends_when: { turns: { gte: 10 } }
+- id: shaun-chat
+  character: shaun
+  goals:
+    - "Tell Liam about your finds on the beach. Brag."
+    - "You found a silver rattle under the pier and it gives you the creeps; if he asks about the pier or old things, offer it to him."
+  opening:
+    - when: { flag: obsession }
+      text: "Shaun takes his headphones off. 'Bro. You look like you've seen a ghost. No offence.'"
+    - text: "Shaun lifts his half. 'Liam! Found a 1982 ten pence this morning. Mint. Basically rich.'"
+  options:
+    - text: "Find anything old down there?"
+      once: true
+      effects:
+        - { adjust_relationship: { who: shaun, with: player, trust: 10 } }
+        - { narrate: "Shaun digs in his pocket and puts something black and tarnished on the bar: a child's rattle. He doesn't let go of it." }
+    # Authored route to the rattle (it can also be stolen, or offered through the shaun-gives-rattle hook).
+    - text: "[Speech] Let me have the rattle, Shaun."
+      when: { all: [ { holds: { who: shaun, what: silver-rattle } }, { believes: { who: player, belief: ashdowns-stayed } } ] }
+      once: true
+      check:
+        skill: speech
+        tier: easy
+        pass:
+          - { move: { object: silver-rattle, to: player } }
+          - { narrate: "Shaun looks at you a long time, then pushes it across the bar. 'Have it. Honestly. It's been in my dreams.'" }
+        fail:
+          - { adjust_relationship: { who: shaun, with: player, trust: -5 } }
+          - { narrate: "'Nah.' Shaun puts it back in his pocket. 'Not while you're looking at it like that.'" }
+    - text: "[Buy him a drink]"
+      when: { holds: { who: player, what: pint-1 } }
+      action: { act: give, item: pint-1, to: shaun }
+      effects: [ { adjust_relationship: { who: shaun, with: player, trust: 15, affinity: 10 } } ]
+      once: true
+  hooks: [adjust-trust, shaun-gives-rattle, notice-he-is-changing]
+  actions: [give, go]
+  ends_when: { turns: { gte: 10 } }
+- id: edith-pier
+  character: edith
+  goals:
+    - "Sell Liam the pier: its history, its steamers, its storms. Ask for a donation."
+    - "If he asks about the glass house or the fire, tell it as the ghost story you tell schoolchildren, and be brisk about it."
+    - "If he already knows the Ashdowns' names, be frightened, and lend him the archive key so he can see the truth for himself."
+  opening:
+    - when: { believes: { who: player, belief: ashdowns-stayed } }
+      text: "Edith looks up and her smile goes out like a lamp. 'You've been in the hotel, haven't you, dear. You've found something.'"
+    - text: "Edith brightens. 'A visitor! Well, a builder. Did you know this pier is one of only two Grade I piers in the country?'"
+  options:
+    - text: "[Donate £5]"
+      when: { money: { who: player, gte: 5 } }
+      once: true
+      effects:
+        - { give_money: { who: player, amount: -5 } }
+        - { give_money: { who: edith, amount: 5 } }
+        - { adjust_relationship: { who: edith, with: player, trust: 15, affinity: 10 } }
+    - text: "What happened to the glass house?"
+      once: true
+    # The authored route to the archive, so the story never depends on an LLM hook (offline play, §6.9).
+    - text: "Mr and Mrs Ashdown. Room 7. You know who I mean."
+      when: { all: [ { believes: { who: player, belief: ashdowns-stayed } }, { holds: { who: edith, what: archive-key } } ] }
+      once: true
+      effects:
+        - { move: { object: archive-key, to: player } }
+        - { narrate: "Edith is quiet for a long time. Then she works the little key off its loop of wool. 'The cupboard. The Mercury, August 1893. Bring it back, dear.'" }
+        - { end_conversation: {} }
+  hooks: [adjust-trust, edith-tells-legend, edith-lends-archive-key]
+  ends_when: { turns: { gte: 10 } }

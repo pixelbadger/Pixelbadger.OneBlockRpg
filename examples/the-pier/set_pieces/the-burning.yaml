@@ -1,0 +1,36 @@
+# The final burning (brief §Set pieces, §Endings): inevitable. Liam recreates the fire; inside, the couple take tea
+# as it takes them all, across both time periods. If he never strikes the match, his hands do it anyway.
+id: the-burning
+starts_when:
+  all:
+    - { flag: breakdown }
+    - { in_room: { who: player, where: glass-house } }
+    - { time_between: { from: "21:00", to: "04:00" } }
+objective: "Finish it."
+stage: [glass-house, pier-head]
+cast: [clara, edmund]
+director_brief: >
+  The last night. The glass house is lit with lamps that are not there, and a table is laid for tea. Clara
+  pours; Edmund takes his cup; the bundle lies in the crook of her arm. They are calm now, almost happy.
+  1893 and today are both happening, layered: gaslight and phone torches, the band and the wind. Liam has
+  matches, maybe petrol, and the stacked deckchairs wait. Never tell him to light it and never stop him.
+  Each turn, let the scene lean a little further: Clara lifts the lace, Edmund sees, Edmund looks at Liam
+  for the first and only time. The ghosts never speak. Keep narration short and terrible and tender.
+beats:
+  - { id: the-tea, description: "The couple take tea at a table that isn't there." }
+  - { id: the-lace, description: "Clara lifts the lace; Edmund sees; he is not surprised." }
+  - { id: the-look, description: "Edmund looks at Liam, once." }
+  - { id: the-flames, description: "Fire." }
+moves:
+  actions: []
+  effects: [narrate]
+ends_when:
+  any:
+    - { flag: glass_house_burning }
+    - { time_between: { from: "04:00", to: "06:00" } }
+outcomes:
+  - when: { not: { flag: glass_house_burning } }
+    do:
+      - { set_flag: glass_house_burning }
+      - { narrate: "You watch your own hand take out a match. You watch it strike. It is not a decision. It was decided a long time ago, in this room, by somebody else." }
+  - do: [ { set_flag: glass_house_burned } ]

@@ -1,0 +1,282 @@
+synopsis: >
+  Westcombe, now. Liam Doyle, twenty-two, labours on the renovation of the Grand Atlantic Hotel beside the
+  town's Victorian pier. He keeps seeing a couple in Victorian clothes that nobody else can see: a woman
+  in black holding a lace-wrapped bundle, and a man in a frock coat. Their story is in the block, in pieces.
+  In August 1893 Edmund and Clara Ashdown of Bath stayed at the hotel with their "infant". The child had
+  been stillborn two months earlier, while Edmund was away; Clara hid it from him and carried the body
+  wrapped in lace. On the pier he found out. That night he burned the glass house at the pier head with
+  himself, his wife and the child inside. The pieces are a guest register behind the hotel's reception
+  panelling, Clara's letter under the floor of Room 7, and the 1893 newspaper in the pier archive (plus
+  Edith's legend and a silver rattle Shaun found on the beach). Each piece Liam uncovers drives him further
+  into the Ashdowns' story and out of his own. On the fifth night at the latest he goes out to the glass
+  house and recreates the fire. Nobody can stop it. What changes is how much he understands when he does.
+tone: Quiet and accumulating, then unbearable. Grey sea, building dust, a pint at the Anchor, and the glass house.
+tensions:
+  - "Liam is drifting away from the job, his mates and the pub; the more he learns, the less he is here."
+  - "Gary the foreman needs the hotel finished on time and has no patience for a lad going funny."
+  - "Kez has known Liam since school and is the first to be frightened for him."
+  - "Edith knows the pier's ghost story as a story. She does not want it to be true."
+beliefs:
+  - { id: ashdowns-stayed, text: "Edmund and Clara Ashdown of Bath stayed at the Grand Atlantic in August 1893, with an infant." }
+  - { id: stillborn-secret, text: "Clara Ashdown's baby was born dead in June 1893, and she hid it from her husband." }
+  - { id: edmund-set-the-fire, text: "Edmund Ashdown burned the glass house in 1893 with himself, his wife and the dead child inside." }
+  - { id: pier-fire-legend, text: "The glass house at the end of the pier burned down in 1893 with a couple inside." }
+  - { id: child-had-a-name, text: "The Ashdowns' child was named Alice and was born on the 9th of June 1893." }
+  - { id: singing-in-room-seven, text: "Someone sings in Room 7 of the hotel at night, where nobody is." }
+  - { id: liam-not-right, text: "Liam isn't right lately; something is getting to him." }
+triggers:
+  # ─── Discoveries: the three pieces of the couple's story (brief §General plot) ───
+  - id: read-register
+    when: { event: { kind: examined, actor: player, target: guest-register } }
+    do:
+      - { set_flag: clue_register }
+      - { add_belief: { who: player, belief: ashdowns-stayed } }
+      - { award_xp: 50 }
+      - narrate: "Room 7. Mr & Mrs E. Ashdown & infant. You read it three times. You know it's them the way you know your own handwriting."
+    once: true
+  - id: read-letter
+    when: { event: { kind: examined, actor: player, target: claras-letter } }
+    do:
+      - { set_flag: clue_letter }
+      - { add_belief: { who: player, belief: stillborn-secret } }
+      - { award_xp: 50 }
+      - narrate: "You fold the letter along its old creases. In the room behind you, very quietly, someone has stopped breathing in."
+    once: true
+  - id: read-newspaper
+    when: { event: { kind: examined, actor: player, target: newspaper } }
+    do:
+      - { set_flag: clue_newspaper }
+      - { add_belief: { who: player, belief: edmund-set-the-fire } }
+      - { award_xp: 50 }
+      - narrate: "The archive smells of damp and pencil shavings. Outside, the glass house catches the light, and for a moment every pane is orange."
+    once: true
+  - id: read-rattle
+    when: { event: { kind: examined, actor: player, target: silver-rattle } }
+    do:
+      - { set_flag: clue_rattle }
+      - { add_belief: { who: player, belief: child-had-a-name } }
+      - { award_xp: 25 }
+    once: true
+
+  # ─── Madness: stage flags and SPECIAL modifiers (brief §Madness). Each story piece advances a stage, but the
+  # madness takes days to set in: obsession from day 2, breakdown from day 3, so the earliest ending is night 3. ───
+  - id: stage-unease
+    when: { any: [ { flag: clue_register }, { flag: clue_letter }, { flag: clue_newspaper } ] }
+    do:
+      - { set_flag: unease }
+      - { modify: { who: player, id: madness-pe, attribute: PE, amount: 1 } }
+      - { modify: { who: player, id: madness-ch, attribute: CH, amount: -1 } }
+      - narrate: "Something has come loose. Colours are a little too sharp, and people's voices arrive a little late."
+    once: true
+  - id: stage-obsession
+    when:
+      all:
+        - { flag: unease }
+        - { day: { gte: 2 } }
+        - any:
+            - { all: [ { flag: clue_register }, { flag: clue_letter } ] }
+            - { all: [ { flag: clue_register }, { flag: clue_newspaper } ] }
+            - { all: [ { flag: clue_letter }, { flag: clue_newspaper } ] }
+    do:
+      - { set_flag: obsession }
+      - { modify: { who: player, id: madness-pe, attribute: PE, amount: 2 } }
+      - { modify: { who: player, id: madness-ch, attribute: CH, amount: -2 } }
+      - { modify: { who: player, id: madness-in, attribute: IN, amount: -1 } }
+      - narrate: "You can't stop thinking about them. You've started seeing the pier as it was: gas lamps, bunting, the band. It is getting harder to see it as it is."
+    once: true
+  - id: stage-breakdown
+    when:
+      all: [ { flag: obsession }, { day: { gte: 3 } }, { flag: clue_register }, { flag: clue_letter }, { flag: clue_newspaper } ]
+    do:
+      - { set_flag: breakdown }
+      - { modify: { who: player, id: madness-pe, attribute: PE, amount: 4 } }
+      - { modify: { who: player, id: madness-ch, attribute: CH, amount: -3 } }
+      - { modify: { who: player, id: madness-in, attribute: IN, amount: -2 } }
+      - narrate: "You understand now. It is very simple, and it is waiting for you at the end of the pier after dark."
+    once: true
+
+  # ─── The ghosts: silent, seen only by the player (Q31), staged by spawn and remove ───
+  - id: clara-at-the-rail
+    when:
+      all:
+        - { time_between: { from: "12:30", to: "13:15" } }
+        - { not: { flag: clara_at_rail } }
+        - { not: { in_set_piece: true } }
+    do:
+      - { spawn: { object: clara, in: promenade } }
+      - { set_intent: { who: clara, intent: "standing at the rail, looking out at the pier" } }
+      - { set_flag: clara_at_rail }
+  - id: clara-leaves-the-rail
+    when:
+      all:
+        - { flag: clara_at_rail }
+        - { not: { time_between: { from: "12:30", to: "13:15" } } }
+        - { not: { in_set_piece: true } }
+    do:
+      - { remove: clara }
+      - { clear_flag: clara_at_rail }
+  - id: first-sight
+    when: { all: [ { flag: clara_at_rail }, { in_room: { who: player, where: promenade } } ] }
+    do:
+      - set_flag: saw_clara
+      - narrate: "People walk past her with their chips and their dogs. Nobody looks at her. Nobody steps round her, either. They just don't arrive where she is."
+    once: true
+  - id: edmund-at-dusk
+    when:
+      all:
+        - { time_between: { from: "18:00", to: "19:15" } }
+        - { not: { flag: edmund_at_dusk } }
+        - { not: { in_set_piece: true } }
+    do:
+      - { spawn: { object: edmund, in: glass-house } }
+      - { set_intent: { who: edmund, intent: "standing among the deckchairs, looking out to sea" } }
+      - { set_flag: edmund_at_dusk }
+  - id: edmund-leaves
+    when:
+      all:
+        - { flag: edmund_at_dusk }
+        - { not: { time_between: { from: "18:00", to: "19:15" } } }
+        - { not: { in_set_piece: true } }
+    do:
+      - { remove: edmund }
+      - { clear_flag: edmund_at_dusk }
+  - id: clara-at-the-bed
+    when:
+      all:
+        - { flag: obsession }
+        - { asleep: player }
+        - { in_room: { who: player, where: digs } }
+        - { time_between: { from: "03:00", to: "04:00" } }
+    do:
+      - { spawn: { object: clara, in: digs } }
+      - { set_intent: { who: clara, intent: "standing at the foot of your bed, rocking the bundle" } }
+      - { set_flag: clara_at_bed }
+      - narrate: "You wake all at once. There is someone standing at the foot of the bed. The bundle in her arms is very small, and she rocks it the way you'd rock something that has stopped crying."
+    once: true
+    wakes: true
+  - id: clara-leaves-the-bed
+    when:
+      all:
+        - { flag: clara_at_bed }
+        - any: [ { not: { in_room: { who: player, where: digs } } }, { time_between: { from: "04:00", to: "05:00" } } ]
+    do:
+      - { remove: clara }
+      - { clear_flag: clara_at_bed }
+      - narrate: "When you look again the room is just the room."
+
+  # ─── Set-piece staging ───
+  - id: promenade-ghosts
+    when: { all: [ { in_set_piece: the-promenade }, { not: { flag: promenade_ghosts } } ] }
+    do:
+      - { spawn: { object: clara, in: promenade } }
+      - { spawn: { object: edmund, in: promenade } }
+      - { set_intent: { who: clara, intent: "walking arm in arm with her husband, the bundle held close" } }
+      - { set_intent: { who: edmund, intent: "walking arm in arm with his wife, raising his hat to no one" } }
+      - { set_flag: promenade_ghosts }
+  # However close Liam gets, they are a little further on: one room ahead, all the way to the glass house.
+  - id: promenade-ahead-1
+    when: { all: [ { flag: promenade_ghosts }, { in_room: { who: player, where: pier-tollhouse } } ] }
+    do:
+      - { move: { object: clara, to: pier-deck } }
+      - { move: { object: edmund, to: pier-deck } }
+      - { narrate: "Through the turnstile, they are already out on the deck. Nobody took their money." }
+    once: true
+  - id: promenade-ahead-2
+    when: { all: [ { flag: promenade_ghosts }, { in_room: { who: player, where: pier-deck } } ] }
+    do:
+      - { move: { object: clara, to: pier-head } }
+      - { move: { object: edmund, to: pier-head } }
+      - { narrate: "They are further on than they should be, at the pier head, his hat raised to the sea." }
+    once: true
+  - id: promenade-ahead-3
+    when: { all: [ { flag: promenade_ghosts }, { in_room: { who: player, where: pier-head } } ] }
+    do:
+      - { move: { object: clara, to: glass-house } }
+      - { move: { object: edmund, to: glass-house } }
+      - { narrate: "The glass house door is open. Her black skirts go in out of the wind, and then his coat." }
+    once: true
+  - id: promenade-ghosts-gone
+    when: { all: [ { flag: promenade_ghosts }, { not: { in_set_piece: the-promenade } } ] }
+    do:
+      - { remove: clara }
+      - { remove: edmund }
+      - { clear_flag: promenade_ghosts }
+  - id: lullaby-staging
+    when: { all: [ { in_set_piece: the-lullaby }, { not: { flag: lullaby_staged } } ] }
+    do:
+      - { set_property: { object: door-room-seven, key: locked, value: false } }
+      - { set_property: { object: door-room-seven, key: open, value: true } }
+      - { spawn: { object: clara, in: room-seven } }
+      - { spawn: { object: bassinet, in: room-seven } }
+      - { spawn: { object: edmund, in: hotel-corridor } }
+      - { set_intent: { who: clara, intent: "sitting by the bassinet, singing under her breath" } }
+      - { set_intent: { who: edmund, intent: "standing at the door of Room 7, his hand raised to knock" } }
+      - { set_flag: lullaby_staged }
+  - id: saw-the-cradle
+    when: { event: { kind: examined, actor: player, target: bassinet } }
+    do:
+      - { set_flag: saw_cradle }
+      - { add_belief: { who: player, belief: stillborn-secret } }
+    once: true
+  - id: lullaby-gone
+    when: { all: [ { flag: lullaby_staged }, { not: { in_set_piece: the-lullaby } } ] }
+    do:
+      - { remove: clara }
+      - { remove: edmund }
+      - { remove: bassinet }
+      - { clear_flag: lullaby_staged }
+  - id: burning-staging
+    when: { all: [ { in_set_piece: the-burning }, { not: { flag: burning_staged } } ] }
+    do:
+      - { spawn: { object: clara, in: glass-house } }
+      - { spawn: { object: edmund, in: glass-house } }
+      - { spawn: { object: tea-table, in: glass-house } }
+      - { set_intent: { who: clara, intent: "pouring tea, the bundle in the crook of her arm" } }
+      - { set_intent: { who: edmund, intent: "taking his tea, quite calm now" } }
+      - { set_flag: burning_staged }
+
+  # ─── The pull, and the deadline (brief §Trigger points: a final day forces the ending) ───
+  - id: the-pull
+    when: { all: [ { flag: breakdown }, { time: "21:00" } ] }
+    do:
+      - narrate: "Out past the end of the parade, the glass house has its lamps lit. It hasn't had lamps for a hundred and thirty years."
+  - id: the-last-night
+    when: { all: [ { day: { gte: 5 } }, { time: "23:00" }, { not: { flag: glass_house_burning } } ] }
+    do:
+      - { set_flag: breakdown }
+      - { set_flag: compelled }
+      - { modify: { who: player, id: madness-pe, attribute: PE, amount: 4 } }
+      - { modify: { who: player, id: madness-ch, attribute: CH, amount: -3 } }
+      - { modify: { who: player, id: madness-in, attribute: IN, amount: -2 } }
+      - narrate: "You don't remember climbing the gate. You don't remember the length of the pier. You are standing in the glass house with the box of matches in your hand, and you are not afraid at all."
+      - { spawn: { object: matches, in: player } }
+      - { move: { object: player, to: glass-house } }
+    once: true
+    wakes: true
+
+endings:
+  - id: the-glass-house
+    title: "The Glass House"
+    when: { flag: glass_house_burned }
+    text:
+      - when: { all: [ { flag: clue_register }, { flag: clue_letter }, { flag: clue_newspaper }, { flag: clue_rattle } ] }
+        text: >
+          The deckchairs go up first, then the old varnish, then the glass, pane by pane, like applause.
+          They are at their table. Clara pours. Edmund takes his cup and thanks her, and you know what he knows
+          now: Alice, the ninth of June, the lace, the long weeks of her pretending to him that she slept. He is
+          not angry any more. Nor are you. The heat is enormous and quite gentle. Across the water, Westcombe's
+          lights come on one after another, and the town of 1893 comes on behind them, and somewhere a fire bell
+          is ringing in both. You sit down with them. There is a cup for you. There has always been a cup for you.
+      - when: { all: [ { flag: clue_register }, { flag: clue_letter }, { flag: clue_newspaper } ] }
+        text: >
+          The deckchairs go up first, then the old varnish, then the glass. They are at their table, Mr and Mrs
+          Ashdown of Bath, Room 7, taking tea. She lifts the lace and he looks, and this time you look with him.
+          You understand why he did it. You understand that you are doing it. Both are true and neither stops
+          your hand. Through the heat the pier is lit with gas, and the band is playing, and the panes burst one
+          by one like a long held breath let go.
+      - text: >
+          The deckchairs go up first. You don't know why you are doing this; you only know it has been done
+          before, here, and that it wants doing again. A man and a woman sit at a table in the smoke, taking tea,
+          and you never learned their names. She holds something wrapped in lace. When the glass starts to go,
+          the noise is like the sea. In the morning the papers will say a young man from the hotel job set fire
+          to the pier head, and nobody will be able to tell them why.

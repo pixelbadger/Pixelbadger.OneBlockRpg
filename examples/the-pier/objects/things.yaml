@@ -1,0 +1,190 @@
+# Everything else: tools, the fire's makings, food and drink, beds and doors.
+
+# ─── The site ───
+- id: crowbar
+  name: crowbar
+  aliases: [bar, wrecking bar, jemmy]
+  location: compound
+  description: "A three-foot wrecking bar, orange paint worn back to the steel at both ends."
+  affordances: [takeable]
+  tags: [pry]
+  properties: { mass: 3, value: 12 }
+  weapon: { type: blunt, skill: melee_weapons, damage: [3, 8], ap: 4, min_st: 4 }
+- id: petrol-can
+  name: petrol can
+  aliases: [petrol, jerrycan, can, fuel]
+  location: compound
+  description: "A red jerrycan of petrol for the generator, two-thirds full."
+  room_text: "A red jerrycan stands by the generator."
+  affordances: [takeable]
+  properties: { mass: 12, value: 15 }
+- id: generator
+  name: generator
+  aliases: [genny]
+  location: compound
+  scenery: true
+  description: "A yellow site generator that thuds all day and coughs at night."
+  properties: { mass: 300 }
+- id: key-board
+  name: key board
+  aliases: [keys, board, hooks]
+  location: site-office
+  scenery: true
+  description: "A board of hooks by the cabin door, each with a hotel room fob. Most hooks are empty."
+  affordances: [surface]
+  properties: { mass: 3 }
+- id: camp-bed
+  name: camp bed
+  location: site-office
+  scenery: true
+  description: "A camp bed with a sleeping bag balled at one end. Gary does not sleep on it."
+  affordances: [sleepable]
+  properties: { mass: 6 }
+- id: hard-hat
+  name: hard hat
+  aliases: [hat, helmet]
+  location: digs
+  description: "Your hard hat, white, with DOYLE on it in marker and a sticker from a job in Swindon."
+  affordances: [takeable]
+  properties: { mass: 0.4, value: 3 }
+  armour: { ac: 1, dt: 1, dr: 5 }
+
+# ─── The fire's makings ───
+- id: matches
+  name: box of matches
+  aliases: [matches, match, box]
+  location: dresser
+  description: "A box of Swan Vestas, nearly full."
+  affordances: [takeable]
+  properties: { mass: 0.05, value: 1 }
+- id: deckchairs
+  name: stacked deckchairs
+  aliases: [deckchairs, deckchair, chairs, stack]
+  location: glass-house
+  scenery: true
+  description:
+    - when: { property: { object: deckchairs, key: soaked, value: true } }
+      text: "The deckchairs are dark with petrol. The fumes make the green light swim."
+    - text: "Hundreds of wooden deckchairs stacked to the roof, striped canvas gone pale. Dry as tinder. Dry as anything."
+  properties: { mass: 400, soaked: false }
+  uses:
+    - on: petrol-can
+      when: { flag: breakdown }
+      text: "You unscrew the cap and walk the length of the stack, slopping petrol over the canvas and the old wood. Your hands are very steady."
+      effects: [ { set_property: { object: deckchairs, key: soaked, value: true } } ]
+      minutes: 5
+    - on: petrol-can
+      text: "You stand with the can in your hand for a long time. Then you put the cap back on. Not yet. Not you."
+    - on: matches
+      when: { flag: breakdown }
+      text: "The match flares. You hold it to the canvas, and the canvas takes it as if it has been waiting."
+      effects: [ { set_flag: glass_house_burning } ]
+    - on: matches
+      text: "You strike a match and hold it until it burns down to your fingers. You don't know why you did that."
+
+# ─── Food, drink, comfort ───
+- id: pint-1
+  name: pint of bitter
+  aliases: [pint, bitter, beer]
+  location: kez
+  description: "A pint of the Anchor's bitter, flat as the sea."
+  affordances: [takeable]
+  properties: { mass: 0.6, value: 4 }
+  consumable:
+    modifiers: [ { attribute: CH, amount: 1, hours: 2 }, { attribute: PE, amount: -1, hours: 2 } ]
+    text: "You drink it in four long pulls. The edges of things go soft for a while."
+- id: pint-2
+  name: pint of bitter
+  aliases: [pint, bitter, beer]
+  location: kez
+  description: "A pint of the Anchor's bitter."
+  affordances: [takeable]
+  properties: { mass: 0.6, value: 4 }
+  consumable:
+    modifiers: [ { attribute: CH, amount: 1, hours: 2 }, { attribute: PE, amount: -1, hours: 2 } ]
+    text: "Another one. The fruit machine plays its little tune to nobody."
+- id: pint-3
+  name: pint of bitter
+  aliases: [pint, bitter, beer]
+  location: kez
+  description: "A pint of the Anchor's bitter."
+  affordances: [takeable]
+  properties: { mass: 0.6, value: 4 }
+  consumable:
+    modifiers: [ { attribute: CH, amount: 1, hours: 2 }, { attribute: PE, amount: -1, hours: 2 } ]
+    text: "You drink it. It doesn't help as much as the first."
+- id: sleeping-tablets
+  name: sleeping tablets
+  aliases: [tablets, pills, sleeping pills]
+  # Off-stage until Kez hands them over (hook kez-gives-tablets).
+  description: "A strip of Kez's mum's sleeping tablets, four left."
+  affordances: [takeable]
+  properties: { mass: 0.01, value: 0 }
+  consumable:
+    modifiers: [ { attribute: PE, amount: -3, hours: 10 } ]
+    text: "You swallow two dry. For a while, the world is only the world."
+- id: tea-flask
+  name: flask of tea
+  aliases: [flask, tea]
+  location: marek
+  description: "Marek's tartan flask: strong tea, three sugars."
+  affordances: [takeable]
+  properties: { mass: 1, value: 2 }
+  consumable: { fatigue: 1, text: "Marek's tea is strong enough to stand a spoon in. You feel almost human." }
+
+# ─── Furniture ───
+- id: dresser
+  name: dresser
+  location: seaview-hall
+  scenery: true
+  description: "A dresser with a tray of complimentary nothing on it."
+  affordances: [surface]
+  properties: { mass: 40 }
+- id: digs-bed
+  name: bed
+  aliases: [my bed]
+  location: digs
+  scenery: true
+  description:
+    - when: { flag: obsession }
+      text: "Your bed. You have started sleeping facing the door."
+    - text: "A single bed with a candlewick bedspread from about 1975."
+  affordances: [sleepable]
+  properties: { mass: 30 }
+- id: marek-bed
+  name: Marek's bed
+  location: lads-room
+  scenery: true
+  description: "Made with hospital corners. A rosary on the bedpost."
+  affordances: [sleepable]
+  properties: { mass: 30 }
+- id: tommo-bed
+  name: Tommo's bed
+  location: lads-room
+  scenery: true
+  description: "A nest. Possibly alive."
+  affordances: [sleepable]
+  properties: { mass: 30 }
+- id: kez-bed
+  name: Kez's bed
+  location: anchor-flat
+  scenery: true
+  description: "Under the fairy lights. The cat has claimed the pillow."
+  affordances: [sleepable]
+  properties: { mass: 30 }
+- id: sofa
+  name: sofa
+  aliases: [couch]
+  location: anchor-flat
+  scenery: true
+  description: "A brown sofa with a Shaun-shaped dent."
+  affordances: [sleepable]
+  properties: { mass: 40 }
+- id: armchair
+  name: Edith's armchair
+  aliases: [armchair, chair]
+  location: pier-tollhouse
+  scenery: true
+  description: "A wing-backed armchair behind the kiosk, with a blanket and a hot-water bottle. Edith lives in the tollhouse, more or less."
+  affordances: [sleepable]
+  properties: { mass: 25 }

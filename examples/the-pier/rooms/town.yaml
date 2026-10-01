@@ -1,0 +1,38 @@
+# Liam's life off-site: the Anchor and the flat above it, and the Seaview guest house where the lads lodge.
+- id: anchor
+  name: The Anchor
+  tags: [public]
+  description:
+    - when: { flag: obsession }
+      text: "The Anchor. The same carpet, the same fruit machine, the same faces. They all look slightly posed, like a photograph of a pub."
+    - text: "The Anchor: sticky carpet, a fruit machine, a dartboard nobody uses, and a window onto the parade. Kez behind the bar when she's on. Stairs at the back go up to her flat."
+  exits:
+    - { direction: east, to: promenade }
+    - { direction: up, to: anchor-flat }
+- id: anchor-flat
+  name: Kez's Flat
+  description: "The flat above the Anchor: a sofa that is mostly Shaun, a telly, fairy lights, a cat called Biscuit who hates everyone."
+  exits:
+    - { direction: down, to: anchor }
+- id: seaview-hall
+  name: Seaview Guest House
+  description: "The Seaview's hall and kitchen: a payphone that doesn't work, a dresser with a tray of complimentary nothing, a laminated list of rules. The landlady is never seen. The stairs go up to the rooms."
+  exits:
+    - { direction: north, to: promenade }
+    - { direction: up, to: digs }
+    - { label: the lads' room, direction: east, to: lads-room }
+- id: digs
+  name: Your Room
+  description:
+    - when: { flag: breakdown }
+      text: "Your room. You've pinned things to the wall: the photograph, a page from the register, a drawing of the glass house you don't remember doing. The bed hasn't been slept in properly for days."
+    - when: { flag: obsession }
+      text: "Your room at the Seaview: single bed, kettle, a window that looks straight at the pier. You keep the curtain open now. You want to see if the lamps come on."
+    - text: "Your room at the Seaview: single bed, kettle, a telly that only gets three channels, and a window that looks straight out at the pier. Work boots by the door."
+  exits:
+    - { direction: down, to: seaview-hall }
+- id: lads-room
+  name: The Lads' Room
+  description: "Marek and Tommo's twin room: Marek's side squared away, a rosary on the bedpost; Tommo's side a crime scene of energy-drink cans and hi-vis."
+  exits:
+    - { direction: west, to: seaview-hall }

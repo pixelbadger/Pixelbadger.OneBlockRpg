@@ -1,0 +1,17 @@
+unarmed:
+  hit: [ "{{Attacker}} catches {{target}} with a fist ({{damage}}).", "{{Attacker}} gets one in on {{target}} ({{damage}})." ]
+  miss: [ "{{Attacker}} swings at {{target}} and misses.", "{{Target}} sways back from {{attacker}}'s fist." ]
+  crit: "{{Attacker}} lands one square on {{target}}'s jaw ({{damage}})!"
+  down: "{{Target}} goes down on the floor and stays there."
+  kill: "{{Target}} doesn't get up."
+blunt:
+  hit: "{{Attacker}} cracks {{target}} with {{weapon}} ({{damage}})."
+  miss: "{{Attacker}} swings {{weapon}} at {{target}} and hits nothing."
+  crit: "{{Attacker}} brings {{weapon}} down on {{target}} with a sound like a dropped plank ({{damage}})!"
+  down: "{{Target}} crumples."
+  kill: "{{Target}} is very still."
+thrown:
+  hit: "{{Weapon}} hits {{target}} ({{damage}})."
+  miss: "{{Weapon}} sails past {{target}}."
+  crit: "{{Weapon}} smacks {{target}} full in the face ({{damage}})!"
+  down: "{{Target}} goes down."

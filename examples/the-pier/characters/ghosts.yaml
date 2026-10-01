@@ -1,0 +1,41 @@
+# The Ashdowns (brief §The ghosts): silent and seen only by the player (Q31). No conversations: talking to them
+# gets refuse_text. They have no location; triggers spawn, move and remove them, and the director stages them in
+# set pieces. They are intangible, so they can't be fought or handed things.
+- id: clara
+  name: the woman in black
+  aliases: [woman, lady, woman in black, clara, mrs ashdown, ghost]
+  perceived_by: player
+  description:
+    - when: { believes: { who: player, belief: stillborn-secret } }
+      text: "Clara Ashdown, in mourning she never explained to anyone. She holds the bundle the way you'd hold something asleep. You know it isn't."
+    - when: { believes: { who: player, belief: ashdowns-stayed } }
+      text: "Mrs Ashdown of Bath, in black silk, a lace-wrapped bundle in her arms. She doesn't look at you. She never looks at you."
+    - text: "A young woman in a black Victorian dress, hair pinned up, holding a bundle wrapped in white lace. The wind off the sea doesn't move her skirts."
+  persona:
+    identity: "Clara Ashdown, d. 1893. An apparition. She never speaks."
+    background: "Hid her daughter's stillbirth from her husband for two months, and died with him in the glass house fire."
+    personality: [silent, grieving]
+    voice: "She never speaks."
+  special: { ST: 3, PE: 5, EN: 3, CH: 6, IN: 6, AG: 5, LK: 1 }
+  essential: true
+  combat_profile: { style: coward }
+  refuse_text: "She doesn't answer. You aren't sure she can hear you, or that you are anywhere she can hear."
+- id: edmund
+  name: the man in the frock coat
+  aliases: [man, gentleman, man in the frock coat, edmund, mr ashdown, ghost]
+  perceived_by: player
+  description:
+    - when: { believes: { who: player, belief: edmund-set-the-fire } }
+      text: "Edmund Ashdown. Frock coat, watch chain, a gentle face. Nothing in it tells you what he did. That is the worst part."
+    - when: { believes: { who: player, belief: ashdowns-stayed } }
+      text: "Mr Ashdown of Bath: frock coat, top hat, a watch chain catching light that isn't there."
+    - text: "A man in a frock coat and top hat, side-whiskers, a watch chain. He stands very still and looks at the sea as though it owes him something."
+  persona:
+    identity: "Edmund Ashdown, d. 1893. An apparition. He never speaks."
+    background: "Learned on the pier that his daughter had been dead for two months, and burned the glass house with his wife, the child and himself inside."
+    personality: [silent, composed]
+    voice: "He never speaks."
+  special: { ST: 6, PE: 5, EN: 5, CH: 5, IN: 7, AG: 5, LK: 1 }
+  essential: true
+  combat_profile: { style: coward }
+  refuse_text: "He doesn't turn. He is listening to something out over the water, and it isn't you."

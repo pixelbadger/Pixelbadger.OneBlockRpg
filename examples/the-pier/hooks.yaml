@@ -1,0 +1,56 @@
+# Hooks (§6.4): the only way what characters say becomes world state. Each is guarded so the LLM can offer, never force.
+- id: adjust-trust
+  description: "Change how far you trust Liam, by -10 to +10, after something he said or did."
+  params:
+    amount: { type: number, min: -10, max: 10, description: "trust change" }
+  effects:
+    - { adjust_relationship: { who: self, with: player, trust: { $arg: amount } } }
+- id: notice-he-is-changing
+  description: "Decide, privately, that Liam isn't right lately: something is getting to him."
+  guard: { flag: unease }
+  effects:
+    - { add_belief: { who: self, belief: liam-not-right, source: conversation } }
+- id: edith-tells-legend
+  description: "Tell Liam the pier's old ghost story: the glass house burned in 1893 with a couple inside, and people say they still take tea there."
+  guard: { relationship: { who: edith, with: player, trust: { gte: 10 } } }
+  effects:
+    - { add_belief: { who: player, belief: pier-fire-legend } }
+    - { set_flag: heard_legend }
+  once: true
+- id: edith-lends-archive-key
+  description: "Lend Liam the key to the archive cupboard, so he can read the 1893 papers himself."
+  guard:
+    any:
+      - { relationship: { who: edith, with: player, trust: { gte: 30 } } }
+      - { believes: { who: player, belief: ashdowns-stayed } }
+  effects:
+    - { move: { object: archive-key, to: player } }
+    - { narrate: "Edith works the little key off its loop of wool and presses it into your hand. 'Bring it back, dear. Don't lose it. Don't keep it.'" }
+  once: true
+- id: marek-tells-of-room-seven
+  description: "Tell Liam about the singing you hear from Room 7 when you work late, and the board by its window that has been lifted before."
+  guard: { relationship: { who: marek, with: player, trust: { gte: 25 } } }
+  effects:
+    - { add_belief: { who: player, belief: singing-in-room-seven } }
+    - { set_flag: marek_told }
+  once: true
+- id: shaun-gives-rattle
+  description: "Give Liam the silver rattle you found on the beach under the pier. You want rid of it."
+  guard: { relationship: { who: shaun, with: player, trust: { gte: 40 } } }
+  effects:
+    - { move: { object: silver-rattle, to: player } }
+    - { narrate: "Shaun puts the rattle in your hand and wipes his palm on his trackies, hard, like he's touched something dead." }
+  once: true
+- id: kez-gives-tablets
+  description: "Give Liam some of your mum's sleeping tablets, because he looks like he hasn't slept in days."
+  guard: { flag: obsession }
+  effects:
+    - { spawn: { object: sleeping-tablets, in: player } }
+  once: true
+- id: gary-sends-him-home
+  description: "Send Liam home for the rest of the day: he's no use on site like this, and he's frightening the lads."
+  guard: { flag: obsession }
+  effects:
+    - { set_flag: sent_home }
+    - { adjust_relationship: { who: gary, with: player, trust: -10 } }
+  once: true
