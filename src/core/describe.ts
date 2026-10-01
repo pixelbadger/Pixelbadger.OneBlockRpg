@@ -30,6 +30,11 @@ export function listedObjects(w: World, room: string): string[] {
     .filter((id) => !w.isChar(id) && !w.thing(id)?.scenery && !w.isHidden(id) && w.perceives(w.playerId, id));
 }
 
+/** "the old photograph" → "an old photograph"; proper names and other articles are left alone. */
+export function indefinite(name: string): string {
+  return name.replace(/^the (\w)/, (_, c: string) => (/[aeiou]/i.test(c) ? `an ${c}` : `a ${c}`));
+}
+
 export function charLine(w: World, id: string): string {
   const s = w.char(id);
   const Actor = w.label(id);
@@ -61,7 +66,7 @@ export function describeRoom(w: World, room: string): RoomDescription {
     const inside = w
       .childrenOf(id)
       .filter((c) => !w.isChar(c) && !w.thing(c)?.scenery && visible(c))
-      .map((c) => w.name(c).replace(/^the /, "a "));
+      .map((c) => indefinite(w.name(c)));
     const key = w.thing(id)!.affordances.includes("surface") ? "room.contents-on" : "room.contents-of";
     if (inside.length) objects.push(w.msg(key, { container: w.name(id), list: listJoin(inside) }));
   };
@@ -70,7 +75,7 @@ export function describeRoom(w: World, room: string): RoomDescription {
     const def = w.thing(id)!;
     if (!def.scenery) {
       if (def.room_text) objects.push(w.text(def.room_text, { self: id }));
-      else plain.push(w.name(id).replace(/^the /, "a "));
+      else plain.push(indefinite(w.name(id)));
     }
     // Contents of open containers and surfaces, scenery included (a desk, a shelf).
     contentsLine(id);

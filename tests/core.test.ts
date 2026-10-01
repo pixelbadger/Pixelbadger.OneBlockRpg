@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BASE_MINUTES, perform, SNEAK_TIME, UNNOTICED_STEAL_BONUS } from "../src/core/actions.js";
 import { playerCombat, pursuable, runCombat } from "../src/core/combat.js";
-import { describeRoom } from "../src/core/describe.js";
+import { describeRoom, indefinite } from "../src/core/describe.js";
 import { applyEffects } from "../src/core/effects.js";
 import { applyOps, clone } from "../src/core/ops.js";
 import { tick } from "../src/core/tick.js";
@@ -476,5 +476,13 @@ describe("apparitions are intangible (Q31)", () => {
     expect(w.state.combat).toBeNull();
     expect(perform(w, "player", { act: "give", item: "mug", to: "shade" }, P).ok).toBe(false);
     expect(w.isWithin("mug", "player")).toBe(true);
+  });
+});
+
+describe("room listings", () => {
+  it("uses 'an' before a vowel", () => {
+    expect(indefinite("the old photograph")).toBe("an old photograph");
+    expect(indefinite("the key")).toBe("a key");
+    expect(indefinite("Edith's armchair")).toBe("Edith's armchair");
   });
 });
