@@ -403,7 +403,10 @@ function lockUnlock(c: Ctx, req: ActionRequest, verb: "lock" | "unlock"): Action
       verb === "unlock" ? w.inventory(c.actor).find((x) => w.thing(x)?.tags.includes("lockpick")) : undefined;
     if (!tool) return refuse(c, "lock.no-key");
     // Lockpick (§5.3): a skill check at the lock's tier.
-    const result = w.roll((rng) => skillCheck(rng, w.skill(c.actor, "lockpick"), def.lock_tier ?? "normal"), c.cause);
+    const result = w.roll(
+      (rng) => skillCheck(rng, w.skill(c.actor, "lockpick"), def.lock_tier ?? "normal", 0, w.special(c.actor).LK),
+      c.cause,
+    );
     w.emit("checked", {
       actor: c.actor,
       targets: [id],
@@ -529,7 +532,7 @@ function throwIt(c: Ctx, req: ActionRequest): ActionResult {
     report(c, "throw", { item: w.name(item) }, item);
   }
   if (!target) return { ok: true, minutes: BASE_MINUTES.throw, summary: `threw ${w.label(item)}` };
-  const hit = w.roll((rng) => skillCheck(rng, w.skill(c.actor, "throwing"), "easy"), c.cause);
+  const hit = w.roll((rng) => skillCheck(rng, w.skill(c.actor, "throwing"), "easy", 0, w.special(c.actor).LK), c.cause);
   w.emit("checked", {
     actor: c.actor,
     targets: [item, target],
@@ -570,7 +573,10 @@ function pushIt(c: Ctx, req: ActionRequest): ActionResult {
   const def = w.thing(id)!;
   if (!def.affordances.includes("pushable")) return refuse(c, "push.fixed", { item: w.name(id) }, id);
   const mass = w.mass(id);
-  const check = w.roll((rng) => attributeCheck(rng, w.special(c.actor).ST, -Math.floor(mass / 25)), c.cause);
+  const check = w.roll(
+    (rng) => attributeCheck(rng, w.special(c.actor).ST, -Math.floor(mass / 25), w.special(c.actor).LK),
+    c.cause,
+  );
   w.emit("checked", { actor: c.actor, targets: [id], payload: { attribute: "ST", ...check }, cause: c.cause });
   if (!check.pass) {
     if (c.isPlayer) w.say(w.msg("push.failed", { item: w.name(id) }, id));
@@ -638,7 +644,10 @@ function steal(c: Ctx, req: ActionRequest): ActionResult {
   if (!pass) {
     // Steal vs 10×PE of the target, −1 per kg of the item (§5.4).
     const skill = w.skill(c.actor, "steal") - Math.round(w.mass(item));
-    const result = w.roll((rng) => opposedCheck(rng, skill, perceptionDefence(w.special(from))), c.cause);
+    const result = w.roll(
+      (rng) => opposedCheck(rng, skill, perceptionDefence(w.special(from)), "normal", 0, w.special(c.actor).LK),
+      c.cause,
+    );
     w.emit("checked", {
       actor: c.actor,
       targets: [from, item],

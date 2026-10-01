@@ -47,6 +47,7 @@ export function resolveCheck(w: World, spec: CheckSpec, ctx: EvalContext, cause:
   const who = w.resolve(spec.who ?? "player", ctx);
   const tier = spec.tier ?? "normal";
   const mod = spec.modifier ?? 0;
+  const LK = w.special(who).LK;
   let result: CheckResult;
   let label: string;
   if (spec.skill) {
@@ -58,14 +59,14 @@ export function resolveCheck(w: World, spec: CheckSpec, ctx: EvalContext, cause:
         spec.skill === "speech" || spec.skill === "barter"
           ? speechDefence(w.special(opp), w.relationship(opp, who).trust)
           : perceptionDefence(w.special(opp));
-      result = w.roll((rng) => opposedCheck(rng, skill, defence, tier, mod), cause);
+      result = w.roll((rng) => opposedCheck(rng, skill, defence, tier, mod, LK), cause);
     } else {
-      result = w.roll((rng) => skillCheck(rng, skill, tier, mod), cause);
+      result = w.roll((rng) => skillCheck(rng, skill, tier, mod, LK), cause);
     }
   } else {
     const attr = spec.attribute ?? "LK";
     label = attr;
-    result = w.roll((rng) => attributeCheck(rng, w.special(who)[attr], mod), cause);
+    result = w.roll((rng) => attributeCheck(rng, w.special(who)[attr], mod, LK), cause);
   }
   w.emit("checked", {
     actor: who,

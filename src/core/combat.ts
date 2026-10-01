@@ -11,7 +11,7 @@ import {
   throwVelocity,
   UNARMED,
 } from "../mechanics/combat-math.js";
-import { armourClass, criticalChance, meleeDamageBonus, sequence } from "../mechanics/special.js";
+import { armourClass, criticalChance, luckNudge, meleeDamageBonus, sequence } from "../mechanics/special.js";
 import type { Exit, Weapon } from "../payload/schema.js";
 import { perform } from "./actions.js";
 import { exitLabel } from "./describe.js";
@@ -196,7 +196,8 @@ function strike(w: World, attacker: string, target: string, thrownItem: string |
   const ts = w.special(target);
   const armourId = w.char(target).equipment.armour;
   const armour = armourId ? w.thing(armourId)?.armour : undefined;
-  const chance = hitChance(w.skill(attacker, weapon.skill), armourClass(ts, armour?.ac ?? 0), weapon, as.ST, aimed);
+  const ac = armourClass(ts, armour?.ac ?? 0);
+  const chance = hitChance(w.skill(attacker, weapon.skill), ac, weapon, as.ST, aimed, luckNudge(as.LK));
   const { roll, dmgRoll } = w.roll(
     (rng) => ({ roll: rng.die(100), dmgRoll: rng.int(weapon.damage[0], weapon.damage[1]) }),
     COMBAT,
