@@ -17,8 +17,12 @@ The engine splits the world in two:
   properties (mass, velocity, open, locked…). The player, objects and characters all act through one shared set of actions,
   and objects and characters run scripted behaviours.
 - **Construct.** Characters are objects with goals, intents, relationships and SPECIAL attributes. In **multiple-choice
-  conversations** an LLM voices them, steered by their high-level and conversation-specific goals. What they say can be as
+  conversations** an LLM voices them, steered by their high-level and conversation-specific goals. They can act mid-conversation:
+  walk off, hand something over, throw a punch. What they say can be as
   hyperreal or magically real as the story wants. It only becomes world state through **hooks** the author declares.
+- **Set pieces.** For big scenes, the author gives the player a loose objective and an LLM **director** orchestrates the cast.
+- **Days are chapters.** When the player sleeps, each character's day is summarised in their own perspective and carried forward.
+- **SPECIAL** is the only RPG system. Combat, stealing, persuasion, fatigue and progression all run on SPECIAL-derived numbers and seeded rolls.
 
 Stories are **authored by the user**: plot, characters, relationships and tensions, and trigger points. A coding agent turns
 that brief into a **game payload**, which is YAML/JSON validated against a published schema. The payload holds all the flavour text,
@@ -41,9 +45,10 @@ The implementation baseline is in [`docs/spec/`](docs/spec/index.html):
 2. [Design pillars](docs/spec/02-pillars.html)
 3. [Engine architecture](docs/spec/03-architecture.html)
 4. [World model](docs/spec/04-world-model.html)
-5. [Conversation & LLM](docs/spec/05-llm-layer.html)
-6. [Game payload](docs/spec/06-game-payload.html)
-7. [Open questions](docs/spec/07-open-questions.html)
+5. [Mechanics: SPECIAL](docs/spec/05-mechanics.html)
+6. [LLM layer](docs/spec/06-llm-layer.html)
+7. [Game payload](docs/spec/07-game-payload.html)
+8. [Open questions](docs/spec/08-open-questions.html)
 
 ## Status
 

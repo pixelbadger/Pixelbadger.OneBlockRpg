@@ -12,10 +12,11 @@ backend. The LLM layer sits behind a **pluggable provider interface** so that ot
 
 - Implementation baseline: [`README.md`](README.md) and the specification in [`docs/spec/`](docs/spec/index.html).
 - Core rule: **a simple simulation grounds the world; LLM-driven characters construct its social reality.**
-  The LLM runs only in conversations and payload-declared callouts. It never mutates world state
-  directly. It reaches state only through hooks declared in the game payload, which the engine validates and applies.
+  The LLM runs only in conversations, set pieces (director), payload-declared callouts and nightly day summaries. It never mutates world state
+  directly. It reaches state only through payload-declared hooks and shared-vocabulary actions, which the engine validates and applies.
+- **SPECIAL is the only RPG system.** Any mechanical requirement is expressed in SPECIAL terms ([`docs/spec/05-mechanics.html`](docs/spec/05-mechanics.html)).
 - Stories are **user-authored** and delivered as a **game payload** (YAML/JSON plus schema, no code) that a coding
-  agent builds from the user's story brief. See [`docs/spec/06-game-payload.html`](docs/spec/06-game-payload.html).
+  agent builds from the user's story brief. See [`docs/spec/07-game-payload.html`](docs/spec/07-game-payload.html).
 
 # Version control: Jujutsu (jj)
 

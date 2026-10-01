@@ -10,21 +10,22 @@
 <nav class="top">
   <a href="index.html" aria-current="page">Overview</a>
   <a href="01-concept.html">1 · Concept</a>
-  <a href="02-pillars.html">2 · Design pillars</a>
+  <a href="02-pillars.html">2 · Pillars</a>
   <a href="03-architecture.html">3 · Architecture</a>
   <a href="04-world-model.html">4 · World model</a>
-  <a href="05-llm-layer.html">5 · Conversation &amp; LLM</a>
-  <a href="06-game-payload.html">6 · Game payload</a>
-  <a href="07-open-questions.html">7 · Open questions</a>
+  <a href="05-mechanics.html">5 · Mechanics</a>
+  <a href="06-llm-layer.html">6 · LLM layer</a>
+  <a href="07-game-payload.html">7 · Game payload</a>
+  <a href="08-open-questions.html">8 · Open questions</a>
 </nav>
 <main>
 <h1>One Block CRPG: Specification</h1>
-<p class="subtitle">Implementation baseline for Pixelbadger.OneBlockRpg · Draft 0.2 · 2026-10-01</p>
+<p class="subtitle">Implementation baseline for Pixelbadger.OneBlockRpg · Draft 0.3 · 2026-10-01</p>
 
 <div class="note">
-<p><strong>Status: draft for discussion.</strong> Draft 0.2 adopts a simple simulation, conversation-only LLM use and
-user-authored stories delivered as a game payload. Anything marked <span class="tag">open</span> needs a decision before implementation. The complete list
-is in <a href="07-open-questions.html">§7</a>.</p>
+<p><strong>Status: draft for discussion.</strong> Draft 0.3 adds SPECIAL mechanics (combat, fatigue, progression), day-based memory,
+director-run set pieces and character actions in conversation. This is on top of 0.2's simple simulation, conversation-centred LLM use and user-authored game payloads. Anything marked <span class="tag">open</span> needs a decision before implementation. The complete list
+is in <a href="08-open-questions.html">§8</a>.</p>
 </div>
 
 <h2>What we are building</h2>
@@ -32,7 +33,7 @@ is in <a href="07-open-questions.html">§7</a>.</p>
 <em>one city block</em> RPG ideal. The game world is a single city block of descriptive rooms, holding objects with simple
 simulable properties. Everything, including the player and characters, acts through one shared set of actions. Characters are objects with goals,
 intents, relationships and SPECIAL attributes. Their routines are scripted. Their <strong>voices are LLM-driven</strong>, in multiple-choice conversations
-steered by their goals. The <strong>story is supplied by the user</strong> (plot, characters, tensions, trigger points) and built into a
+steered by their goals, and they can act mid-conversation. An LLM <strong>director</strong> runs declared set pieces. Each in-game day is a chapter, summarised per character when the player sleeps. The <strong>story is supplied by the user</strong> (plot, characters, tensions, trigger points) and built into a
 <strong>game payload</strong> by a coding agent. Claude, accessed through a Claude subscription, is the default model backend, behind a pluggable provider interface.</p>
 
 <h2>The one-sentence architecture</h2>
@@ -46,10 +47,11 @@ through hooks the author declares.</p></blockquote>
 <tr><td>1</td><td><a href="01-concept.html">Concept &amp; research</a></td><td>What is the one block RPG, where does it come from, who has attempted it, and why LLMs change the equation.</td></tr>
 <tr><td>2</td><td><a href="02-pillars.html">Design pillars</a></td><td>The premise (ground and construct) and the principles every feature is tested against.</td></tr>
 <tr><td>3</td><td><a href="03-architecture.html">Engine architecture</a></td><td>Layers, the exploration and conversation loops, persistence, determinism and testing.</td></tr>
-<tr><td>4</td><td><a href="04-world-model.html">World model</a></td><td>Rooms, objects and properties, actions, behaviours, characters, SPECIAL, beliefs and time.</td></tr>
-<tr><td>5</td><td><a href="05-llm-layer.html">Conversation &amp; LLM</a></td><td>Conversation specs, the character turn, hooks, scripted callouts and the provider interface.</td></tr>
-<tr><td>6</td><td><a href="06-game-payload.html">Game payload</a></td><td>From story brief to loadable game: layout, the condition/effect language, triggers and validation.</td></tr>
-<tr><td>7</td><td><a href="07-open-questions.html">Open questions</a></td><td>Decisions needed before and during implementation.</td></tr>
+<tr><td>4</td><td><a href="04-world-model.html">World model</a></td><td>Rooms, objects and properties, actions, behaviours, characters, beliefs and time.</td></tr>
+<tr><td>5</td><td><a href="05-mechanics.html">Mechanics: SPECIAL</a></td><td>Attributes, derived stats, skills, checks, combat, items, fatigue and sleep, progression.</td></tr>
+<tr><td>6</td><td><a href="06-llm-layer.html">LLM layer</a></td><td>Conversations, in-conversation actions, hooks, set pieces and the director, callouts, day-based memory, providers.</td></tr>
+<tr><td>7</td><td><a href="07-game-payload.html">Game payload</a></td><td>From story brief to loadable game: layout, the condition/effect language, triggers, set pieces and validation.</td></tr>
+<tr><td>8</td><td><a href="08-open-questions.html">Open questions</a></td><td>Decisions needed before and during implementation.</td></tr>
 </tbody>
 </table>
 

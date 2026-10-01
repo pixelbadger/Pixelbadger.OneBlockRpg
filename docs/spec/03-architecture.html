@@ -10,102 +10,109 @@
 <nav class="top">
   <a href="index.html">Overview</a>
   <a href="01-concept.html">1 · Concept</a>
-  <a href="02-pillars.html">2 · Design pillars</a>
+  <a href="02-pillars.html">2 · Pillars</a>
   <a href="03-architecture.html" aria-current="page">3 · Architecture</a>
   <a href="04-world-model.html">4 · World model</a>
-  <a href="05-llm-layer.html">5 · Conversation &amp; LLM</a>
-  <a href="06-game-payload.html">6 · Game payload</a>
-  <a href="07-open-questions.html">7 · Open questions</a>
+  <a href="05-mechanics.html">5 · Mechanics</a>
+  <a href="06-llm-layer.html">6 · LLM layer</a>
+  <a href="07-game-payload.html">7 · Game payload</a>
+  <a href="08-open-questions.html">8 · Open questions</a>
 </nav>
 <main>
 <h1>3 · Engine architecture</h1>
-<p class="subtitle">Layers, the two loops (exploration and conversation), persistence and testing.</p>
+<p class="subtitle">Layers, the game's loops (exploration, conversation, combat, set piece, day), persistence and testing.</p>
 
 <h2>3.1 Layers</h2>
 <pre><code>┌──────────────────────────────────────────────────────────┐
 │ Frontend          CLI first · web later                  │
 ├──────────────────────────────────────────────────────────┤
-│ Session           turn loop · conversation loop ·        │
-│                   save/load · replay                     │
+│ Session           loops · save/load · replay             │
 ├────────────────────────────────┬─────────────────────────┤
-│ Engine core (no LLM)           │ Conversation system     │
-│  World state (§4)              │  Context builder        │
-│  Action system                 │  Option merger          │
-│  Behaviour runner              │  Hook executor ─────────┼──▶ core
-│  Trigger engine                │  Scripted callouts      │
-│  Clock · event log · PRNG      │                         │
+│ Engine core (no LLM)           │ Narrative system (LLM)  │
+│  World state (§4)              │  Conversations          │
+│  Actions · checks (§5)         │  Set-piece director     │
+│  Combat (§5.6)                 │  Scripted callouts      │
+│  Behaviour runner              │  Day summariser         │
+│  Trigger engine                │  Context builder        │
+│  Clock · fatigue · day cycle   │  Action/hook executor ──┼──▶ core
+│  Event log · PRNG              │                         │
 ├────────────────────────────────┴─────────────────────────┤
-│ Payload loader &amp; validator (§6)                          │
+│ Payload loader &amp; validator (§7)                          │
 ├──────────────────────────────────────────────────────────┤
-│ LLM provider interface (§5)                              │
-│  claude-subscription · anthropic-api · scripted · replay │
+│ LLM provider interface (§6.9)                            │
 └──────────────────────────────────────────────────────────┘</code></pre>
-<p>Dependency rule: the <strong>engine core has no dependency on the LLM layer</strong>. The entire non-conversation
-game is plain, deterministic TypeScript. The conversation system depends on both. It only changes world state through the
-hook executor, which calls ordinary core actions and effects.</p>
+<p>Dependency rule: the <strong>engine core has no dependency on the LLM layer</strong>. Exploration and combat are plain, deterministic TypeScript.
+The narrative system only changes the world through the action/hook executor, which calls ordinary core actions and effects.</p>
 
 <h2>3.2 Exploration loop (one turn)</h2>
 <ol>
-  <li><strong>Input.</strong> The player enters a command. <span class="tag">open</span> Q19: a classic verb–noun parser over the shared action vocabulary,
-      a menu of available actions, or both.</li>
-  <li><strong>Resolve.</strong> The command becomes an <code>Action</code>. Preconditions are checked (location, possession, open or locked,
-      properties, SPECIAL/skill checks with seeded rolls). Effects are applied as events.</li>
-  <li><strong>Advance time.</strong> The clock moves by the action's cost, scaled by Agility.</li>
-  <li><strong>Behaviours.</strong> Every object and character with scripted behaviours gets its tick. Behaviours act through the same
-      action vocabulary, so a character can walk to the shop, and a clock can chime.</li>
-  <li><strong>Triggers.</strong> Story triggers are evaluated against the new state. Matching triggers fire their effects, which can include starting a conversation
-      or a scripted callout.</li>
-  <li><strong>Render.</strong> The authored text for what happened and what is perceivable is selected and composed. State-conditioned variants are
-      chosen by condition, and SPECIAL Perception can reveal extra detail.</li>
-  <li><strong>Persist.</strong> Events are appended, with periodic snapshots.</li>
+  <li><strong>Input.</strong> The player enters a command. <span class="tag">open</span> Q19: a parser, an action menu, or both.</li>
+  <li><strong>Resolve.</strong> The command becomes an <code>Action</code>. Preconditions and checks are resolved (§5.4), and effects applied as events.</li>
+  <li><strong>Advance time</strong> by the action's cost, scaled by AP (§5.5). Fatigue accrues.</li>
+  <li><strong>Behaviours</strong> tick for every scripted object and character, acting through the same action vocabulary.</li>
+  <li><strong>Triggers</strong> are evaluated. They may start a conversation, a set piece or a callout.</li>
+  <li><strong>Render</strong> the authored text for what happened and what is perceivable.</li>
+  <li><strong>Persist</strong> events.</li>
 </ol>
 
 <h2>3.3 Conversation loop</h2>
-<p>A conversation starts from the player (<code>talk to X</code>), from a trigger, or from a character behaviour that seeks out the player.</p>
 <ol>
-  <li><strong>Build context.</strong> Assemble the character's persona, SPECIAL, high-level goals, this conversation's goals, relationship
-      to the player, relevant beliefs and memories, the story synopsis, the available hooks, and the transcript so far.</li>
-  <li><strong>Character turn (LLM).</strong> Returns the character's line, any hook invocations, and suggested player options (§5.3).</li>
-  <li><strong>Apply hooks.</strong> Guards are validated and core effects applied. Rejections are fed back to the next call.</li>
-  <li><strong>Merge options.</strong> Authored options whose conditions hold, including SPECIAL gates such as <code>[CH 7]</code>, are merged with LLM options.
-      The result is deduplicated and capped.</li>
-  <li><strong>Player chooses.</strong> Authored options may carry their own effects or skill checks, which the engine resolves deterministically.</li>
-  <li><strong>Loop or end.</strong> The conversation continues until an end condition, a goal resolution, an exit option or a hook ends it. On end, the transcript
-      is summarised into both parties' memories. Time advances by the conversation's length.</li>
+  <li><strong>Build context</strong> (§6.3), including the character's previous day summaries and today's log.</li>
+  <li><strong>Character turn (LLM)</strong>: line, actions, hooks and suggested options.</li>
+  <li><strong>Resolve</strong> actions (§6.6) and hooks (§6.4). An <code>attack</code> suspends the conversation and enters combat (3.4).</li>
+  <li><strong>Merge options</strong>: authored options whose conditions hold, plus LLM options. Options may carry actions or checks.</li>
+  <li><strong>Player chooses</strong>. Attached actions and checks are resolved by the engine.</li>
+  <li><strong>Loop or end</strong>. The transcript goes into both parties' day logs. Time advances by the conversation's length plus action time.</li>
 </ol>
-<p>Time is paused for everything else during a conversation. <span class="tag">open</span> Q21: can other characters join or overhear?</p>
+<p>The rest of the world pauses during a conversation. <span class="tag">open</span> Q21: overhearing and joining.</p>
 
-<h2>3.4 State &amp; persistence</h2>
+<h2>3.4 Combat loop</h2>
+<p>Entered from any loop when an attack resolves (§5.6). Each round, combatants act in Sequence order and spend AP. NPCs act from their scripted combat profiles,
+or from the director inside a set piece. Combat ends when one side is down, has fled or has surrendered. Control then returns to the loop that started it,
+with combat time added to the clock. No LLM calls are made per round outside set pieces.</p>
+
+<h2>3.5 Set-piece loop</h2>
+<p>Started by a trigger (§6.7). The exploration loop continues for the player, with the objective shown. After each player turn, the director takes one turn:
+cast actions, effects, hooks, narration and beat progress, all validated. Conversations and combat nest inside it. When the end condition holds, outcomes apply
+and a summary goes into participants' day logs.</p>
+
+<h2>3.6 Day cycle</h2>
+<ol>
+  <li>Fatigue accrues with time awake (§5.8). The player must sleep at least once per day, or collapse.</li>
+  <li><strong>The player sleeps → day boundary.</strong> Every character with activity that day gets a day-summary call (§6.8). These calls are independent and can run in parallel.</li>
+  <li>The clock advances by the sleep duration. Off-screen NPC behaviours run cheaply over the skipped hours, and healing applies. Triggers may interrupt sleep.</li>
+  <li>The day logs are closed. The player wakes, optionally to their journal.</li>
+</ol>
+
+<h2>3.7 State &amp; persistence</h2>
 <ul>
-  <li><strong>Event-sourced.</strong> The authoritative record is an append-only event log. Current state is a fold over it, with snapshots.</li>
-  <li><strong>Save file</strong> = payload id and version + seed + snapshot + event tail + LLM exchange log. <span class="tag">open</span> Q12: JSON files or SQLite.</li>
-  <li>State is plain serialisable data. The payload is immutable at runtime, and state holds only what changed from the payload's initial state.</li>
+  <li><strong>Event-sourced.</strong> An append-only event log, with snapshots. The current state is a fold over it.</li>
+  <li><strong>Save file</strong> = payload id and version + seed + snapshot + event tail + day summaries + LLM exchange log. <span class="tag">open</span> Q12: JSON files or SQLite.</li>
+  <li>The payload is immutable at runtime. State holds only what has changed from it.</li>
 </ul>
 
-<h2>3.5 Determinism</h2>
+<h2>3.8 Determinism</h2>
 <ul>
-  <li>All randomness comes from a seeded PRNG carried in state. <code>Math.random</code> and wall-clock time are banned in the core.</li>
-  <li>LLM calls are recorded as <code>(role, request hash, response)</code> cassettes. Replay serves them back.</li>
-  <li>Outside conversations and callouts there are no LLM calls, so most of a playthrough is deterministic without any recording.</li>
+  <li>All randomness comes from a seeded PRNG in state, including every check and combat roll. <code>Math.random</code> and wall-clock time are banned in the core.</li>
+  <li>LLM calls are recorded as <code>(purpose, request hash, response)</code> cassettes, and replay serves them back.</li>
 </ul>
 
-<h2>3.6 Testing strategy</h2>
+<h2>3.9 Testing strategy</h2>
 <table>
 <thead><tr><th>Level</th><th>What</th><th>Model?</th></tr></thead>
 <tbody>
-<tr><td>Unit</td><td>Actions, properties, behaviours, triggers, condition/effect language, hook guards</td><td>No</td></tr>
-<tr><td>Payload validation</td><td>Schema + referential integrity + reachability (every room reachable, every trigger satisfiable)</td><td>No</td></tr>
-<tr><td>Playthrough</td><td>Scripted command and choice sequences against a fixture payload, asserting on state and output</td><td>Scripted provider</td></tr>
-<tr><td>Replay</td><td>Recorded real sessions replayed to catch regressions</td><td>Cassettes</td></tr>
-<tr><td>Eval</td><td>Conversation quality, goal adherence, hook appropriateness</td><td>Live, opt-in</td></tr>
+<tr><td>Unit</td><td>SPECIAL formulas, checks, combat maths, actions, behaviours, triggers, the condition/effect language, hook guards</td><td>No</td></tr>
+<tr><td>Payload validation</td><td>Schema, references, playability lint</td><td>No</td></tr>
+<tr><td>Playthrough</td><td>Scripted command and choice sequences against a fixture payload</td><td>Scripted provider</td></tr>
+<tr><td>Replay</td><td>Recorded sessions as regression tests</td><td>Cassettes</td></tr>
+<tr><td>Eval</td><td>Conversation quality, goal adherence, action/hook appropriateness, director pacing, summary fidelity</td><td>Live, opt-in</td></tr>
 </tbody>
 </table>
 
-<h2>3.7 Proposed tooling</h2>
+<h2>3.10 Proposed tooling</h2>
 <p><span class="tag">open</span> Q13: Node 22+, TypeScript strict and ESM, <code>npm</code>, <code>vitest</code>, <code>zod</code>
-(one source for runtime validation, generated JSON Schema for the payload, and LLM structured output), and <code>biome</code>.
-A single package with <code>src/{core,conversation,llm,payload,session,cli}</code>, plus a CLI with
-<code>validate</code>, <code>play</code> and <code>replay</code> commands.</p>
+(runtime validation, a generated JSON Schema for payloads, and LLM structured output), and <code>biome</code>.
+A single package with <code>src/{core,mechanics,narrative,llm,payload,session,cli}</code>, plus a CLI with <code>validate</code>, <code>play</code> and <code>replay</code>.</p>
 
 <footer>§3 of the One Block CRPG specification</footer>
 </main>
