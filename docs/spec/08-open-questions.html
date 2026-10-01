@@ -25,8 +25,8 @@
 <table>
 <thead><tr><th>#</th><th>Question</th><th>Suggested starting point</th></tr></thead>
 <tbody>
-<tr><td>Q22</td><td>The first example story, which serves as the test fixture and the authoring guide's worked example. (§7.9)</td><td>Need your brief.</td></tr>
 <tr><td>Q30</td><td>Do the Claude subscription terms allow the <code>claude-subscription</code> provider's use from a personal app? (§6.9)</td><td>Confirm before release. <code>anthropic-api</code> is the fallback.</td></tr>
+<tr><td>Q31</td><td>Player-only perception: how does a character or object exist only for the player? This is for apparitions such as The Pier's ghosts. Other characters must not see them, react to them or record them in their day logs. (§4, §6.8)</td><td>A <code>perceivedBy: player</code> field on characters and objects. The engine excludes such entities from NPC perception, witnessed events and day logs.</td></tr>
 </tbody>
 </table>
 
@@ -55,6 +55,7 @@
 <tr><td>Q19</td><td>Exploration input</td><td>Both a verb–noun parser and an action menu (§3.2).</td></tr>
 <tr><td>Q20</td><td>Free-text conversation option</td><td>No for v1 (§6.3).</td></tr>
 <tr><td>Q21</td><td>Joining or overhearing conversations</td><td>Overhear only. Others in the room get the transcript in their day log but can't take part (§3.3).</td></tr>
+<tr><td>Q22</td><td>First example story</td><td><strong>The Pier</strong>: a present-day ghost story on a Victorian pier, with silent apparitions, madness as flags plus SPECIAL modifiers, and a discovery-paced inevitable ending with a deadline (<a href="../../examples/the-pier/brief.md">brief</a>, §7.9).</td></tr>
 <tr><td>Q23</td><td>Conversation memory</td><td>Day-based. A raw day log during the day, a per-character summary when the player sleeps, and all previous summaries put at the front of later calls (§6.8).</td></tr>
 <tr><td>Q24</td><td>Ranged fire into adjacent rooms</td><td>No for v1: same room only (§5.6).</td></tr>
 <tr><td>Q25</td><td>Perks and traits</td><td>Deferred past v1 (§5.9).</td></tr>
