@@ -1,0 +1,195 @@
+/**
+ * Engine message templates. Flavour text belongs to the payload (P5); these are the generic action results the engine
+ * needs when the author has not supplied one. Every key can be overridden in game.yaml `messages`, and per object in
+ * the object's `messages` (keyed by the short form, e.g. `take` for `take.ok`).
+ *
+ * `.npc` variants are what the player sees when someone else does it in the same room.
+ */
+export const MESSAGES: Record<string, string> = {
+  // general
+  "not-here": "You don't see that here.",
+  "not-held": "You aren't holding {{item}}.",
+  "cannot-reach": "You can't reach {{item}} from here.",
+  "nothing-happens": "Nothing happens.",
+  "busy-asleep": "You are asleep.",
+  "too-tired": "You can barely keep your eyes open.",
+  // go
+  "go.ok": "You go {{dir}}.",
+  "go.ok-to": "You go to {{room}}.",
+  "go.npc-leave": "{{Actor}} leaves {{dir}}.",
+  "go.npc-leave-to": "{{Actor}} leaves for {{room}}.",
+  "go.npc-arrive": "{{Actor}} arrives.",
+  "go.no-exit": "You can't go that way.",
+  "go.closed": "You can't go that way right now.",
+  "go.door-locked": "{{Door}} is locked.",
+  "go.door-opened": "You open {{door}}.",
+  // take / drop / put
+  "take.ok": "You take {{item}}.",
+  "take.npc": "{{Actor}} takes {{item}}.",
+  "take.fixed": "You can't take {{item}}.",
+  "take.already": "You already have {{item}}.",
+  "take.too-heavy": "{{Item}} is too heavy: you can carry {{capacity}} kg and already have {{carried}} kg.",
+  "take.consent": "{{Holder}} won't just let you take that.",
+  "take.closed": "{{Container}} is closed.",
+  "drop.ok": "You drop {{item}}.",
+  "drop.npc": "{{Actor}} drops {{item}}.",
+  "put.ok": "You put {{item}} in {{container}}.",
+  "put.npc": "{{Actor}} puts {{item}} in {{container}}.",
+  "put.not-container": "You can't put things in {{container}}.",
+  "put.closed": "{{Container}} is closed.",
+  "put.self": "You can't put something inside itself.",
+  "put.full": "{{Container}} won't hold that much.",
+  // open / close / lock
+  "open.ok": "You open {{item}}.",
+  "open.npc": "{{Actor}} opens {{item}}.",
+  "open.cannot": "You can't open {{item}}.",
+  "open.already": "{{Item}} is already open.",
+  "open.locked": "{{Item}} is locked.",
+  "open.contents": "Inside: {{contents}}.",
+  "close.ok": "You close {{item}}.",
+  "close.npc": "{{Actor}} closes {{item}}.",
+  "close.cannot": "You can't close {{item}}.",
+  "close.already": "{{Item}} is already closed.",
+  "lock.ok": "You lock {{item}}.",
+  "lock.npc": "{{Actor}} locks {{item}}.",
+  "lock.cannot": "{{Item}} has no lock.",
+  "lock.already": "{{Item}} is already locked.",
+  "lock.no-key": "You don't have the key.",
+  "lock.open": "You need to close {{item}} first.",
+  "unlock.ok": "You unlock {{item}}.",
+  "unlock.npc": "{{Actor}} unlocks {{item}}.",
+  "unlock.already": "{{Item}} isn't locked.",
+  "unlock.picked": "You work the lock with {{tool}}. It gives.",
+  "unlock.pick-failed": "You work the lock with {{tool}}, but it won't give.",
+  // use
+  "use.nothing": "You can't think how to use {{item}}{{onText}}.",
+  "use.npc": "{{Actor}} uses {{item}}.",
+  "consume.ok": "You use {{item}}.",
+  "consume.npc": "{{Actor}} uses {{item}}.",
+  // throw / push
+  "throw.ok": "You throw {{item}}.",
+  "throw.npc": "{{Actor}} throws {{item}}.",
+  "throw.at": "You throw {{item}} at {{target}}.",
+  "throw.at-npc": "{{Actor}} throws {{item}} at {{target}}.",
+  "throw.too-heavy": "{{Item}} is far too heavy to throw.",
+  "throw.miss": "It misses and lands on the floor.",
+  "throw.hit": "It hits {{target}}.",
+  "break.ok": "{{Item}} breaks.",
+  "push.ok": "You push {{item}}.",
+  "push.npc": "{{Actor}} pushes {{item}}.",
+  "push.moved": "You push {{item}} {{dir}}.",
+  "push.cannot": "{{Item}} won't budge that way.",
+  "push.failed": "You strain against {{item}}, but it won't move.",
+  "push.fixed": "You can't push {{item}}.",
+  // give / show / steal / trade
+  "give.ok": "You give {{item}} to {{target}}.",
+  "give.npc": "{{Actor}} gives {{item}} to {{target}}.",
+  "give.not-char": "You can only give things to people.",
+  "give.cannot-carry": "{{Target}} can't carry that.",
+  "show.ok": "You show {{item}} to {{target}}.",
+  "show.npc": "{{Actor}} shows {{item}} to {{target}}.",
+  "steal.ok": "You lift {{item}} from {{target}} without being noticed.",
+  "steal.caught": "{{Target}} catches you reaching for {{item}}!",
+  "steal.npc-caught": "You catch {{Actor}} reaching for {{item}}!",
+  "steal.npc-unseen": "",
+  "steal.not-held": "{{Target}} doesn't have that.",
+  "buy.ok": "You buy {{item}} from {{target}} for {{price}}.",
+  "buy.poor": "{{Item}} costs {{price}}; you have {{money}}.",
+  "buy.not-merchant": "{{Target}} isn't selling anything.",
+  "buy.not-for-sale": "{{Target}} doesn't have that.",
+  "sell.ok": "You sell {{item}} to {{target}} for {{price}}.",
+  "sell.poor": "{{Target}} can't afford it.",
+  "sell.not-merchant": "{{Target}} isn't buying.",
+  price: "{{Target}} would sell {{item}} for {{price}}.",
+  // equipment
+  "equip.ok": "You ready {{item}}.",
+  "equip.npc": "{{Actor}} readies {{item}}.",
+  "equip.weak": "{{Item}} is heavy in your hands (it wants ST {{min}}).",
+  "equip.cannot": "You can't equip {{item}}.",
+  "unequip.ok": "You put away {{item}}.",
+  "unequip.not": "You don't have {{item}} ready.",
+  // talk
+  "talk.nothing": "{{Target}} has nothing to say to you right now.",
+  "talk.asleep": "{{Target}} is asleep.",
+  "talk.down": "{{Target}} is in no state to talk.",
+  "talk.hostile": "{{Target}} is in no mood for talking.",
+  "talk.not-char": "You can't talk to {{target}}.",
+  // wait, sleep, examine
+  "wait.ok": "Time passes.",
+  "sleep.ok": "You lie down on {{item}} and sleep.",
+  "sleep.floor": "You curl up on the floor and sleep.",
+  "sleep.npc": "{{Actor}} lies down and falls asleep.",
+  "sleep.not-tired": "You're not tired enough to sleep.",
+  "wake.ok": "You wake.",
+  "wake.npc": "{{Actor}} wakes.",
+  "collapse.player": "Your legs fold. You are asleep before you hit the ground.",
+  "collapse.npc": "{{Actor}} slumps where they stand, asleep.",
+  "examine.held-by": "{{Holder}} has it.",
+  "examine.contents": "In {{item}}: {{contents}}.",
+  "examine.empty": "{{Item}} is empty.",
+  "examine.status-down": "{{Target}} is unconscious.",
+  "examine.status-dead": "{{Target}} is dead.",
+  "examine.status-asleep": "{{Target}} is asleep.",
+  "examine.status-hurt": "{{Target}} looks hurt.",
+  "examine.wielding": "{{Target}} is holding {{item}}.",
+  "examine.self": "You are {{name}}. HP {{hp}}/{{maxHp}}.",
+  "examine.nothing": "You see nothing special about {{item}}.",
+  // room listing
+  "room.you-see": "You see {{list}} here.",
+  "room.person": "{{Actor}} is here.",
+  "room.person-intent": "{{Actor}} is here, {{intent}}.",
+  "room.person-asleep": "{{Actor}} is asleep here.",
+  "room.person-down": "{{Actor}} is lying here, unconscious.",
+  "room.person-dead": "{{Actor}}'s body is here.",
+  "room.exits": "Exits: {{list}}.",
+  "room.contents-of": "In {{container}}: {{list}}.",
+  "room.contents-on": "On {{container}}: {{list}}.",
+  "inventory.empty": "You are carrying nothing.",
+  "inventory.list": "You are carrying: {{list}}.",
+  "inventory.money": "Money: {{money}}.",
+  // combat
+  "combat.start": "Combat! {{list}}.",
+  "combat.round": "Round {{round}}.",
+  "combat.no-ap": "Not enough action points.",
+  "combat.end-win": "The fight is over.",
+  "combat.end-fled": "You get away.",
+  "combat.flee": "{{Actor}} flees {{dir}}.",
+  "combat.surrender": "{{Actor}} gives up the fight.",
+  "combat.reload": "{{Actor}} reloads {{item}}.",
+  "combat.empty": "{{Item}} is empty.",
+  "combat.no-ammo": "You have no ammunition for {{item}}.",
+  "combat.joins": "{{Actor}} joins the fight.",
+  "combat.target-gone": "{{Target}} is out of reach.",
+  "combat.player-down": "Everything goes dark.",
+  "combat.wake-robbed": "You come to, aching, in {{room}}. Your pockets are lighter.",
+  // progression and status
+  "level-up": "You reach level {{level}}. You have {{points}} skill points to spend (improve <skill>).",
+  xp: "+{{amount}} XP.",
+  "improve.ok": "{{Skill}} is now {{value}}%.",
+  "improve.none": "You have no skill points to spend.",
+  "first-aid.ok": "You patch up {{target}} (+{{amount}} HP).",
+  "first-aid.failed": "Your attempt at first aid does no good.",
+  "first-aid.used": "{{Target}} has already had first aid today.",
+  "hook.refused": "",
+  // checks
+  "check.pass": "[{{label}} {{target}}%: passed]",
+  "check.fail": "[{{label}} {{target}}%: failed]",
+};
+
+export function interpolate(template: string, vars: Record<string, string | number | undefined>): string {
+  return template.replace(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g, (_, k: string) => {
+    const v = vars[k];
+    if (v !== undefined) return String(v);
+    // Capitalised variant: {{Item}} → capitalised {{item}}.
+    const lower = k.charAt(0).toLowerCase() + k.slice(1);
+    if (lower !== k && vars[lower] !== undefined) return capitalise(String(vars[lower]));
+    return `{{${k}}}`;
+  });
+}
+
+export const capitalise = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+export function listJoin(items: readonly string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
