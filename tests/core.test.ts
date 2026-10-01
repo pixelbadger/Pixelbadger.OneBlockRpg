@@ -486,3 +486,20 @@ describe("room listings", () => {
     expect(indefinite("Edith's armchair")).toBe("Edith's armchair");
   });
 });
+
+describe("apparitions have no bodies (Q31)", () => {
+  it("never tire or collapse", () => {
+    const p = mini();
+    p.characters.push({
+      ...p.characters[1]!,
+      id: "shade",
+      name: "the shade",
+      perceived_by: "player",
+      location: "hall",
+    });
+    const w = world(p);
+    tick(w, 30 * 60);
+    expect(w.char("shade").awakeMinutes).toBe(0);
+    expect(w.char("shade").asleepUntil).toBeNull();
+  });
+});

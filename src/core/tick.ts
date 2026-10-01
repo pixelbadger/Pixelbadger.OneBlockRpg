@@ -84,7 +84,8 @@ function bodies(w: World, minutes: number): void {
   const collapseList: string[] = [];
   const healList: [string, number][] = [];
   for (const [id, s] of Object.entries(w.state.chars)) {
-    if (s.status === "dead") continue;
+    // Apparitions (Q31) have no bodies: they never tire, sleep or heal.
+    if (s.status === "dead" || !w.npcsPerceive(id)) continue;
     const asleep = s.asleepUntil !== null;
     let awake = s.awakeMinutes;
     if (asleep) awake = Math.max(0, awake - minutes * 2 * s.sleepQuality);
