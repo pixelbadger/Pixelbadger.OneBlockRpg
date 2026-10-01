@@ -160,6 +160,21 @@ function initialChar(c: Character, day: number): CharState {
   };
 }
 
+/**
+ * Brings a saved state up to a compatible newer payload (§7.8): objects and characters the save has never seen
+ * start as the payload declares them. Returns the ids added.
+ */
+export function addNewEntities(state: WorldState, p: Payload): string[] {
+  const added: string[] = [];
+  for (const o of [...p.objects, ...p.characters]) {
+    if (state.objects[o.id]) continue;
+    state.objects[o.id] = { location: o.location ?? null, props: clone(o.properties) };
+    added.push(o.id);
+  }
+  for (const c of p.characters) if (!state.chars[c.id]) state.chars[c.id] = initialChar(c, state.day);
+  return added;
+}
+
 export function initialState(p: Payload, seed: string): WorldState {
   const clock = parseClock(p.game.clock.time);
   const objects: WorldState["objects"] = {};

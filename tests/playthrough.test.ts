@@ -153,3 +153,27 @@ describe("saves and replay (§3.7, §3.8, P11)", () => {
     store.close();
   });
 });
+
+describe("compatible payload upgrades (§7.8)", () => {
+  it("adds objects a save has never seen when loading it against a compatible newer payload", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "oneblock-save-"));
+    const payload = example();
+    const store = await SaveStore.open(join(dir, "g.db"));
+    const w = World.create(payload, "upgrade");
+    store.init(payload, w, "scripted");
+    store.attach(w);
+    store.flush(w);
+    const newer = {
+      ...payload,
+      game: { ...payload.game, version: "0.2.0", compatible_with: [payload.game.version] },
+      objects: [
+        ...payload.objects,
+        { ...payload.objects.find((o) => o.id === "kettle")!, id: "toaster", name: "toaster", location: "flat-2b" },
+      ],
+    };
+    const loaded = store.load(newer);
+    expect(loaded.locationOf("toaster")).toBe("flat-2b");
+    expect(loaded.locationOf("kettle")).toBe("flat-2b");
+    store.close();
+  });
+});
