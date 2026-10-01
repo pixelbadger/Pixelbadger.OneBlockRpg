@@ -41,6 +41,7 @@ export const EVENT_KINDS = [
   "downed",
   "killed",
   "fled",
+  "pursued", // actor followed a fleeing combatant (targets: [quarry, from, to]); combat moves with them
   "surrendered",
   "combat-ended",
   // conversation (§6)

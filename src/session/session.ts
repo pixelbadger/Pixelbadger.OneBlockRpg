@@ -3,7 +3,15 @@
  * driven by player intents and reporting view models through the UI port.
  */
 import { perform } from "../core/actions.js";
-import { type CombatOutcome, currentId, playerCombat, playerTargets, runCombat, weaponOf } from "../core/combat.js";
+import {
+  type CombatOutcome,
+  currentId,
+  playerCombat,
+  playerTargets,
+  pursuable,
+  runCombat,
+  weaponOf,
+} from "../core/combat.js";
 import { describeRoom } from "../core/describe.js";
 import { endGame } from "../core/effects.js";
 import { giveMoney, heal, moveThing } from "../core/mutate.js";
@@ -41,7 +49,8 @@ export const HELP = `Type commands like: look, go north (or n), take kettle, ope
 use deed on letters, give letters to dev, show deed to okafor, talk to okafor, buy bandage from ravi,
 throw mug at window, attack pike with knife, sneak (toggle), sneak north, wait 30, wait until 22:00, sleep, examine me.
 Also: inventory (i), status, journal, menu (numbered actions available right now), improve <skill> [points].
-In conversation, pick an option by number. In combat: attack <target>, use <item>, flee <direction>, end.`;
+In conversation, pick an option by number. In combat: attack <target>, use <item>, flee <direction>,
+pursue <target>, end.`;
 
 export interface SessionOptions {
   provider: LlmProvider;
@@ -168,6 +177,12 @@ export class Session {
         }
       }
       if (wpn.weapon.ammo) add("reload", AP_COST.reload, { type: "combat", intent: { kind: "reload" } });
+      for (const t of pursuable(w, w.playerId)) {
+        add(`pursue ${w.label(t.id)} ${t.direction}`, AP_COST.leave, {
+          type: "combat",
+          intent: { kind: "pursue", target: t.id },
+        });
+      }
       for (const x of w.ix.rooms.get(c.room)?.exits ?? []) {
         if (x.to && !x.blocked) {
           const dir = x.direction ?? x.label!;
@@ -235,7 +250,12 @@ export class Session {
     if (intent.type === "command") {
       const parsed =
         mode === "combat"
-          ? parseCombat(this.w, intent.text, playerTargets(this.w))
+          ? parseCombat(
+              this.w,
+              intent.text,
+              playerTargets(this.w),
+              pursuable(this.w, this.w.playerId).map((t) => t.id),
+            )
           : mode === "create"
             ? this.parseCreate(intent.text)
             : parseCommand(this.w, intent.text);

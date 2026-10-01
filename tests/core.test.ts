@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BASE_MINUTES, perform, SNEAK_TIME, UNNOTICED_STEAL_BONUS } from "../src/core/actions.js";
-import { playerCombat, runCombat } from "../src/core/combat.js";
+import { playerCombat, pursuable, runCombat } from "../src/core/combat.js";
 import { describeRoom } from "../src/core/describe.js";
 import { applyEffects } from "../src/core/effects.js";
 import { applyOps, clone } from "../src/core/ops.js";
@@ -212,7 +212,9 @@ describe("combat (§5.6)", () => {
     perform(w, "player", { act: "attack", target: "npc" }, P);
     expect(w.state.combat).not.toBeNull();
     for (let i = 0; i < 200 && w.state.combat; i++) {
-      const out = playerCombat(w, { kind: "attack", target: "npc" });
+      // If Nell runs, let her go.
+      const fled = w.state.combat.combatants.some((x) => x.id === "npc" && x.status === "fled");
+      const out = playerCombat(w, fled ? { kind: "end" } : { kind: "attack", target: "npc" });
       if (out.ended) break;
     }
     expect(w.state.combat).toBeNull();
@@ -385,5 +387,76 @@ describe("parser: sneak (§3.2)", () => {
       intent: { type: "action", action: { act: "sneak", stop: true } },
     });
     expect(parseCommand(w, "stop sneaking").ok).toBe(true);
+  });
+});
+
+describe("pursuit (§5.6)", () => {
+  /** Nell runs at the first blow; Brute (aggressive) can stand with the player. */
+  const chase = (opts: { brute?: boolean } = {}) => {
+    const p = mini();
+    p.objects.find((o) => o.id === "door")!.properties.open = true;
+    p.characters[1]!.combat_profile = { style: "coward", flee_at: 100 };
+    p.characters[1]!.essential = true;
+    if (opts.brute) {
+      p.characters.push({
+        ...p.characters[1]!,
+        id: "brute",
+        name: "Brute",
+        combat_profile: { style: "aggressive" },
+        relationships: { player: { trust: 50, affinity: 80, notes: "" } },
+      });
+    }
+    return p;
+  };
+
+  it("lets the player follow a fleeing opponent, moving the fight", () => {
+    const w = world(chase(), "chase");
+    perform(w, "player", { act: "attack", target: "npc" }, P);
+    let out = playerCombat(w, { kind: "end" });
+    expect(out.ended).toBe(false);
+    expect(w.char("npc") && w.roomOf("npc")).toBe("kitchen");
+    expect(pursuable(w, "player").map((t) => t.id)).toEqual(["npc"]);
+    out = playerCombat(w, { kind: "pursue", target: "npc" });
+    expect(w.roomOf("player")).toBe("kitchen");
+    expect(w.state.combat?.room).toBe("kitchen");
+    expect(w.state.combat?.combatants.find((x) => x.id === "npc")?.status).toBe("in");
+    expect(w.log.some((e) => e.kind === "pursued" && e.actor === "player")).toBe(true);
+  });
+
+  it("lets the escape stand if nobody follows before the order comes round", () => {
+    const w = world(chase(), "chase");
+    perform(w, "player", { act: "attack", target: "npc" }, P);
+    playerCombat(w, { kind: "end" });
+    expect(w.state.combat).not.toBeNull();
+    const out = playerCombat(w, { kind: "end" });
+    expect(out.ended).toBe(true);
+    expect(w.state.combat).toBeNull();
+    expect(w.roomOf("player")).toBe("hall");
+  });
+
+  it("has aggressive NPCs chase a fleeing player", () => {
+    const p = mini();
+    p.objects.find((o) => o.id === "door")!.properties.open = true;
+    p.characters[1]!.combat_profile = { style: "aggressive" };
+    p.characters[1]!.hostile = true;
+    const w = world(p, "hunt");
+    perform(w, "npc", { act: "attack", target: "player" }, { by: "behaviour" });
+    runCombat(w);
+    expect(w.char("player").status).toBe("ok");
+    const out = playerCombat(w, { kind: "flee", direction: "north" });
+    expect(out.ended).toBe(false);
+    expect(w.roomOf("npc")).toBe("kitchen");
+    expect(w.state.combat?.room).toBe("kitchen");
+    expect(w.state.combat?.combatants.find((x) => x.id === "player")?.status).toBe("in");
+  });
+
+  it("leaves a player's ally behind when the player gives chase, and NPC allies leave the choice to the player", () => {
+    const w = world(chase({ brute: true }), "ally");
+    perform(w, "player", { act: "attack", target: "npc" }, P);
+    playerCombat(w, { kind: "end" });
+    expect(w.roomOf("brute")).toBe("hall");
+    expect(pursuable(w, "player").map((t) => t.id)).toEqual(["npc"]);
+    playerCombat(w, { kind: "pursue", target: "npc" });
+    expect(w.state.combat?.combatants.find((x) => x.id === "brute")?.status).toBe("left");
   });
 });

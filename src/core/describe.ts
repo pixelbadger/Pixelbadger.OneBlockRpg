@@ -139,6 +139,8 @@ export function describeEvent(w: World, e: WorldEvent): string | null {
       return `${t(0)} was killed${e.actor ? ` by ${a}` : ""}.`;
     case "fled":
       return `${t(0)} fled the fight.`;
+    case "pursued":
+      return `${a} chased after ${t(0)}.`;
     case "surrendered":
       return `${t(0)} surrendered.`;
     case "slept":
@@ -174,6 +176,7 @@ export const WITNESSED = new Set([
   "downed",
   "killed",
   "fled",
+  "pursued",
   "surrendered",
   "collapsed",
   "spawned",
