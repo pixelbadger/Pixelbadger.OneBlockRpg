@@ -1,0 +1,79 @@
+# Routines (§4.5). Everyone sleeps on schedule. Working hours are 08:00–17:30 with lunch on the parade at 12:30.
+- id: gary-routine
+  rules:
+    - when: { time: "07:30" }
+      do: [ { act: go, to: compound }, { set_intent: "shouting at the generator" } ]
+    - when: { time: "09:30" }
+      do: [ { act: go, to: hotel-lobby }, { set_intent: "checking the drawings against the walls" } ]
+    - when: { time: "12:30" }
+      do: [ { act: go, to: anchor }, { set_intent: "eating a pie with his phone to his ear" } ]
+    - when: { time: "13:30" }
+      do: [ { act: go, to: compound }, { set_intent: "arguing with a delivery driver on speaker" } ]
+    - when: { time: "17:30" }
+      do: [ { act: go, to: site-office }, { set_intent: "doing the paperwork" } ]
+    - when: { time: "19:00" }
+      do: [ { act: go, to: anchor }, { set_intent: "having one pint, slowly" } ]
+    - when: { time: "21:30" }
+      do: [ { act: go, to: site-office }, { set_intent: null } ]
+    - when: { time: "22:30" }
+      do: [ { act: sleep } ]
+- id: marek-routine
+  rules:
+    - when: { time: "07:30" }
+      do: [ { act: go, to: hotel-corridor }, { set_intent: "chasing out old plaster, humming hymns" } ]
+    - when: { time: "12:30" }
+      do: [ { act: go, to: compound }, { set_intent: "eating sandwiches on an upturned bucket" } ]
+    - when: { time: "13:15" }
+      do: [ { act: go, to: hotel-corridor }, { set_intent: "chasing out old plaster, not going near Room 7" } ]
+    - when: { time: "17:30" }
+      do: [ { act: go, to: lads-room }, { set_intent: "writing a letter home" } ]
+    - when: { time: "19:30" }
+      do: [ { act: go, to: anchor }, { set_intent: "nursing a half by the window" } ]
+    - when: { time: "21:30" }
+      do: [ { act: go, to: lads-room }, { set_intent: "saying his prayers" } ]
+    - when: { time: "22:00" }
+      do: [ { act: sleep } ]
+- id: tommo-routine
+  rules:
+    - when: { time: "07:45" }
+      do: [ { act: go, to: compound }, { set_intent: "filming himself on the scaffold" } ]
+    - when: { time: "10:00" }
+      do: [ { act: go, to: hotel-lobby }, { set_intent: "knocking plaster off a wall and singing" } ]
+    - when: { time: "12:30" }
+      do: [ { act: go, to: promenade }, { set_intent: "eating chips on the railings" } ]
+    - when: { time: "13:30" }
+      do: [ { act: go, to: hotel-lobby }, { set_intent: "sweeping, badly" } ]
+    - when: { time: "17:30" }
+      do: [ { act: go, to: anchor }, { set_intent: "trying to win on the fruit machine" } ]
+    - when: { time: "23:15" }
+      do: [ { act: go, to: lads-room }, { set_intent: null } ]
+    - when: { time: "23:30" }
+      do: [ { act: sleep } ]
+- id: kez-routine
+  rules:
+    - when: { time: "11:30" }
+      do: [ { act: go, to: anchor }, { set_intent: "behind the bar, polishing glasses" } ]
+    - when: { time: "23:15" }
+      do: [ { act: go, to: anchor-flat }, { set_intent: null } ]
+    - when: { time: "23:45" }
+      do: [ { act: sleep } ]
+- id: shaun-routine
+  rules:
+    - when: { time: "09:00" }
+      do: [ { act: go, to: beach }, { set_intent: "sweeping the shingle with his metal detector" } ]
+    - when: { time: "13:00" }
+      do: [ { act: go, to: anchor }, { set_intent: "making a half last an hour at the end of the bar" } ]
+    - when: { time: "23:15" }
+      do: [ { act: go, to: anchor-flat }, { set_intent: "asleep on the sofa with the telly on" } ]
+    - when: { time: "23:30" }
+      do: [ { act: sleep, on: sofa } ]
+- id: edith-routine
+  rules:
+    - when: { time: "08:45" }
+      do: [ { set_intent: "opening up the tollhouse, a flask of tea at her elbow" } ]
+    - when: { time: "09:30" }
+      do: [ { set_intent: "behind the kiosk window, sorting leaflets nobody takes" } ]
+    - when: { time: "21:00" }
+      do: [ { set_intent: "chaining the pier gate for the night" } ]
+    - when: { time: "21:30" }
+      do: [ { act: sleep, on: armchair } ]

@@ -1,0 +1,92 @@
+# The crew. Each character has a default conversation, and stage-gated ones at higher priority (§6.2), so people
+# react to Liam's madness: jokes first, then worry, then distance (brief §Relationships).
+- id: gary-work
+  character: gary
+  goals:
+    - "Get Liam to strip the reception panelling in the lobby today; there's a bar in the compound."
+    - "Remind him he's on thin ice for lateness."
+  opening:
+    - when: { flag: panelling_off }
+      text: "Gary looks up from the drawings. 'Lobby looks better. What d'you want, a medal?'"
+    - text: "Gary looks up from the drawings. 'Doyle. Reception panelling. Today. Bar's in the compound. Why are you still here?'"
+  options:
+    - text: "What was this place like? Before."
+      once: true
+    - text: "Have you got a key for Room 7?"
+      once: true
+      effects: [ { narrate: "Gary jerks a thumb at the board by the door. 'Key board. Don't lose it, the client's precious about that room.'" } ]
+  hooks: [adjust-trust]
+  ends_when: { turns: { gte: 8 } }
+- id: gary-concerned
+  character: gary
+  priority: 1
+  when: { flag: obsession }
+  goals:
+    - "Liam has been weird all week: staring at the pier, talking to himself, turning up at odd hours. Find out if he's on something."
+    - "If he can't give you a straight answer, send him home before he hurts himself."
+  opening: "Gary takes his glasses off. 'Sit down a minute, son. You look like death.'"
+  options:
+    - text: "I'm fine. I'm just not sleeping."
+    - text: "Do you ever see people on the pier who aren't there?"
+      once: true
+      effects: [ { adjust_relationship: { who: gary, with: player, trust: -5, affinity: 5 } } ]
+  hooks: [adjust-trust, notice-he-is-changing, gary-sends-him-home]
+  ends_when: { any: [ { flag: sent_home }, { turns: { gte: 8 } } ] }
+- id: gary-distance
+  character: gary
+  priority: 2
+  when: { flag: breakdown }
+  goals:
+    - "You're frightened of Liam now and won't say so. Keep it short, keep the desk between you."
+    - "Tell him to go home and see a doctor. Do not let him back on the scaffold."
+  opening: "Gary doesn't get up. 'Go home, Liam. I mean it. I've told the agency you're off sick.'"
+  hooks: [adjust-trust]
+  ends_when: { turns: { gte: 4 } }
+- id: marek-chat
+  character: marek
+  goals:
+    - "Be kind to Liam; offer him tea from your flask."
+    - "Do not talk about Room 7 unless he asks about the hotel at night, or about singing."
+  opening:
+    - when: { flag: unease }
+      text: "Marek looks at you a long moment. 'Young man. You are not sleeping. I know this face. Here, tea.'"
+    - text: "Marek wipes his hands on a rag. 'Young man. You want tea? Is strong.'"
+  options:
+    - text: "[Take the tea]"
+      when: { holds: { who: marek, what: tea-flask } }
+      action: { act: take, item: tea-flask, from: marek }
+      effects: [ { adjust_relationship: { who: marek, with: player, trust: 5, affinity: 5 } } ]
+      once: true
+    - text: "You ever work here late?"
+      once: true
+    - text: "Do you believe in ghosts, Marek?"
+      once: true
+      effects: [ { adjust_relationship: { who: marek, with: player, trust: 10 } } ]
+  hooks: [adjust-trust, marek-tells-of-room-seven, notice-he-is-changing]
+  actions: [give, go]
+  ends_when: { turns: { gte: 10 } }
+- id: tommo-banter
+  character: tommo
+  goals:
+    - "Wind Liam up. Get him to come to the Anchor tonight."
+    - "If he mentions the pier or the glass house, tell him the school-trip ghost story as a joke."
+  opening:
+    - when: { flag: obsession }
+      text: "Tommo starts a joke and doesn't finish it. 'You look rough, mate. Like, actually rough.'"
+    - text: "Tommo points his phone at you. 'Say hello to my followers, Liam. All four of them.'"
+  options:
+    - text: "Anchor tonight?"
+    - text: "What's the story with the glass house?"
+      once: true
+  hooks: [adjust-trust, notice-he-is-changing]
+  ends_when: { turns: { gte: 8 } }
+- id: tommo-spooked
+  character: tommo
+  priority: 1
+  when: { flag: breakdown }
+  goals:
+    - "Liam frightens you now. You don't know what to say. Try a joke; it dies."
+    - "Tell him Kez has been asking after him. Don't let him walk off towards the pier at night."
+  opening: "Tommo doesn't film you. That's how you know it's bad. 'Mate. Where've you been?'"
+  hooks: [adjust-trust]
+  ends_when: { turns: { gte: 6 } }

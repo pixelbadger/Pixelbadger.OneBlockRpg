@@ -11,14 +11,14 @@ import {
   throwVelocity,
   UNARMED,
 } from "../mechanics/combat-math.js";
-import { armourClass, criticalChance, meleeDamageBonus, sequence } from "../mechanics/special.js";
+import { armourClass, criticalChance, luckNudge, meleeDamageBonus, sequence } from "../mechanics/special.js";
 import type { Exit, Weapon } from "../payload/schema.js";
 import { perform } from "./actions.js";
 import { exitLabel } from "./describe.js";
 import { interpolate } from "./messages.js";
 import { awardXp, damage, moveThing, setProp } from "./mutate.js";
 import { set } from "./ops.js";
-import type { Combatant, CombatState } from "./state.js";
+import type { Combatant, CombatState, Trail } from "./state.js";
 import type { Cause, World } from "./world.js";
 
 const COMBAT: Cause = { by: "combat" };
@@ -29,6 +29,7 @@ export type CombatIntent =
   | { kind: "equip"; item: string }
   | { kind: "reload" }
   | { kind: "flee"; direction: string }
+  | { kind: "pursue"; target: string }
   | { kind: "end" };
 
 export interface CombatOutcome {
@@ -196,7 +197,8 @@ function strike(w: World, attacker: string, target: string, thrownItem: string |
   const ts = w.special(target);
   const armourId = w.char(target).equipment.armour;
   const armour = armourId ? w.thing(armourId)?.armour : undefined;
-  const chance = hitChance(w.skill(attacker, weapon.skill), armourClass(ts, armour?.ac ?? 0), weapon, as.ST, aimed);
+  const ac = armourClass(ts, armour?.ac ?? 0);
+  const chance = hitChance(w.skill(attacker, weapon.skill), ac, weapon, as.ST, aimed, luckNudge(as.LK));
   const { roll, dmgRoll } = w.roll(
     (rng) => ({ roll: rng.die(100), dmgRoll: rng.int(weapon.damage[0], weapon.damage[1]) }),
     COMBAT,
@@ -253,9 +255,91 @@ function fleeRoom(w: World, who: string, direction?: string): boolean {
   if (c) {
     const c2 = clone(c);
     const me = combatant(c2, who);
-    if (me) me.status = "fled";
+    if (me) {
+      me.status = "fled";
+      // Each opponent may follow on their next turn, until the order comes back round to the fleer.
+      const trail: Trail = {
+        id: who,
+        from: room,
+        to: x.to!,
+        direction: exitLabel(x),
+        expires: { round: c2.round + 1, turn: c2.order.indexOf(who) },
+      };
+      c2.trails = [...(c2.trails ?? []).filter((t) => t.id !== who), trail];
+    }
     update(w, c2);
   }
+  return true;
+}
+
+// ─── Pursuit (§5.6) ──────────────────────────────────────────────────────────
+
+/** An NPC gives chase when it is aggressive or hostile, isn't itself ready to flee, and has nobody left to fight. */
+function npcWouldPursue(w: World, id: string): boolean {
+  const c = cur(w)!;
+  const s = w.char(id);
+  const profile = s.combatProfile;
+  if (profile.style !== "aggressive" && !s.hostile) return false;
+  if (opponents(w, id).length > 0) return false;
+  // Never drag the fight away from a player fighting on the same side: the player decides that.
+  const me = combatant(c, id)!;
+  if (c.combatants.some((x) => x.id === w.playerId && x.status === "in" && x.side === me.side)) return false;
+  const fleeAt = profile.flee_at ?? (profile.style === "coward" ? 60 : profile.style === "defensive" ? 20 : undefined);
+  return fleeAt === undefined || (s.hp / w.maxHp(id)) * 100 > fleeAt;
+}
+
+/** Can `id` follow the fleer on `trail` (ignoring AP)? */
+function canPursue(w: World, id: string, trail: Trail): boolean {
+  const c = cur(w)!;
+  const me = combatant(c, id);
+  const quarry = combatant(c, trail.id);
+  if (!me || !quarry || me.status !== "in" || me.side === quarry.side || quarry.status !== "fled") return false;
+  if (w.char(id).status !== "ok" || w.roomOf(id) !== c.room || trail.from !== c.room) return false;
+  if (w.roomOf(trail.id) !== trail.to) return false;
+  return id === w.playerId || npcWouldPursue(w, id);
+}
+
+/** Open trails that someone in the fight could still follow. */
+function openTrails(w: World): Trail[] {
+  const c = cur(w);
+  if (!c) return [];
+  return (c.trails ?? []).filter((t) => c.combatants.some((x) => canPursue(w, x.id, t)));
+}
+
+/** Trails `id` could follow this turn. */
+export function pursuable(w: World, id: string): Trail[] {
+  const c = cur(w);
+  return c ? (c.trails ?? []).filter((t) => canPursue(w, id, t)) : [];
+}
+
+/**
+ * `who` follows the fleer through the same exit, spending leave AP. The fight moves to the new room with the pursuer
+ * and the quarry; everyone else still in it is left behind.
+ */
+function pursue(w: World, who: string, trail: Trail): boolean {
+  const c = cur(w)!;
+  if (c.ap < AP_COST.leave || !canPursue(w, who, trail)) return false;
+  const x = passableExits(w, c.room, who).find((e) => e.to === trail.to);
+  if (!x) return false;
+  if (x.via && w.prop(x.via, "open") !== true) setProp(w, x.via, "open", true, COMBAT, who);
+  const from = c.room;
+  const vars = { Actor: w.label(who), target: w.label(trail.id), dir: trail.direction };
+  if (who === w.playerId) w.say(w.msg("combat.pursue", vars), "combat");
+  else if (w.roomOf(w.playerId) === from) w.say(w.msg("combat.pursue-npc", vars), "combat");
+  moveThing(w, who, trail.to, "moved", COMBAT, who, [from, trail.to]);
+  const c2 = clone(cur(w)!);
+  c2.ap -= AP_COST.leave;
+  c2.room = trail.to;
+  c2.trails = [];
+  for (const m of c2.combatants) {
+    if (m.id === trail.id) m.status = "in";
+    else if (m.id !== who && m.status === "in") m.status = "left";
+  }
+  combatant(c2, who)!.target = trail.id;
+  combatant(c2, trail.id)!.target = who;
+  update(w, c2);
+  w.emit("pursued", { actor: who, targets: [trail.id, from, trail.to], cause: COMBAT });
+  if (trail.id === w.playerId) w.say(w.msg("combat.pursued", vars), "combat");
   return true;
 }
 
@@ -263,13 +347,16 @@ function sideAlive(c: CombatState, side: "a" | "b") {
   return c.combatants.some((x) => x.side === side && x.status === "in");
 }
 
-/** True if the fight is over: one side is out, or the player has left it. */
+/**
+ * True if the fight is over: one side is out, or the player has left it, and no escape is still open to pursuit.
+ */
 function isOver(w: World): boolean {
   const c = cur(w);
   if (!c) return true;
+  const open = openTrails(w);
   const player = combatant(c, w.playerId);
-  if (player && player.status !== "in") return true;
-  return !sideAlive(c, "a") || !sideAlive(c, "b");
+  if (player && player.status !== "in") return !(player.status === "fled" && open.some((t) => t.id === w.playerId));
+  return (!sideAlive(c, "a") || !sideAlive(c, "b")) && open.length === 0;
 }
 
 function endCombat(w: World): CombatOutcome {
@@ -308,6 +395,11 @@ function nextTurn(w: World): void {
     const me = combatant(c, id);
     if (me?.status === "in" && w.char(id).status === "ok") break;
   }
+  if (c.trails?.length) {
+    c.trails = c.trails.filter(
+      (t) => c.round < t.expires.round || (c.round === t.expires.round && c.turn < t.expires.turn),
+    );
+  }
   c.ap = w.ap(c.order[c.turn]!);
   update(w, c);
 }
@@ -316,6 +408,8 @@ function nextTurn(w: World): void {
 function npcTurn(w: World, id: string): void {
   const s = w.char(id);
   const profile = s.combatProfile;
+  const trail = pursuable(w, id)[0];
+  if (trail && !pursue(w, id, trail)) return;
   const hpPct = (s.hp / w.maxHp(id)) * 100;
   const fleeAt = profile.flee_at ?? (profile.style === "coward" ? 60 : profile.style === "defensive" ? 20 : undefined);
   if (fleeAt !== undefined && hpPct <= fleeAt) {
@@ -454,7 +548,23 @@ export function playerCombat(w: World, intent: CombatIntent): CombatOutcome {
         w.say(w.msg("combat.no-ap"), "system");
         break;
       }
-      if (!fleeRoom(w, p, intent.direction)) w.say(w.msg("go.no-exit"), "system");
+      if (!fleeRoom(w, p, intent.direction)) {
+        w.say(w.msg("go.no-exit"), "system");
+        break;
+      }
+      return endPlayerTurn(w);
+    }
+    case "pursue": {
+      const trail = pursuable(w, p).find((t) => t.id === intent.target);
+      if (!trail) {
+        w.say(w.msg("combat.pursue-gone", { Target: w.label(intent.target) }), "system");
+        break;
+      }
+      if (c.ap < AP_COST.leave) {
+        w.say(w.msg("combat.no-ap"), "system");
+        break;
+      }
+      if (!pursue(w, p, trail)) w.say(w.msg("go.no-exit"), "system");
       break;
     }
     case "end":

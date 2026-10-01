@@ -155,30 +155,46 @@ export const TIER_MODIFIER: Record<Tier, number> = {
 export interface CheckResult {
   kind: "skill" | "attribute" | "opposed";
   roll: number;
+  /** The number to roll at or under, Luck nudge included. */
   target: number;
   pass: boolean;
   /** target − roll: positive is a pass by that much, negative a fail by that much. */
   margin: number;
+  /** The Luck nudge folded into the target (0 when neutral or not given). */
+  luck: number;
 }
 
-/** d100 ≤ skill + tier modifier. */
-export function skillCheck(rng: Rng, skill: number, tier: Tier = "normal", modifier = 0): CheckResult {
+// ─── Luck (§5.1) ──────────────────────────────────────────────────────────────
+
+/**
+ * Luck's small nudge on seeded d100 rolls (skill, opposed, hit chance): LK − 5 points on the target, so LK 5 is
+ * neutral, LK 10 is +5 and LK 1 is −4. Only the roller's Luck counts.
+ */
+export const luckNudge = (LK: number) => LK - 5;
+
+/** On d10 attribute checks a point is a 10% swing, so Luck only shows at the extremes: +1 at LK 9–10, −1 at LK 1–2. */
+export const luckNudgeD10 = (LK: number) => (LK >= 9 ? 1 : LK <= 2 ? -1 : 0);
+
+/** d100 ≤ skill + tier modifier (+ the roller's Luck nudge when `LK` is given). */
+export function skillCheck(rng: Rng, skill: number, tier: Tier = "normal", modifier = 0, LK?: number): CheckResult {
   const roll = rng.die(100);
-  const target = skill + TIER_MODIFIER[tier] + modifier;
-  return { kind: "skill", roll, target, pass: roll <= target, margin: target - roll };
+  const luck = LK === undefined ? 0 : luckNudge(LK);
+  const target = skill + TIER_MODIFIER[tier] + modifier + luck;
+  return { kind: "skill", roll, target, pass: roll <= target, margin: target - roll, luck };
 }
 
-/** d10 ≤ attribute + modifier. */
-export function attributeCheck(rng: Rng, attribute: number, modifier = 0): CheckResult {
+/** d10 ≤ attribute + modifier (+ the roller's Luck nudge when `LK` is given). */
+export function attributeCheck(rng: Rng, attribute: number, modifier = 0, LK?: number): CheckResult {
   const roll = rng.die(10);
-  const target = attribute + modifier;
-  return { kind: "attribute", roll, target, pass: roll <= target, margin: target - roll };
+  const luck = LK === undefined ? 0 : luckNudgeD10(LK);
+  const target = attribute + modifier + luck;
+  return { kind: "attribute", roll, target, pass: roll <= target, margin: target - roll, luck };
 }
 
 /**
  * Opposed check: the actor's skill against a defender value (Sneak/Steal vs 10×PE, Speech vs trust + 5×IN).
  * The spec leaves the combining rule open; we centre it so that skill = defender gives 50%:
- * chance = skill − defender + 50 + tier, clamped to 5–95.
+ * chance = skill − defender + 50 + tier (+ the actor's Luck nudge), clamped to 5–95.
  */
 export function opposedCheck(
   rng: Rng,
@@ -186,10 +202,12 @@ export function opposedCheck(
   defender: number,
   tier: Tier = "normal",
   modifier = 0,
+  LK?: number,
 ): CheckResult {
   const roll = rng.die(100);
-  const target = Math.max(5, Math.min(95, skill - defender + 50 + TIER_MODIFIER[tier] + modifier));
-  return { kind: "opposed", roll, target, pass: roll <= target, margin: target - roll };
+  const luck = LK === undefined ? 0 : luckNudge(LK);
+  const target = Math.max(5, Math.min(95, skill - defender + 50 + TIER_MODIFIER[tier] + modifier + luck));
+  return { kind: "opposed", roll, target, pass: roll <= target, margin: target - roll, luck };
 }
 
 /** Defender values for opposed checks (§5.4). */

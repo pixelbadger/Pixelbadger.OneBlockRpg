@@ -1,0 +1,143 @@
+# The couple's story, in pieces (brief §General plot). Examining each piece fires a discovery trigger in story.yaml.
+
+# ─── Piece 1: they came here on holiday (the hotel) ───
+- id: reception-panelling
+  name: reception panelling
+  aliases: [panelling, panels, reception desk, desk, reception]
+  location: hotel-lobby
+  scenery: true
+  description:
+    - when: { flag: panelling_off }
+      text: "The panelling is in a heap by the skip door. Behind where it was, a cavity in the old wall."
+    - text: "Dark varnished panelling round the old reception desk, screwed and glued and painted over. It'll need a bar."
+  properties: { mass: 80 }
+  uses:
+    - on: crowbar
+      when: { not: { flag: panelling_off } }
+      text: "You get the bar in behind the first panel and lean. It comes away with a shriek of old nails, then the next, then the next. Behind them, in a cavity in the brick, is a ledger furred with dust, and a photograph face down on top of it."
+      effects:
+        - { set_flag: panelling_off }
+        - { spawn: { object: guest-register, in: hotel-lobby } }
+        - { spawn: { object: photograph, in: hotel-lobby } }
+        - { award_xp: 25 }
+      minutes: 30
+    - on: crowbar
+      text: "There's nothing left to take off."
+- id: guest-register
+  name: guest register
+  aliases: [register, ledger, book]
+  description: "The Grand Atlantic Hotel guest register, July to September 1893. Copperplate. On the 11th of August: Mr & Mrs E. Ashdown & infant, Bath. Room 7. Under 'remarks', in another hand: Did not settle account."
+  affordances: [takeable]
+  properties: { mass: 2, value: 0 }
+- id: photograph
+  name: old photograph
+  aliases: [photograph, photo, picture]
+  description:
+    - when: { special: { PE: { gte: 7 } } }
+      text: "A couple on the pier in 1893. She holds a bundle in white lace; his hand is on her shoulder. The bundle's face is turned away from the camera, the way it is turned away in every look you have had at it. On the back: E. & C., Westcombe, Aug."
+    - text: "A sepia photograph of a couple on the pier: her in black, holding a bundle in white lace, him in a frock coat with his hand on her shoulder. On the back: E. & C., Westcombe, Aug. You have seen them before. That's the problem."
+  affordances: [takeable]
+  properties: { mass: 0.05, value: 0 }
+
+# ─── Piece 2: the stillbirth she hid (Room 7) ───
+- id: door-room-seven
+  name: door to Room 7
+  aliases: [door, room 7 door, room seven door]
+  location: hotel-corridor
+  scenery: true
+  description: "A panelled door with a brass 7, the only one on the corridor not yet taken off its hinges."
+  affordances: [openable, lockable]
+  key: room-seven-key
+  properties: { open: false, locked: true, mass: 30 }
+- id: room-seven-key
+  name: key to Room 7
+  aliases: [key, room 7 key, room seven key]
+  location: key-board
+  description: "A brass key on a wooden fob with a 7 burnt into it."
+  affordances: [takeable]
+  properties: { mass: 0.1, value: 0 }
+- id: floorboard
+  name: raised floorboard
+  aliases: [floorboard, board, floor]
+  location: room-seven
+  scenery: true
+  # Marek's tip, the lullaby (it leaves Liam kneeling beside it), or the sharpened eyes of obsession (PE 7).
+  hidden_unless: { any: [ { special: { PE: { gte: 7 } } }, { flag: marek_told }, { flag: saw_cradle } ] }
+  description: "One board by the window sits proud of the rest. It's been lifted before: there are old screw holes and new ones."
+  affordances: [container, openable]
+  properties: { open: false, mass: 2 }
+- id: claras-letter
+  name: folded letter
+  aliases: [letter, letters, paper]
+  location: floorboard
+  description: >
+    A letter, never sent. 'My dearest Lou, The child came still on the ninth of June. Edmund was at Bristol on
+    the Society's business and I could not, could not write it to him. When he came home I told him she slept.
+    I have told him she sleeps ever since. I keep her in the lace you made and nobody looks, nobody ever looks
+    at a sleeping child, Lou. He wants to take us to the sea for her health. I think I shall tell him there.
+    I think the sea will make it possible. Burn this. C.'
+  affordances: [takeable]
+  properties: { mass: 0.02, value: 0 }
+
+# ─── Piece 3: the fire (the pier archive) ───
+- id: display-board
+  name: heritage display board
+  aliases: [display, board, display board, heritage board]
+  location: pier-tollhouse
+  scenery: true
+  description: "WESTCOMBE PIER 1869–TODAY. Photographs of steamers, bathing machines, the 1910 storm. A line about the pavilion: 'Destroyed by fire in August 1893 and rebuilt the following year by public subscription.' No mention of who was inside."
+  properties: { mass: 20 }
+- id: archive-cupboard
+  name: archive cupboard
+  aliases: [cupboard, archive, cabinet]
+  location: pier-tollhouse
+  scenery: true
+  description: "A grey steel cupboard labelled ARCHIVE — ASK EDITH. Locked."
+  affordances: [container, openable, lockable]
+  key: archive-key
+  lock_tier: hard
+  properties: { open: false, locked: true, mass: 60 }
+- id: archive-key
+  name: archive key
+  aliases: [key, small key, cupboard key]
+  location: edith
+  description: "A small steel key on a loop of red wool."
+  affordances: [takeable]
+  properties: { mass: 0.02, value: 0 }
+- id: newspaper
+  name: old newspaper
+  aliases: [newspaper, paper, mercury, cutting]
+  location: archive-cupboard
+  description: >
+    The Westcombe Mercury, 14th August 1893, in a plastic sleeve. PAVILION TRAGEDY: THREE DEAD. 'Mr Edmund Ashdown,
+    a gentleman of Bath, his wife Clara, and their infant perished in the fire which destroyed the pier pavilion
+    on Saturday night. Witnesses state that Mr Ashdown was seen to break the lamps upon the floor. An attendant
+    who tried the door reports that he cried out "She is cold, she has been cold all along." The Coroner,
+    remarking on the condition of the infant's remains, has adjourned the inquest.'
+  affordances: [takeable]
+  properties: { mass: 0.1, value: 0 }
+
+# ─── Supporting: the child had a name (the beach) ───
+- id: silver-rattle
+  name: silver rattle
+  aliases: [rattle, silver]
+  location: shaun
+  description: "A child's rattle, black with tarnish, a coral teether at one end. Engraved round the bell: ALICE · 9th JUNE 1893. It doesn't rattle. Something inside has rusted solid."
+  affordances: [takeable]
+  properties: { mass: 0.1, value: 30 }
+
+# ─── Apparition objects (Q31): only the player perceives these ───
+- id: bassinet
+  name: bassinet
+  aliases: [cradle, crib, basket, bundle, lace]
+  perceived_by: player
+  description: "A wicker bassinet hung with white lace. Inside, under the lace, a child's face, small and grey and perfectly still, like a face carved from soap. It has been dead a long time. It has been dead the whole time."
+  room_text: "A wicker bassinet hung with white lace stands by the bed."
+  properties: {}
+- id: tea-table
+  name: tea table
+  aliases: [table, tea, teapot, cups]
+  perceived_by: player
+  description: "A table laid for tea: white cloth, a silver pot, three cups. Three."
+  room_text: "A table is laid for tea in the middle of the floor."
+  properties: {}

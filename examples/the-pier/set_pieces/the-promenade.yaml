@@ -1,0 +1,40 @@
+# An early apparition set piece (brief §Set pieces: "left to the authoring agent"). The couple walk out along the
+# pier at dusk and Liam follows. It only starts if he is on the seafront at the right time.
+id: the-promenade
+starts_when:
+  all:
+    - { day: { gte: 2 } }
+    - { time_between: { from: "19:30", to: "20:30" } }
+    - any:
+        - { in_room: { who: player, where: promenade } }
+        - { in_room: { who: player, where: pier-tollhouse } }
+        - { in_room: { who: player, where: pier-deck } }
+objective: "Follow them."
+stage: [promenade, pier-tollhouse, pier-deck, pier-head, glass-house]
+cast: [clara, edmund]
+director_brief: >
+  Dusk. The Ashdowns walk out along the pier arm in arm, the way they did in August 1893: slow, proper,
+  a holiday couple. Nobody else sees them, and the living walk straight through the places they occupy.
+  They never speak and never acknowledge Liam. However close he gets they are a little further on: the
+  engine keeps them one room ahead of him, so don't move them yourself. Clara adjusts the lace over the
+  bundle; it never moves. At the glass house they go in, and when Liam follows, they are not there.
+  Keep narration short, sensory and quiet. Never explain.
+beats:
+  - { id: arm-in-arm, description: "The couple appear on the parade and set off along the pier." }
+  - { id: the-bundle, description: "Clara adjusts the lace; Liam glimpses that the bundle is too still." }
+  - { id: the-glass-house, description: "They go into the glass house and are gone." }
+moves:
+  actions: []
+  effects: [narrate]
+ends_when:
+  any:
+    - { in_room: { who: player, where: glass-house } }
+    - { time_between: { from: "21:00", to: "23:00" } }
+outcomes:
+  - when: { in_room: { who: player, where: glass-house } }
+    do:
+      - { set_flag: followed_them }
+      - { award_xp: 50 }
+      - { narrate: "The glass house is empty: deckchairs, the broken candyfloss machine, green light. There is a smell of tea." }
+  - when: { not: { in_room: { who: player, where: glass-house } } }
+    do: [ { narrate: "When you look for them again, the pier is only the pier." } ]

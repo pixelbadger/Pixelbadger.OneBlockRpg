@@ -1,0 +1,39 @@
+# The second apparition set piece: the hotel at night, once Liam is obsessed. Room 7 opens itself.
+id: the-lullaby
+starts_when:
+  all:
+    - { flag: obsession }
+    - { not: { flag: breakdown } }
+    - { time_between: { from: "21:00", to: "02:00" } }
+    - any:
+        - { in_room: { who: player, where: hotel-lobby } }
+        - { in_room: { who: player, where: hotel-corridor } }
+        - { in_room: { who: player, where: room-seven } }
+objective: "Find where the singing is coming from."
+stage: [hotel-lobby, hotel-corridor, room-seven]
+cast: [clara, edmund]
+director_brief: >
+  The gutted hotel at night, and Room 7 as it was in August 1893: furnished, lamplit, warm. Clara sits by
+  a lace-hung bassinet singing a lullaby under her breath to a child who will never wake. Edmund stands
+  outside the door wanting to see his daughter, and she will not let him in. Neither speaks to Liam or
+  acknowledges him. Build slowly: the singing, the light under the door, the knocking that makes no sound.
+  The scene's heart is Liam looking into the bassinet. Do not describe what is in it; let the engine's
+  text do that when he examines it. Keep narration short and close.
+beats:
+  - { id: the-singing, description: "Singing somewhere along the corridor; Room 7 stands open." }
+  - { id: the-knock, description: "Edmund at the door, knocking without sound; Clara sings louder." }
+  - { id: the-cradle, description: "Liam at the bassinet." }
+moves:
+  actions: []
+  effects: [narrate]
+ends_when:
+  any:
+    - { flag: saw_cradle }
+    - { time_between: { from: "02:00", to: "06:00" } }
+outcomes:
+  - when: { flag: saw_cradle }
+    do:
+      - { award_xp: 50 }
+      - { narrate: "The singing stops mid-line. The lamp goes out. Room 7 is bare boards and hanging paper, and you are kneeling on the floor by the window." }
+  - when: { not: { flag: saw_cradle } }
+    do: [ { narrate: "The singing stops. The corridor is dark and empty and smells of plaster." } ]

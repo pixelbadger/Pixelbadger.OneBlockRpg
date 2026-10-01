@@ -23,10 +23,20 @@ export const UNARMED: Weapon = {
   ranged: false,
 };
 
-/** Hit chance = weapon skill − target AC + accuracy − 20 per point of ST below minimum, clamped to 5–95%. */
-export function hitChance(skill: number, targetAc: number, weapon: Weapon, attackerST: number, aimed = false): number {
+/**
+ * Hit chance = weapon skill − target AC + accuracy − 20 per point of ST below minimum (+ the attacker's Luck nudge,
+ * §5.1), clamped to 5–95%.
+ */
+export function hitChance(
+  skill: number,
+  targetAc: number,
+  weapon: Weapon,
+  attackerST: number,
+  aimed = false,
+  luck = 0,
+): number {
   const stShort = Math.max(0, weapon.min_st - attackerST);
-  const raw = skill - targetAc + weapon.accuracy - 20 * stShort + (aimed ? 15 : 0);
+  const raw = skill - targetAc + weapon.accuracy - 20 * stShort + (aimed ? 15 : 0) + luck;
   return Math.max(5, Math.min(95, raw));
 }
 

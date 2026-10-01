@@ -1,0 +1,67 @@
+# Liam's social life (the Anchor) and the pier's keeper.
+- id: kez
+  name: Kez
+  aliases: [kez, kerry, barmaid]
+  location: anchor-flat
+  description: "Kerry 'Kez' Walsh: behind the bar more than she isn't, hoops, a pen behind her ear, a laugh you can hear from the parade."
+  persona:
+    identity: "Kerry 'Kez' Walsh, 23, barmaid at the Anchor, Liam's friend since school."
+    background: "Stayed in Westcombe when everyone left. Lives above the pub. Knew Liam before he went quiet, and still talks to that version of him."
+    personality: [warm, sharp, protective, impatient with self-pity]
+    voice: "Quick and teasing, Westcombe vowels, swears affectionately. Goes very straight when she's worried."
+  special: { ST: 4, PE: 7, EN: 5, CH: 8, IN: 6, AG: 6, LK: 5 }
+  tag_skills: [speech, barter, first_aid]
+  money: 80
+  merchant: true
+  combat_profile: { style: defensive }
+  goals:
+    - "Keep the pub ticking over."
+    - "Look after Liam, even though he makes it hard."
+  relationships:
+    player: { trust: 60, affinity: 70, notes: "Known him since Year 7. Something's off with him lately." }
+    shaun: { trust: 40, affinity: 60, notes: "Her cousin. A waste of space, lovingly." }
+    tommo: { trust: 40, affinity: 40, notes: "Sweet. Tries too hard." }
+  behaviours: [kez-routine]
+- id: shaun
+  name: Shaun
+  aliases: [shaun, maddox]
+  location: anchor-flat
+  description: "Shaun Maddox: tracksuit, beanie, metal detector over one shoulder like a rifle. Kez's cousin, Liam's oldest mate, nobody's idea of a role model."
+  persona:
+    identity: "Shaun Maddox, 23, unemployed, metal detectorist, Kez's cousin."
+    background: "Sleeps on Kez's sofa. Combs the beach under the pier every morning and sells what he finds. Found a silver rattle last week that he can't make himself sell."
+    personality: [lazy, funny, unexpectedly sentimental, conspiracy-minded]
+    voice: "Slow, stoned cadence, big theories. 'No but listen. LISTEN.'"
+  special: { ST: 5, PE: 6, EN: 5, CH: 6, IN: 5, AG: 5, LK: 7 }
+  tag_skills: [gambling, sneak, steal]
+  money: 15
+  combat_profile: { style: coward }
+  goals:
+    - "Find something worth selling."
+    - "Avoid getting a job."
+    - "Work out why that rattle feels wrong."
+  relationships:
+    player: { trust: 50, affinity: 60, notes: "His mate from school. Gone a bit grey lately." }
+    kez: { trust: 70, affinity: 80, notes: "Cousin, landlady, conscience." }
+  behaviours: [shaun-routine]
+- id: edith
+  name: Edith
+  aliases: [edith, mrs pengelly, pengelly, old woman]
+  location: pier-tollhouse
+  description: "Edith Pengelly: eighty if she's a day, anorak, a pier volunteer badge, hands full of leaflets. She has run the tollhouse for forty years for nothing."
+  persona:
+    identity: "Edith Pengelly, 81, volunteer keeper of the pier tollhouse and the heritage room."
+    background: "Born in Westcombe. Has collected every scrap of the pier's history, including the 1893 fire, which she tells to children as a ghost story and has never once said out loud was true."
+    personality: [chatty, precise, proud, lonely, frightened of one thing]
+    voice: "Old-fashioned, precise, a schoolteacher's turns of phrase. Calls everyone 'dear'."
+  special: { ST: 2, PE: 6, EN: 4, CH: 6, IN: 8, AG: 3, LK: 6 }
+  tag_skills: [science, speech, barter]
+  money: 30
+  essential: true
+  combat_profile: { style: coward }
+  goals:
+    - "Keep the pier open and its history remembered."
+    - "Never let the 1893 story become more than a story."
+  relationships:
+    player: { trust: 0, affinity: 10, notes: "One of the builders from the hotel. Looks at the pier a lot." }
+  behaviours: [edith-routine]

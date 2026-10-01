@@ -84,6 +84,14 @@ The core set trims Fallout's list to what suits a city block. A payload can enab
       or holding liquor (EN).</li>
   <li><strong>Opposed check:</strong> actor's skill roll against a defender value: Sneak vs 10×PE of observers, Steal vs 10×PE of the target
       (−1 per kg of the item), Speech vs the target's relationship trust plus 5×IN.</li>
+  <li><strong>Sneaking</strong> is a stance, entered and left with the <code>sneak</code> action. While in it, actions take 1.5× time, and before each
+      action every awake character in the room who has not yet noticed the sneaker rolls once (Sneak vs 10×PE, opposed). So does everyone in the
+      next room when the sneaker moves. Anyone who notices stays aware while they share a room, and a <code>noticed</code> event fires. Anyone who
+      hasn't noticed does not perceive the sneaker or their actions, exactly as with apparitions (Q31): no day-log entry, no behaviour reaction,
+      and no attack on sight. Talking or attacking ends the stance. Steal gets +20 against a victim who hasn't noticed the thief.</li>
+  <li><strong>Luck nudge:</strong> the roller's Luck shifts every seeded d100 target (skill, opposed and hit chance) by <code>LK − 5</code> points,
+      so LK 5 is neutral, LK 10 is +5 and LK 1 is −4. On d10 attribute checks it is +1 at LK 9–10 and −1 at LK 1–2. Only the roller's Luck
+      counts, and the nudge is reported with the result.</li>
   <li><strong>Who may request a check:</strong> engine rules, authored options, hooks and use rules, LLM-suggested options (tier only, §6.3),
       and the director's allowed moves (§6.7). The engine always resolves the roll. The LLM never decides an outcome.</li>
 </ul>
@@ -103,7 +111,12 @@ The core set trims Fallout's list to what suits a city block. A payload can enab
   <li><strong>Order</strong>: by Sequence, then AG, then a seeded roll.</li>
   <li><strong>Turns</strong>: each combatant spends AP: unarmed 3, melee 3–4, firearm 4–5 (per weapon), aimed shot +1, reload 2, use or equip item 2,
       leave the room 4 (which exits combat unless pursued), bark 0.</li>
-  <li><strong>Hit chance</strong> = weapon skill − target AC + weapon accuracy − 20 per point of ST below the weapon's minimum, clamped to 5–95%.</li>
+  <li><strong>Pursuit</strong>: leaving the room leaves a trail. Each opponent may follow on their next turn, until the turn order comes back round to
+      the fleer, by spending leave AP. The player gets a <em>pursue</em> option. An NPC gives chase if it is aggressive or hostile, isn't itself ready
+      to flee, has nobody left to fight in the room, and isn't fighting alongside the player (that choice is the player's). The fight moves to the
+      new room with the pursuer and the quarry, and anyone else still in it is left behind. If nobody follows, the escape stands.</li>
+  <li><strong>Hit chance</strong> = weapon skill − target AC + weapon accuracy − 20 per point of ST below the weapon's minimum, plus the
+      attacker's Luck nudge (5.4), clamped to 5–95%.</li>
   <li><strong>Critical</strong>: a hit roll ≤ critical chance doubles damage and ignores DT. Crit tables are deferred.</li>
   <li><strong>Damage</strong> = (weapon roll + melee damage bonus for melee/unarmed − armour DT) × (1 − armour DR%), minimum 0.</li>
   <li><strong>Down</strong>: at HP ≤ 0 a character is unconscious, and at HP ≤ −EN dead. Characters the payload marks <code>essential</code> are only ever knocked

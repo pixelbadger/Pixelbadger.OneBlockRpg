@@ -118,6 +118,23 @@ export function parseCommand(w: World, input: string): ParseResult {
     return act({ type: "action", action: { act: "go", direction: x.direction ?? x.label! } });
   }
 
+  // Sneaking (§5.4): a stance. "sneak" toggles it; "sneak <direction>" enters it and moves.
+  if (["stop sneaking", "unsneak", "stand up", "stop creeping"].includes(lower)) {
+    return act({ type: "action", action: { act: "sneak", stop: true } });
+  }
+  if (["sneak", "creep", "tiptoe", "crouch", "skulk"].includes(verb)) {
+    if (!rest) {
+      return act({
+        type: "action",
+        action: w.isSneaking(w.playerId) ? { act: "sneak", stop: true } : { act: "sneak" },
+      });
+    }
+    const token = DIRECTIONS[clean(rest)] ?? clean(rest.replace(/^(to|into|through)\s+/, ""));
+    const x = exitMatch(token);
+    if (!x) return err("You can't go that way.");
+    return act({ type: "action", action: { act: "sneak", direction: x.direction ?? x.label! } });
+  }
+
   switch (verb) {
     case "x":
     case "examine":
@@ -305,8 +322,13 @@ export function parseCommand(w: World, input: string): ParseResult {
   return err(`I don't know how to "${verb}". Type "help" or "menu".`);
 }
 
-/** Combat commands: attack X, flee <dir>, use X, equip X, reload, end. */
-export function parseCombat(w: World, input: string, targets: readonly string[]): ParseResult {
+/** Combat commands: attack X, flee <dir>, pursue X, use X, equip X, reload, end. */
+export function parseCombat(
+  w: World,
+  input: string,
+  targets: readonly string[],
+  fled: readonly string[] = [],
+): ParseResult {
   const lower = input.trim().toLowerCase();
   const [verb, ...restW] = lower.split(/\s+/);
   const rest = restW.join(" ");
@@ -343,6 +365,17 @@ export function parseCombat(w: World, input: string, targets: readonly string[])
       const it = resolveNoun(w, rest, w.inventory(w.playerId));
       return it.id ? ok({ kind: "equip", item: it.id }) : { ok: false, error: it.error! };
     }
+    case "pursue":
+    case "chase":
+    case "follow": {
+      const phrase = rest.replace(/^after\s+/, "");
+      const t = phrase
+        ? resolveNoun(w, phrase, fled)
+        : fled.length === 1
+          ? { id: fled[0]! }
+          : { error: fled.length ? "Pursue whom?" : "Nobody has fled." };
+      return t.id ? ok({ kind: "pursue", target: t.id }) : { ok: false, error: t.error! };
+    }
     case "reload":
       return ok({ kind: "reload" });
     case "end":
@@ -353,7 +386,8 @@ export function parseCombat(w: World, input: string, targets: readonly string[])
   }
   return {
     ok: false,
-    error: "In combat: attack <target>, aim <target>, use <item>, equip <item>, reload, flee <direction>, end.",
+    error:
+      "In combat: attack <target>, aim <target>, use <item>, equip <item>, reload, flee <direction>, pursue <target>, end.",
   };
 }
 

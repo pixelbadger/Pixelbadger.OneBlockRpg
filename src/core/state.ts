@@ -57,6 +57,11 @@ export interface CharState {
   healAccum: number;
   /** Day on which First Aid was last applied to this character. */
   firstAidDay: number | null;
+  /**
+   * The sneaking stance (§5.4): null when not sneaking. `aware` holds the characters who have noticed the sneaker in
+   * their current room; everyone else does not perceive them or their actions.
+   */
+  sneaking?: { aware: string[] } | null;
 }
 
 export type LogKind = "conversation" | "overheard" | "witnessed" | "action" | "hook" | "set-piece" | "note" | "digest";
@@ -103,7 +108,8 @@ export interface SetPieceState {
   narration: string[];
 }
 
-export type CombatantStatus = "in" | "fled" | "surrendered" | "down" | "dead";
+/** `left` is a combatant left behind when the fight moved rooms with a pursuit. */
+export type CombatantStatus = "in" | "fled" | "surrendered" | "down" | "dead" | "left";
 
 export interface Combatant {
   id: string;
@@ -122,6 +128,19 @@ export interface CombatState {
   seconds: number;
   origin: "explore" | "conversation" | "set-piece";
   log: string[];
+  /**
+   * Escapes still open to pursuit (§5.6): a combatant who left the room can be followed by each opponent on their
+   * next turn, until the turn order comes back round to the fleer (`expires`).
+   */
+  trails?: Trail[];
+}
+
+export interface Trail {
+  id: string;
+  from: string;
+  to: string;
+  direction: string;
+  expires: { round: number; turn: number };
 }
 
 export interface Ended {

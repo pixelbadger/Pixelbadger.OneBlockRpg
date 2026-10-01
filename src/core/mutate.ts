@@ -166,6 +166,7 @@ export function damage(w: World, who: string, amount: number, cause: Cause, by?:
     set(["chars", who, "status"], status),
     set(["chars", who, "downUntil"], status === "down" ? w.state.clock + 60 : null),
     set(["chars", who, "asleepUntil"], null),
+    set(["chars", who, "sneaking"], null),
   ];
   w.emit(status === "dead" ? "killed" : "downed", {
     ...(by ? { actor: by } : {}),

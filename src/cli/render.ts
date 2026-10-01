@@ -64,7 +64,7 @@ export function render(views: readonly ViewModel[], color = true): string {
       case "status":
         out.push(
           k.dim(
-            `[${v.clock} · HP ${v.hp}/${v.maxHp} · awake ${v.awakeHours}/${v.wakingHours}h · £${v.money} · L${v.level} ${v.xp} XP${v.unspentSkillPoints ? ` · ${v.unspentSkillPoints} skill points` : ""}]`,
+            `[${v.clock} · HP ${v.hp}/${v.maxHp} · awake ${v.awakeHours}/${v.wakingHours}h · £${v.money} · L${v.level} ${v.xp} XP${v.unspentSkillPoints ? ` · ${v.unspentSkillPoints} skill points` : ""}${v.sneaking ? " · sneaking" : ""}]`,
           ),
         );
         break;

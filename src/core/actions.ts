@@ -56,7 +56,13 @@ export const BASE_MINUTES: Record<ActionVerb, number> = {
   wait: 0,
   examine: 1,
   look: 0,
+  sneak: 0,
 };
+
+/** Sneaking makes every action take longer (§5.4). */
+export const SNEAK_TIME = 1.5;
+/** Steal bonus against a victim who hasn't noticed the thief. */
+export const UNNOTICED_STEAL_BONUS = 20;
 
 export interface ActionResult {
   ok: boolean;
@@ -135,6 +141,19 @@ export function perform(
     const inCombat = w.state.combat.combatants.some((x) => x.id === actor && x.status === "in");
     if (inCombat && req.act !== "attack") return fail("in combat");
   }
+  if (req.act === "sneak") return sneak(c, req);
+  if (st.sneaking) {
+    // Talking or attacking gives a sneaker away; anything else is a fresh chance for each observer to notice.
+    if (req.act === "talk" || req.act === "attack") stopSneaking(w, actor, c.cause, true);
+    else if (req.act !== "look") sneakRolls(w, actor, w.roomOf(actor), c.cause);
+    c.seen = playerSees(w, actor);
+  }
+  const r = dispatch(c, req);
+  if (w.char(actor).sneaking && !r.fixedTime && r.minutes > 0) return { ...r, minutes: r.minutes * SNEAK_TIME };
+  return r;
+}
+
+function dispatch(c: Ctx, req: ActionRequest): ActionResult {
   switch (req.act) {
     case "go":
       return go(c, req);
@@ -179,7 +198,107 @@ export function perform(
       return examine(c, req);
     case "look":
       return { ok: true, minutes: 0, summary: "looked around" };
+    case "sneak":
+      return sneak(c, req);
   }
+}
+
+// ─── sneak (§5.4) ────────────────────────────────────────────────────────────
+
+/**
+ * Each awake observer in `room` who hasn't yet noticed the sneaker rolls once: Sneak vs 10×PE (opposed, with the
+ * sneaker's Luck nudge). Observers who win notice them and stay aware while they share the room.
+ */
+export function sneakRolls(w: World, sneaker: string, room: string | null, cause: Cause): string[] {
+  const s = w.char(sneaker).sneaking;
+  if (!s || !room) return [];
+  const observers = w.witnessesIn(room).filter((o) => o !== sneaker && !s.aware.includes(o));
+  if (!observers.length) return [];
+  const skill = w.skill(sneaker, "sneak");
+  const LK = w.special(sneaker).LK;
+  const results = w.roll(
+    (rng) => observers.map((o) => opposedCheck(rng, skill, perceptionDefence(w.special(o)), "normal", 0, LK)),
+    cause,
+  );
+  const noticed: string[] = [];
+  observers.forEach((o, i) => {
+    const result = results[i]!;
+    w.emit("checked", { actor: sneaker, targets: [o], payload: { skill: "sneak", ...result }, cause });
+    if (!result.pass) noticed.push(o);
+  });
+  for (const o of noticed) notice(w, o, sneaker, cause);
+  return noticed;
+}
+
+/** `observer` becomes aware of a sneaking character. */
+export function notice(w: World, observer: string, sneaker: string, cause: Cause): void {
+  const s = w.char(sneaker).sneaking;
+  if (!s || s.aware.includes(observer)) return;
+  w.emit("noticed", {
+    actor: observer,
+    targets: [sneaker],
+    cause,
+    ops: [set(["chars", sneaker, "sneaking"], { aware: [...s.aware, observer] })],
+  });
+  if (sneaker === w.playerId) w.say(w.msg("sneak.noticed", { Observer: w.label(observer) }), "ambient");
+  else if (observer === w.playerId) w.say(w.msg("sneak.npc-noticed", { Actor: w.label(sneaker) }), "ambient");
+  w.dayLog(observer, "witnessed", `Noticed ${w.label(sneaker)} creeping about.`, cause);
+}
+
+/** Leaves the stance. `revealed` when an attack or a word gave the sneaker away. */
+export function stopSneaking(w: World, who: string, cause: Cause, revealed = false): void {
+  if (!w.char(who).sneaking) return;
+  w.emit("sneak-ended", {
+    actor: who,
+    targets: [who],
+    payload: { revealed },
+    cause,
+    ops: [set(["chars", who, "sneaking"], null)],
+  });
+  if (who === w.playerId) w.say(w.msg(revealed ? "sneak.revealed" : "sneak.stop"));
+  else if (playerSees(w, who)) w.say(w.msg("sneak.stop-npc", { Actor: w.label(who) }), "ambient");
+}
+
+/** After a room change only those in the new room can still be aware of the sneaker. */
+function pruneAware(w: World, who: string): void {
+  const s = w.char(who).sneaking;
+  if (!s) return;
+  const room = w.roomOf(who);
+  const aware = s.aware.filter((o) => w.roomOf(o) === room);
+  if (aware.length !== s.aware.length) {
+    w.emit("mode", { payload: { sneak: who }, ops: [set(["chars", who, "sneaking"], { aware })] });
+  }
+}
+
+function sneak(c: Ctx, req: ActionRequest): ActionResult {
+  const { w } = c;
+  const sneaking = !!w.char(c.actor).sneaking;
+  if (req.stop) {
+    if (!sneaking) return refuse(c, "sneak.not");
+    stopSneaking(w, c.actor, c.cause);
+    return { ok: true, minutes: 0, summary: "stopped sneaking" };
+  }
+  if (sneaking && !req.direction && !req.to) return refuse(c, "sneak.already");
+  if (sneaking) sneakRolls(w, c.actor, w.roomOf(c.actor), c.cause);
+  else {
+    const seen = c.seen;
+    // The start is unseen by everyone; the rolls that follow decide who notices.
+    w.emit("sneak-started", {
+      actor: c.actor,
+      targets: [c.actor],
+      payload: { sneak: [] },
+      cause: c.cause,
+      ops: [set(["chars", c.actor, "sneaking"], { aware: [] })],
+    });
+    if (c.isPlayer) w.say(w.msg("sneak.ok"));
+    else if (seen) w.say(w.msg("sneak.npc", { Actor: w.label(c.actor) }), "ambient");
+    sneakRolls(w, c.actor, w.roomOf(c.actor), c.cause);
+  }
+  if (req.direction || req.to) {
+    const r = go({ ...c, seen: playerSees(w, c.actor) }, { ...req, act: "go" });
+    return { ...r, minutes: r.minutes * SNEAK_TIME, summary: `sneaked: ${r.summary}` };
+  }
+  return { ok: true, minutes: 0, summary: "started sneaking" };
 }
 
 // ─── go ──────────────────────────────────────────────────────────────────────
@@ -263,10 +382,14 @@ function step(c: Ctx, x: Exit): ActionResult {
   const compass = /^(north|south|east|west|up|down|in|out|north-?east|north-?west|south-?east|south-?west)$/i.test(dir);
   const room = w.ix.rooms.get(x.to!)!.name;
   const playerRoom = w.roomOf(w.playerId);
+  // A sneaker's arrival is a fresh chance for those in the next room to notice.
+  sneakRolls(w, c.actor, x.to!, c.cause);
+  const seenArriving = c.isPlayer || (w.perceives(w.playerId, c.actor) && w.isAwake(w.playerId));
   moveThing(w, c.actor, x.to!, "moved", c.cause, c.actor, [from, x.to!]);
+  pruneAware(w, c.actor);
   if (c.isPlayer) {
     w.say(w.msg(compass ? "go.ok" : "go.ok-to", { dir, room }));
-  } else if (w.perceives(w.playerId, c.actor) && w.isAwake(w.playerId)) {
+  } else if (seenArriving) {
     if (playerRoom === from) {
       w.say(w.msg(compass ? "go.npc-leave" : "go.npc-leave-to", { Actor: w.label(c.actor), dir, room }), "ambient");
     } else if (playerRoom === x.to) w.say(w.msg("go.npc-arrive", { Actor: w.label(c.actor) }), "ambient");
@@ -403,7 +526,10 @@ function lockUnlock(c: Ctx, req: ActionRequest, verb: "lock" | "unlock"): Action
       verb === "unlock" ? w.inventory(c.actor).find((x) => w.thing(x)?.tags.includes("lockpick")) : undefined;
     if (!tool) return refuse(c, "lock.no-key");
     // Lockpick (§5.3): a skill check at the lock's tier.
-    const result = w.roll((rng) => skillCheck(rng, w.skill(c.actor, "lockpick"), def.lock_tier ?? "normal"), c.cause);
+    const result = w.roll(
+      (rng) => skillCheck(rng, w.skill(c.actor, "lockpick"), def.lock_tier ?? "normal", 0, w.special(c.actor).LK),
+      c.cause,
+    );
     w.emit("checked", {
       actor: c.actor,
       targets: [id],
@@ -529,7 +655,7 @@ function throwIt(c: Ctx, req: ActionRequest): ActionResult {
     report(c, "throw", { item: w.name(item) }, item);
   }
   if (!target) return { ok: true, minutes: BASE_MINUTES.throw, summary: `threw ${w.label(item)}` };
-  const hit = w.roll((rng) => skillCheck(rng, w.skill(c.actor, "throwing"), "easy"), c.cause);
+  const hit = w.roll((rng) => skillCheck(rng, w.skill(c.actor, "throwing"), "easy", 0, w.special(c.actor).LK), c.cause);
   w.emit("checked", {
     actor: c.actor,
     targets: [item, target],
@@ -570,7 +696,10 @@ function pushIt(c: Ctx, req: ActionRequest): ActionResult {
   const def = w.thing(id)!;
   if (!def.affordances.includes("pushable")) return refuse(c, "push.fixed", { item: w.name(id) }, id);
   const mass = w.mass(id);
-  const check = w.roll((rng) => attributeCheck(rng, w.special(c.actor).ST, -Math.floor(mass / 25)), c.cause);
+  const check = w.roll(
+    (rng) => attributeCheck(rng, w.special(c.actor).ST, -Math.floor(mass / 25), w.special(c.actor).LK),
+    c.cause,
+  );
   w.emit("checked", { actor: c.actor, targets: [id], payload: { attribute: "ST", ...check }, cause: c.cause });
   if (!check.pass) {
     if (c.isPlayer) w.say(w.msg("push.failed", { item: w.name(id) }, id));
@@ -605,6 +734,7 @@ function giveShow(c: Ctx, req: ActionRequest, verb: "give" | "show"): ActionResu
     return refuse(c, to && !w.isChar(to) ? "give.not-char" : "not-here");
   }
   if (verb === "give") {
+    if (!w.npcsPerceive(to)) return refuse(c, "give.apparition", { target: w.label(to) });
     if (w.carried(to) + w.mass(item) > w.capacity(to)) return refuse(c, "give.cannot-carry", { target: w.label(to) });
     moveThing(w, item, to, "gave", c.cause, c.actor, [to]);
   } else {
@@ -637,8 +767,12 @@ function steal(c: Ctx, req: ActionRequest): ActionResult {
   let pass = victim.status !== "ok" || victim.asleepUntil !== null;
   if (!pass) {
     // Steal vs 10×PE of the target, −1 per kg of the item (§5.4).
-    const skill = w.skill(c.actor, "steal") - Math.round(w.mass(item));
-    const result = w.roll((rng) => opposedCheck(rng, skill, perceptionDefence(w.special(from))), c.cause);
+    const unnoticed = w.isSneaking(c.actor) && !w.perceives(from, c.actor);
+    const skill = w.skill(c.actor, "steal") - Math.round(w.mass(item)) + (unnoticed ? UNNOTICED_STEAL_BONUS : 0);
+    const result = w.roll(
+      (rng) => opposedCheck(rng, skill, perceptionDefence(w.special(from)), "normal", 0, w.special(c.actor).LK),
+      c.cause,
+    );
     w.emit("checked", {
       actor: c.actor,
       targets: [from, item],
@@ -648,6 +782,7 @@ function steal(c: Ctx, req: ActionRequest): ActionResult {
     pass = result.pass;
   }
   if (!pass) {
+    notice(w, from, c.actor, c.cause);
     w.emit("caught-stealing", { actor: c.actor, targets: [item, from], cause: c.cause });
     adjustRelationship(w, from, c.actor, { trust: -20, affinity: -10 }, c.cause);
     if (c.isPlayer) w.say(w.msg("steal.caught", vars));
@@ -753,6 +888,8 @@ function attack(c: Ctx, req: ActionRequest): ActionResult {
     return refuse(c, "not-here");
   }
   if (target === c.actor) return fail("cannot attack yourself");
+  // Apparitions are seen, not touched (Q31).
+  if (!w.npcsPerceive(target)) return refuse(c, "attack.apparition", { target: w.label(target) });
   if (w.char(target).status === "dead") return fail(`${w.label(target)} is already dead`);
   const weapon = req.weapon && held(c, req.weapon) ? req.weapon : undefined;
   w.emit("attacked", { actor: c.actor, targets: [target], payload: { weapon: weapon ?? null }, cause: c.cause });
@@ -786,7 +923,11 @@ export function fallAsleep(w: World, who: string, quality: number, cause: Cause,
     targets: [who],
     payload: { quality },
     cause,
-    ops: [set(["chars", who, "asleepUntil"], w.state.clock + 480), set(["chars", who, "sleepQuality"], quality)],
+    ops: [
+      set(["chars", who, "asleepUntil"], w.state.clock + 480),
+      set(["chars", who, "sleepQuality"], quality),
+      set(["chars", who, "sneaking"], null),
+    ],
   });
   if (playerSees(w, who) && who !== w.playerId) {
     w.say(w.msg(collapsed ? "collapse.npc" : "sleep.npc", { Actor: w.label(who) }), "ambient");

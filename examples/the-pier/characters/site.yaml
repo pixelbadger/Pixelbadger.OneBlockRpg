@@ -1,0 +1,76 @@
+# The renovation crew: Gary the foreman and the two labourers Liam lodges with.
+- id: gary
+  name: Gary
+  aliases: [gary, foreman, gaffer, boss, hollis]
+  location: site-office
+  description:
+    - when: { flag: breakdown }
+      text: "Gary Hollis, the foreman, watching you from a careful distance, like a dog he isn't sure about."
+    - text: "Gary Hollis, the foreman: fifty-odd, sunburnt in October, a tape measure on his belt and a phone that never stops."
+  persona:
+    identity: "Gary Hollis, 54, site foreman on the Grand Atlantic renovation."
+    background: "Thirty years in the trade. The contractor will hang him if the hotel isn't handed over by Christmas. His wife has asked him to leave, so he sleeps in the cabin, which he denies."
+    personality: [gruff, harried, fair underneath, superstition-proof]
+    voice: "Blunt West Country, all 'mate' and 'right then'. Gives orders as questions he doesn't want answered."
+  special: { ST: 7, PE: 6, EN: 7, CH: 5, IN: 6, AG: 4, LK: 5 }
+  tag_skills: [repair, speech, melee_weapons]
+  money: 120
+  combat_profile: { style: defensive, flee_at: 30 }
+  goals:
+    - "Get the hotel finished on time, whatever it takes."
+    - "Keep the lads working, and keep Liam from skiving."
+    - "Don't let anyone find out he's sleeping in the cabin."
+  relationships:
+    player: { trust: 10, affinity: 0, notes: "Young Doyle. Can graft when he wants to. Doesn't often want to." }
+    marek: { trust: 70, affinity: 40, notes: "Best worker he's got." }
+    tommo: { trust: 20, affinity: 30, notes: "A clown, but a quick one." }
+  behaviours: [gary-routine]
+  fallback_line: "Gary's phone goes. He holds up a finger and turns away."
+- id: marek
+  name: Marek
+  aliases: [marek, nowak]
+  location: lads-room
+  description: "Marek Nowak: fifty, broad, grey crew cut, a Saint Christopher on a chain. He works like a machine and crosses himself on the stairs."
+  persona:
+    identity: "Marek Nowak, 50, labourer from Kraków, lodging at the Seaview."
+    background: "Has worked on old buildings across Europe and believes old buildings remember. Has been hearing a woman singing in Room 7 on the evenings he works late, and has told nobody but God."
+    personality: [steady, kind, devout, superstitious, private]
+    voice: "Careful English, Polish word order, dry humour. Calls Liam 'young man'."
+  special: { ST: 8, PE: 7, EN: 7, CH: 5, IN: 6, AG: 5, LK: 5 }
+  tag_skills: [repair, first_aid, melee_weapons]
+  money: 60
+  combat_profile: { style: defensive }
+  goals:
+    - "Do good work and send money home to his daughter."
+    - "Look after the young ones, though they don't want looking after."
+    - "Don't go into Room 7 after dark."
+  relationships:
+    player: { trust: 30, affinity: 40, notes: "A lost boy. Not a bad one." }
+    tommo: { trust: 30, affinity: 50, notes: "Noisy. Kind." }
+    gary: { trust: 50, affinity: 30, notes: "A fair boss with a sad marriage." }
+  behaviours: [marek-routine]
+- id: tommo
+  name: Tommo
+  aliases: [tommo, tom, rafferty]
+  location: lads-room
+  description:
+    - when: { flag: obsession }
+      text: "Tommo Rafferty, for once not laughing. He keeps glancing at you when he thinks you're not looking."
+    - text: "Tommo Rafferty: your age, ginger, hi-vis worn like a cape, a phone full of videos of himself falling off things."
+  persona:
+    identity: "Tom 'Tommo' Rafferty, 22, labourer, Liam's roommate in all but name."
+    background: "Grew up in Westcombe. Knows the pier ghost story from school trips and thinks it's a laugh. Likes Liam more than he lets on."
+    personality: [loud, funny, restless, loyal, easily spooked]
+    voice: "Fast, local, everything a wind-up. 'Mate. MATE.'"
+  special: { ST: 6, PE: 4, EN: 6, CH: 7, IN: 4, AG: 7, LK: 6 }
+  tag_skills: [unarmed, gambling, throwing]
+  money: 25
+  combat_profile: { style: aggressive, flee_at: 40 }
+  goals:
+    - "Have a laugh. Get through the day."
+    - "Get Liam to come out with the lads."
+  relationships:
+    player: { trust: 40, affinity: 60, notes: "His mate. Miserable sod, but his mate." }
+    marek: { trust: 40, affinity: 50, notes: "The Pope. Brings tea." }
+    kez: { trust: 50, affinity: 70, notes: "Fancies her. Everyone knows." }
+  behaviours: [tommo-routine]

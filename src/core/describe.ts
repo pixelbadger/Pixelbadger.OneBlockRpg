@@ -1,7 +1,7 @@
 /** Rendering authored text for rooms, objects and events (P5: all of it authored or templated, none generated). */
 
 import type { Exit } from "../payload/schema.js";
-import { listJoin } from "./messages.js";
+import { capitalise, listJoin } from "./messages.js";
 import type { World, WorldEvent } from "./world.js";
 
 export interface ExitView {
@@ -28,6 +28,11 @@ export function listedObjects(w: World, room: string): string[] {
   return w
     .childrenOf(room)
     .filter((id) => !w.isChar(id) && !w.thing(id)?.scenery && !w.isHidden(id) && w.perceives(w.playerId, id));
+}
+
+/** "the old photograph" → "an old photograph"; proper names and other articles are left alone. */
+export function indefinite(name: string): string {
+  return name.replace(/^the (\w)/, (_, c: string) => (/[aeiou]/i.test(c) ? `an ${c}` : `a ${c}`));
 }
 
 export function charLine(w: World, id: string): string {
@@ -61,7 +66,7 @@ export function describeRoom(w: World, room: string): RoomDescription {
     const inside = w
       .childrenOf(id)
       .filter((c) => !w.isChar(c) && !w.thing(c)?.scenery && visible(c))
-      .map((c) => w.name(c).replace(/^the /, "a "));
+      .map((c) => indefinite(w.name(c)));
     const key = w.thing(id)!.affordances.includes("surface") ? "room.contents-on" : "room.contents-of";
     if (inside.length) objects.push(w.msg(key, { container: w.name(id), list: listJoin(inside) }));
   };
@@ -70,7 +75,7 @@ export function describeRoom(w: World, room: string): RoomDescription {
     const def = w.thing(id)!;
     if (!def.scenery) {
       if (def.room_text) objects.push(w.text(def.room_text, { self: id }));
-      else plain.push(w.name(id).replace(/^the /, "a "));
+      else plain.push(indefinite(w.name(id)));
     }
     // Contents of open containers and surfaces, scenery included (a desk, a shelf).
     contentsLine(id);
@@ -92,6 +97,11 @@ export function describeRoom(w: World, room: string): RoomDescription {
 
 /** A plain third-person sentence for an event, used in day logs and prompts (§6.8). */
 export function describeEvent(w: World, e: WorldEvent): string | null {
+  const text = eventSentence(w, e);
+  return text ? capitalise(text) : text;
+}
+
+function eventSentence(w: World, e: WorldEvent): string | null {
   const a = e.actor ? w.label(e.actor) : "Someone";
   const t = (i: number) => (e.targets[i] ? w.label(e.targets[i]!) : "something");
   switch (e.kind) {
@@ -139,6 +149,8 @@ export function describeEvent(w: World, e: WorldEvent): string | null {
       return `${t(0)} was killed${e.actor ? ` by ${a}` : ""}.`;
     case "fled":
       return `${t(0)} fled the fight.`;
+    case "pursued":
+      return `${a} chased after ${t(0)}.`;
     case "surrendered":
       return `${t(0)} surrendered.`;
     case "slept":
@@ -174,6 +186,7 @@ export const WITNESSED = new Set([
   "downed",
   "killed",
   "fled",
+  "pursued",
   "surrendered",
   "collapsed",
   "spawned",

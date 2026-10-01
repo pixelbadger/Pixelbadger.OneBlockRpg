@@ -1,0 +1,91 @@
+# The seafront: the parade, the beach under the pier, the pier itself and the glass house at its head.
+# Perception-gated variants (PE ≥ 7 and up) let the Victorian pier show through as the madness sharpens Liam's eyes.
+- id: promenade
+  name: Marine Parade
+  tags: [outdoors, public]
+  description:
+    - when: { flag: breakdown }
+      text: "Marine Parade, and over it, like a second exposure, the parade as it was: gas lamps, bath chairs, a band in the shelter. The two pictures don't line up. The pier runs out into both."
+    - when: { time_between: { from: "21:00", to: "06:00" } }
+      text: "Marine Parade at night: orange lamps, the shelter full of wind, the sea breathing on the shingle below. The pier is a black line with the glass house at its end."
+    - when: { special: { PE: { gte: 7 } } }
+      text: "Marine Parade: railings, the shelter, the kiosk shut till Easter. Gulls. The paint on the railings is a dozen layers deep; under the green there is a cream, under the cream a Victorian maroon."
+    - text: "Marine Parade: railings, a shelter, a kiosk shut till Easter, gulls working the bins. The pier gate is to the north. The hotel site is east, the Anchor west, Seaview south across the road."
+  exits:
+    - { direction: north, to: pier-tollhouse }
+    - { direction: east, to: compound }
+    - { direction: west, to: anchor }
+    - { direction: south, to: seaview-hall }
+    - { direction: down, to: beach }
+    - direction: town
+      label: town
+      blocked: "The parade runs on past the bandstand into town. You haven't been into town in weeks. Everything you need is here."
+- id: beach
+  name: The Beach Under the Pier
+  tags: [outdoors]
+  description:
+    - when: { special: { PE: { gte: 8 } } }
+      text: "Shingle, weed and the pier's iron legs, scabbed with rust and barnacles. On one leg, under the green, someone has scratched C.A. and a date. The tide is coming in. It is always coming in."
+    - text: "Shingle, weed and the pier's iron legs going out into the water in rows, scabbed with rust and barnacles. It smells of salt and diesel. The steps go back up to the parade."
+  exits:
+    - { direction: up, to: promenade }
+    - direction: out
+      label: sea
+      blocked: "The sea. Grey, cold and very patient. You don't go in."
+- id: pier-tollhouse
+  name: Pier Tollhouse
+  tags: [public]
+  description:
+    - when: { time_between: { from: "21:30", to: "08:45" } }
+      text: "The tollhouse at night: shutters down, the turnstile locked, the pier gate chained. The little heritage room behind the kiosk window is dark."
+    - text: "The tollhouse at the foot of the pier: a ticket kiosk, a turnstile, and a heritage room with a display board and a grey archive cupboard. A sign: PIER OPEN 9 TIL 9. SUPPORT YOUR PIER."
+  exits:
+    - { direction: south, to: promenade }
+    - direction: north
+      to: pier-deck
+      when: { time_between: { from: "09:00", to: "21:00" } }
+      closed_text: "The turnstile is locked for the night and the gate beside it is chained."
+    - label: over the gate
+      direction: over
+      to: pier-deck
+      hidden: true
+      when: { all: [ { flag: unease }, { not: { time_between: { from: "09:00", to: "21:00" } } } ] }
+- id: pier-deck
+  name: The Pier
+  tags: [outdoors, public]
+  description:
+    - when: { special: { PE: { gte: 9 } } }
+      text: "The pier deck runs out over the water on its spindly legs. Bunting snaps overhead that isn't there. A boy in a sailor suit runs past you with a hoop and doesn't come out the other side. Ahead, the glass house is lit."
+    - when: { special: { PE: { gte: 7 } } }
+      text: "The deck runs out over the water. The boards are new but the ironwork is original, and in places you can see the old gas pipes, capped, running under the rail."
+    - text: "The pier deck runs out over the grey water on its spindly legs. Benches with brass plaques for the dead. The wind is a flat hand. Ahead, at the pier head, the glass house."
+  exits:
+    - direction: south
+      to: pier-tollhouse
+      when: { time_between: { from: "09:00", to: "21:00" } }
+      closed_text: "The turnstile is locked from this side too. You'll have to climb."
+    - { label: over the gate, direction: over, to: pier-tollhouse, when: { not: { time_between: { from: "09:00", to: "21:00" } } }, hidden: true }
+    - { direction: north, to: pier-head }
+- id: pier-head
+  name: The Pier Head
+  tags: [outdoors, public]
+  description:
+    - when: { flag: breakdown }
+      text: "The pier head. The landing stage, the rail, the sea all round. The glass house stands open to you, lamps lit, and the smell of tea and paraffin comes out of it."
+    - text: "The pier head: the landing stage where the steamers used to come in, a lifebuoy in a box, and the glass house, a Victorian pavilion of white ironwork and a hundred panes, half of them boarded."
+  exits:
+    - { direction: south, to: pier-deck }
+    - { direction: in, to: glass-house }
+    - direction: out
+      label: sea
+      blocked: "Nothing out there but the Holms and the Welsh coast, and the water in between."
+- id: glass-house
+  name: The Glass House
+  description:
+    - when: { in_set_piece: the-burning }
+      text: "The glass house is lit with lamps that aren't there. A table is laid for tea in the middle of the floor, white cloth, silver pot. Around it the stacked deckchairs wait like kindling."
+    - when: { special: { PE: { gte: 8 } } }
+      text: "Inside the glass house the light comes green through the old panes. The ironwork is blistered in places, under the paint, as if it was once very hot. Deckchairs are stacked to the roof. You can smell smoke that isn't there."
+    - text: "Inside the glass house the light comes green through the old panes. It's used for storage now: deckchairs stacked to the roof, a broken candyfloss machine, a sign for a tea room that closed in 1994."
+  exits:
+    - { direction: out, to: pier-head }

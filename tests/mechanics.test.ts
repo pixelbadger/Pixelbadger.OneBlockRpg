@@ -11,6 +11,8 @@ import {
   effectiveSpecial,
   fatiguePenalty,
   levelForXp,
+  luckNudge,
+  luckNudgeD10,
   maxHp,
   opposedCheck,
   sellPrice,
@@ -85,6 +87,22 @@ describe("checks (§5.4)", () => {
     expect(opposedCheck(new Rng(seedState("o")), 50, 50).target).toBe(50);
     expect(opposedCheck(new Rng(seedState("o")), 0, 100).target).toBe(5);
     expect(opposedCheck(new Rng(seedState("o")), 200, 0).target).toBe(95);
+  });
+  it("Luck nudges the roller's target: LK − 5 on d100, ±1 at the extremes on d10 (§5.1)", () => {
+    expect(luckNudge(5)).toBe(0);
+    expect(luckNudge(10)).toBe(5);
+    expect(luckNudge(1)).toBe(-4);
+    expect([1, 2, 3, 8, 9, 10].map(luckNudgeD10)).toEqual([-1, -1, 0, 0, 1, 1]);
+    const lucky = skillCheck(new Rng(seedState("c")), 50, "normal", 0, 10);
+    const plain = skillCheck(new Rng(seedState("c")), 50, "normal");
+    expect(lucky.roll).toBe(plain.roll);
+    expect(lucky.target).toBe(55);
+    expect(lucky.luck).toBe(5);
+    expect(skillCheck(new Rng(seedState("c")), 50, "normal", 0, 5).target).toBe(50);
+    expect(opposedCheck(new Rng(seedState("o")), 50, 50, "normal", 0, 1).target).toBe(46);
+    expect(opposedCheck(new Rng(seedState("o")), 200, 0, "normal", 0, 10).target).toBe(95);
+    expect(attributeCheck(new Rng(seedState("a")), 6, 0, 9).target).toBe(7);
+    expect(hitChance(50, 5, UNARMED, 5, false, luckNudge(10))).toBe(50);
   });
 });
 

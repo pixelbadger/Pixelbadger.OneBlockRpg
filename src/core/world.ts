@@ -156,6 +156,7 @@ function initialChar(c: Character, day: number): CharState {
     behaviours: [...c.behaviours],
     healAccum: 0,
     firstAidDay: null,
+    sneaking: null,
   };
 }
 
@@ -235,6 +236,8 @@ export class World {
       ops?: Op[];
     } = {},
   ): WorldEvent {
+    // A sneaking actor's events carry who noticed them; everyone else did not perceive the event (§5.4).
+    const sneak = opts.actor && this.state.chars[opts.actor]?.sneaking;
     const e: WorldEvent = {
       seq: this.log.length,
       at: this.state.clock,
@@ -242,7 +245,7 @@ export class World {
       kind,
       ...(opts.actor ? { actor: opts.actor } : {}),
       targets: opts.targets ?? [],
-      payload: opts.payload ?? {},
+      payload: sneak ? { ...opts.payload, sneak: [...sneak.aware] } : (opts.payload ?? {}),
       cause: opts.cause ?? { by: "engine" },
       ops: opts.ops ?? [],
     };
@@ -411,10 +414,25 @@ export class World {
     return this.thing(id)?.perceived_by !== "player";
   }
 
-  /** Can `observer` perceive entity `id` at all (ignoring location)? */
+  /** Can `observer` perceive entity `id` at all (ignoring location)? Apparitions and unnoticed sneakers are unseen. */
   perceives(observer: string, id: string): boolean {
     if (observer !== this.playerId && !this.npcsPerceive(id)) return false;
+    const sneak = observer !== id ? this.state.chars[id]?.sneaking : null;
+    if (sneak && !sneak.aware.includes(observer)) return false;
     return true;
+  }
+
+  /** True if `who` did not perceive event `e`: it involves an apparition (for NPCs) or an unnoticed sneaker. */
+  missed(e: WorldEvent, who: string): boolean {
+    if (who !== this.playerId && [e.actor, ...e.targets].some((id) => id && this.thing(id) && !this.npcsPerceive(id))) {
+      return true;
+    }
+    const aware = e.payload.sneak as string[] | undefined;
+    return !!aware && who !== e.actor && !aware.includes(who);
+  }
+
+  isSneaking(id: string): boolean {
+    return !!this.state.chars[id]?.sneaking;
   }
 
   /** Hidden objects need their hidden_unless condition to hold for the player. */

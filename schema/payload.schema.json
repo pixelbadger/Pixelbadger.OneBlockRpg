@@ -2005,7 +2005,8 @@
                         "talk",
                         "wait",
                         "examine",
-                        "look"
+                        "look",
+                        "sneak"
                       ]
                     },
                     "item": {
@@ -2039,6 +2040,9 @@
                       "type": "integer",
                       "exclusiveMinimum": 0,
                       "maximum": 9007199254740991
+                    },
+                    "stop": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -2096,7 +2100,8 @@
                 "talk",
                 "wait",
                 "examine",
-                "look"
+                "look",
+                "sneak"
               ]
             }
           },
@@ -2397,7 +2402,8 @@
                     "talk",
                     "wait",
                     "examine",
-                    "look"
+                    "look",
+                    "sneak"
                   ]
                 }
               },
@@ -3790,7 +3796,8 @@
                 "talk",
                 "wait",
                 "examine",
-                "look"
+                "look",
+                "sneak"
               ]
             },
             "actor": {
@@ -3828,6 +3835,9 @@
               "type": "integer",
               "exclusiveMinimum": 0,
               "maximum": 9007199254740991
+            },
+            "stop": {
+              "type": "boolean"
             }
           },
           "required": [

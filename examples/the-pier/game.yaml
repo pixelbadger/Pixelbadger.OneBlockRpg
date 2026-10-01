@@ -1,0 +1,29 @@
+# The Pier: the first full example story (spec Q22), built from brief.md by following docs/authoring-guide.md.
+# A present-day ghost story on a Victorian pier. One ending, and it is inevitable: the player's agency is in how
+# much he understands before it happens. It is also a playthrough fixture (tests/pier.test.ts).
+id: the-pier
+title: "The Pier"
+schema_version: "1.0"
+version: "0.1.0"
+start: digs
+player:
+  character: player
+  mode: fixed
+clock: { time: "07:00" }
+intro: >
+  Monday. Week six on the Grand Atlantic job. The alarm on your phone has been going for a while.
+  Through the thin curtain the sea is the colour of dishwater, and the pier walks out into it on its
+  iron legs the way it has every morning since you came to Westcombe. The glass house sits at the far
+  end like something left behind.
+style_guide: >
+  Present-day English seaside town out of season. Quiet, accumulating, then unbearable. Mundane labouring
+  detail (dust masks, tea in the cabin, the radio on Gold) with the uncanny seeping in at the edges. Short
+  sentences. British English, regional and blunt; swearing is fine, sparingly. The Victorian couple never
+  speak and are never explained. Nobody else sees them, so nobody else mentions them as present. People
+  notice Liam getting stranger and react the way people do: jokes first, then worry, then distance.
+downed:
+  mode: wake-robbed
+  room: beach
+  text: "You come to on the shingle under the pier with the tide sucking at your boots. Your pockets are lighter."
+xp: { check: 5, fight: 15 }
+conversation_minutes_per_turn: 1

@@ -1,0 +1,49 @@
+# The Grand Atlantic Hotel renovation: the site compound, Gary's cabin and the gutted hotel.
+- id: compound
+  name: Site Compound
+  tags: [outdoors]
+  description:
+    - when: { time_between: { from: "18:00", to: "07:00" } }
+      text: "The compound after hours: Heras fencing rattling in the wind, the generator quiet, the skip full of the hotel's insides. The cabin window is lit."
+    - text: "The hotel forecourt is a site compound now: Heras fencing, a skip full of lath and plaster, the generator thudding, a stack of scaffold tubes. Gary's cabin sits by the gate. The hotel's front doors are propped open with a breeze block."
+  exits:
+    - { direction: west, to: promenade }
+    - { direction: in, to: hotel-lobby }
+    - { label: cabin, direction: cabin, to: site-office }
+- id: site-office
+  name: Site Cabin
+  description: "Gary's cabin: a kettle, a calendar from a plant-hire firm, drawings pinned to the wall, a key board by the door, and a camp bed he says he doesn't sleep on."
+  exits:
+    - { direction: out, to: compound }
+- id: hotel-lobby
+  name: Hotel Lobby
+  description:
+    - when: { flag: panelling_off }
+      text: "The lobby of the Grand Atlantic, stripped back to brick. Where the reception panelling was, the old wall shows through, with a cavity at waist height. A staircase goes up into the dark."
+    - when: { special: { PE: { gte: 7 } } }
+      text: "The lobby of the Grand Atlantic, half gutted. Under the dust sheets you can see the pattern of the old tiles, and for a moment, palms in brass pots and a porter at the desk. The reception panelling is still to come off."
+    - text: "The lobby of the Grand Atlantic, half gutted: dust sheets, a radio on Gold, a stripped staircase going up. The old reception desk is still clad in dark panelling, the last of it. Gary wants it off this week."
+  exits:
+    - { direction: out, to: compound }
+    - { direction: up, to: hotel-corridor }
+- id: hotel-corridor
+  name: First-floor Corridor
+  description:
+    - when: { in_set_piece: the-lullaby }
+      text: "The first-floor corridor in the dark. Somewhere along it a woman is singing, very softly, the kind of song you sing to make a baby sleep."
+    - when: { property: { object: door-room-seven, key: locked, value: true } }
+      text: "The first-floor corridor: doors stacked against the wall, cables taped along the floor, numbers still on the frames. Most rooms are stripped. Room 7, at the end, is still locked."
+    - text: "The first-floor corridor: doors stacked against the wall, cables taped along the floor, numbers still on the frames. Most rooms are stripped. At the end, Room 7."
+  exits:
+    - { direction: down, to: hotel-lobby }
+    - { label: Room 7, direction: east, to: room-seven, via: door-room-seven }
+- id: room-seven
+  name: Room 7
+  description:
+    - when: { in_set_piece: the-lullaby }
+      text: "Room 7 is furnished. It shouldn't be. A brass bed, a washstand, a lace-curtained window onto the pier. The air is warm and smells of lavender water."
+    - when: { any: [ { special: { PE: { gte: 7 } } }, { flag: marek_told }, { flag: saw_cradle } ] }
+      text: "Room 7: a sea view, bare boards, wallpaper hanging in tongues. The floor by the window is wrong somehow; one board sits slightly proud."
+    - text: "Room 7: a sea view, bare boards, wallpaper hanging in tongues. It's colder in here than the corridor."
+  exits:
+    - { label: corridor, direction: west, to: hotel-corridor, via: door-room-seven }

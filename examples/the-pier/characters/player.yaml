@@ -1,0 +1,19 @@
+id: player
+name: Liam
+aliases: [liam, me]
+description:
+  - when: { flag: breakdown }
+    text: "Liam Doyle in the mirror: hollow-eyed, unshaven, plaster dust in the creases of his hands. He keeps looking past himself, at the window."
+  - when: { flag: obsession }
+    text: "Liam Doyle: twenty-two, hi-vis, a week's stubble. You've lost weight. You've stopped noticing."
+  - text: "Liam Doyle: twenty-two, hi-vis over a hoodie, steel toecaps, a labourer on the Grand Atlantic job. Sick of it. Sick of most things."
+persona:
+  identity: "Liam Doyle, 22, labourer on the Grand Atlantic Hotel renovation."
+  background: "Left school with nothing, drifted through agency jobs, ended up in Westcombe because the work was there. Lodges at the Seaview with Marek and Tommo."
+  personality: [disaffected, sardonic, observant, lonely]
+  voice: "Mumbled, short, sarcastic. Says less than he means."
+special: { ST: 6, PE: 5, EN: 6, CH: 4, IN: 5, AG: 6, LK: 4 }
+tag_skills: [unarmed, sneak, repair]
+money: 40
+equipment: {}
+goals: ["Get through the week.", "Find out who they are."]
