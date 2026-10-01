@@ -53,16 +53,18 @@ The implementation baseline is in [`docs/spec/`](docs/spec/index.html):
 ## Status
 
 v0.1: the engine implements the spec end to end. The exploration, conversation, combat, set-piece and day loops run
-on a deterministic simulation; conversations, the director, callouts and day summaries run through the provider
-interface; saves are SQLite and replay identically. Open questions Q30 and Q31 are still open (see §8). Q31 is
-implemented as its suggested starting point (`perceived_by: player`).
+on a deterministic simulation. Conversations, the director, callouts and day summaries run through the provider
+interface. Saves are SQLite and replay identically. Sneaking is a stance, combat has pursuit, and Luck nudges seeded
+rolls (§5.4, §5.6). Open questions Q30 and Q31 are still open (see §8). Q31 is implemented as its suggested starting
+point (`perceived_by: player`): apparitions are seen only by the player, can't be touched, and have no bodies.
 
 ## Quick start
 
 ```sh
 pnpm install
 pnpm build
-node bin/oneblock.js validate examples/carver-street
+node bin/oneblock.js validate examples/the-pier
+node bin/oneblock.js play examples/the-pier                           # The Pier: the first full story
 node bin/oneblock.js play examples/carver-street                      # Claude via your Claude Code login
 node bin/oneblock.js play examples/carver-street --provider offline   # no model: authored options only
 node bin/oneblock.js replay examples/carver-street carver-street.db   # check a save replays identically
@@ -71,9 +73,15 @@ node bin/oneblock.js replay examples/carver-street carver-street.db   # check a 
 `play` saves after every turn to `<game id>.db` and resumes it next time (`--new` starts over). Type `help` in game.
 During development, `pnpm oneblock <command>` runs the CLI from source.
 
-[`examples/carver-street`](examples/carver-street) is a small demo block built from the examples in the spec. It is
-also the playthrough fixture. The Pier ([brief](examples/the-pier/brief.md)) is the first full story and is still to
-be built.
+[`examples/the-pier`](examples/the-pier) is the first full story: a present-day ghost story on a Victorian pier,
+built from its [brief](examples/the-pier/brief.md). [`examples/carver-street`](examples/carver-street) is a small
+demo block built from the examples in the spec. Both are playthrough fixtures.
+
+## Making your own game
+
+Write a story brief (spec §7.2) and ask Claude Code to "make me a game from this story". The
+[`make-game`](.claude/skills/make-game/SKILL.md) skill follows the [authoring guide](docs/authoring-guide.md): it plans
+the block, writes the payload, validates it to zero warnings and writes a playthrough test.
 
 ## Layout
 
@@ -87,6 +95,9 @@ be built.
 | `src/session` | the loops, UI port, parser, action menu and SQLite saves (§3) |
 | `src/cli` | the readline CLI, the only frontend adapter |
 | `schema/payload.schema.json` | the published payload JSON Schema (`pnpm schema` regenerates it) |
+| `docs/authoring-guide.md` | how to build a payload from a story brief (§7.9) |
+| `.claude/skills/make-game` | the Claude Code skill that wraps the guide |
+| `examples/` | The Pier and Carver Street |
 
 ## Development
 
