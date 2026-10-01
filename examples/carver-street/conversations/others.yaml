@@ -1,0 +1,47 @@
+- id: dev-letters
+  character: dev
+  goals:
+    - "Find out whether the player is on Pike's side."
+    - "Do not admit the letters are from your father unless you trust the player."
+  opening:
+    - when: { holds: { who: player, what: unstamped-letters } }
+      text: "Dev sees the letters in your hand and goes very still. 'Where did you get those?'"
+    - text: "Dev pulls one headphone off. 'Hey. 2B, right?'"
+  options:
+    - text: "Somebody's been at your lock."
+    - text: "[Give back the letters]"
+      when: { holds: { who: player, what: unstamped-letters } }
+      action: { act: give, item: unstamped-letters, to: dev }
+      effects: [ { adjust_relationship: { who: dev, with: player, trust: 20, affinity: 15 } } ]
+  hooks: [confess-father, adjust-trust]
+  actions: [go, give, take, use]
+  ends_when: { turns: { gte: 10 } }
+- id: pike-warning
+  character: pike
+  goals:
+    - "Persuade the player to leave quietly, with a small payment if need be."
+    - "If the player threatens to expose you, intimidate them. Violence is a last resort."
+  opening: "Mr Pike smiles with half his face. 'Sam, isn't it? Just the person.'"
+  options:
+    - text: "[Barter] How much to make me disappear?"
+      check:
+        skill: barter
+        tier: normal
+        opposed: pike
+        pass: [ { give_money: { who: player, amount: 100 } }, { give_money: { who: pike, amount: -100 } }, { end_conversation: {} } ]
+  hooks: [adjust-trust, pike-turns-nasty]
+  actions: [go, give, use, attack]
+  ends_when: { turns: { gte: 8 } }
+- id: ravi-shop
+  character: ravi
+  goals: ["Sell the player something.", "Find out what is going on at number 41."]
+  opening: "'My friend! The usual? The usual is gone, sorry. Supply chain.'"
+  options:
+    - text: "[Buy a bandage]"
+      when: { holds: { who: ravi, what: bandage } }
+      action: { act: buy, item: bandage, from: ravi }
+    - text: "[Buy a torch]"
+      when: { holds: { who: ravi, what: torch } }
+      action: { act: buy, item: torch, from: ravi }
+  hooks: [adjust-trust]
+  ends_when: { turns: { gte: 8 } }

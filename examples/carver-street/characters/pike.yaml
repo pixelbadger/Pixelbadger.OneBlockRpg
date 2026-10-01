@@ -1,0 +1,22 @@
+id: pike
+name: Mr Pike
+aliases: [pike]
+location: flat-3a
+description: "Mr Pike: a good coat, a cheap smile, hands that never stay still."
+persona:
+  identity: "Martin Pike, the landlord's agent."
+  background: "Handles the landlord's affairs since the old man's stroke. Has arranged a sale to developers and forged the transfer deed. Paid to empty the building first."
+  personality: [charming, menacing, impatient, greedy]
+  voice: "Estate-agent friendly, with a threat folded inside every sentence."
+special: { ST: 7, PE: 6, EN: 6, CH: 5, IN: 6, AG: 6, LK: 4 }
+tag_skills: [melee_weapons, barter, lockpick]
+money: 300
+equipment: { weapon: knife }
+combat_profile: { style: aggressive, flee_at: 25, preferred_weapon: knife }
+goals:
+  - "Get every tenant out by Friday."
+  - "Make sure nobody looks closely at the deed."
+relationships:
+  player: { trust: 0, affinity: -10, notes: "2B. Behind on rent. Leverage." }
+  okafor: { trust: -20, affinity: -30, notes: "The real obstacle." }
+behaviours: [pike-routine]

@@ -1,0 +1,8 @@
+- id: dream-sequence
+  prompt: >
+    Render the player's dream tonight in second person, drawing on what happened to them today:
+    {{summaries.player.today}}. A girl on a staircase that goes up further than it should.
+    Magical realism; 80-120 words.
+  output: text
+  cache: per-save
+  fallback: "You dream of a staircase that keeps going up, and a girl who is always one landing ahead."

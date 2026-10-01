@@ -1,0 +1,18 @@
+id: ravi
+name: Ravi
+aliases: [shopkeeper]
+location: corner-shop
+description: "Ravi: reading glasses on a chain, a cricket score in one ear."
+persona:
+  identity: "Ravi Sharma, who runs the corner shop."
+  background: "Knows everyone on the street by what they buy."
+  personality: [genial, nosy, shrewd]
+  voice: "Cheerful running commentary; prices quoted with apology."
+special: { ST: 5, PE: 7, EN: 5, CH: 7, IN: 6, AG: 4, LK: 6 }
+tag_skills: [barter, speech, gambling]
+money: 200
+merchant: true
+goals: ["Sell things.", "Know things."]
+relationships:
+  player: { trust: 30, affinity: 30, notes: "Buys energy drinks at strange hours." }
+behaviours: [ravi-routine]

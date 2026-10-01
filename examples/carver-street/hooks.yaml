@@ -1,0 +1,35 @@
+- id: reveal-landlord-sale
+  description: "Admit that the landlord is selling the building."
+  guard: { relationship: { who: self, with: player, trust: { gte: 40 } } }
+  effects:
+    - { add_belief: { who: player, belief: landlord-selling } }
+    - { set_flag: sale_known }
+  once: true
+- id: adjust-trust
+  description: "Change how far you trust the player, by -10 to +10, after something they said or did."
+  params:
+    amount: { type: number, min: -10, max: 10, description: "trust change" }
+  effects:
+    - { adjust_relationship: { who: self, with: player, trust: { $arg: amount } } }
+- id: confess-father
+  description: "Tell the player the letters are from your father, the landlord."
+  guard: { relationship: { who: dev, with: player, trust: { gte: 30 } } }
+  effects:
+    - { add_belief: { who: player, belief: dev-is-landlords-son } }
+    - { set_flag: dev_confessed }
+  once: true
+- id: take-up-the-deed
+  description: "Agree to take the forged deed to the council, stopping the sale."
+  guard: { all: [ { holds: { who: player, what: forged-deed } }, { believes: { who: player, belief: pike-forged-deed } } ] }
+  effects:
+    - { set_flag: sale_stopped }
+  once: true
+- id: pike-turns-nasty
+  description: "Decide the player is a problem to be dealt with physically."
+  effects:
+    - { set_hostile: { who: pike } }
+- id: fire-spreads
+  description: "The fire spreads to the next floor."
+  effects:
+    - { set_flag: fire_upstairs }
+    - { narrate: "Smoke rolls up the stairwell. Somewhere above, glass bursts." }

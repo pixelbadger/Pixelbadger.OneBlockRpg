@@ -1,0 +1,47 @@
+# Routines and reactions (§4.5).
+- id: okafor-routine
+  rules:
+    - when: { time: "07:30" }
+      do: [ { act: go, to: lobby }, { set_intent: "sweeping the lobby" } ]
+    - when: { time: "12:00" }
+      do: [ { act: go, to: basement }, { set_intent: "glaring at the boiler" } ]
+    - when: { time: "14:00" }
+      do: [ { act: go, to: lobby }, { set_intent: "sorting the post" } ]
+    - when: { time: "21:00" }
+      do: [ { act: go, to: okafor-flat }, { set_intent: null } ]
+    - when: { time: "22:30" }
+      do: [ { act: sleep } ]
+- id: okafor-reactions
+  rules:
+    - when: { event: { kind: broken, target: lobby-window } }
+      do:
+        - { act: go, to: lobby }
+        - { say: "Who has done this? Who?" }
+    - when: { all: [ { event: { kind: broken, target: lobby-window } }, { in_room: { who: player, where: lobby } } ] }
+      do: [ { adjust_relationship: { who: okafor, with: player, trust: -15, affinity: -10 } } ]
+    - when: { event: { kind: showed, actor: player, target: forged-deed } }
+      do:
+        - { say: "Let me see that. … That is not his hand. That is not Mr Mistry's hand." }
+        - { add_belief: { who: okafor, belief: pike-forged-deed } }
+- id: dev-routine
+  rules:
+    - when: { time: "09:00" }
+      do: [ { act: go, to: corner-shop }, { set_intent: "reading the backs of cereal boxes" } ]
+    - when: { time: "10:00" }
+      do: [ { act: go, to: flat-3b }, { set_intent: "playing the same four bars on the keyboard" } ]
+    - when: { time: "23:00" }
+      do: [ { act: sleep } ]
+- id: pike-routine
+  rules:
+    - when: { time: "10:00" }
+      do: [ { act: go, to: hall-3 }, { set_intent: "trying door handles" } ]
+    - when: { time: "14:00" }
+      do: [ { act: go, to: lobby }, { set_intent: "measuring the lobby with a laser tape" } ]
+    - when: { time: "18:00" }
+      do: [ { act: go, to: flat-3a }, { set_intent: null } ]
+    - when: { time: "23:30" }
+      do: [ { act: sleep } ]
+- id: ravi-routine
+  rules:
+    - when: { time: "23:00" }
+      do: [ { act: sleep } ]

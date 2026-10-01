@@ -1,0 +1,12 @@
+id: player
+name: Sam
+description: "Sam Reyes, 2B. Bike courier, behind on rent, good at stairs."
+persona:
+  identity: "Sam Reyes, the tenant of flat 2B, a bike courier in their twenties."
+  background: "Has lived at 41 Carver Street for two years. Owes three months' rent."
+  personality: [wry, restless, decent]
+  voice: "Short sentences, deflects with jokes."
+special: { ST: 5, PE: 5, EN: 5, CH: 5, IN: 5, AG: 5, LK: 5 }
+tag_skills: [speech, sneak, unarmed]
+money: 20
+goals: ["Keep a roof over your head."]

@@ -1,0 +1,208 @@
+- id: key-2b
+  name: key to 2B
+  aliases: [key, my key]
+  location: player
+  description: "Your door key, on a ring with a bottle opener."
+  affordances: [takeable]
+  properties: { mass: 0.05, value: 1 }
+- id: key-3a
+  name: key to 3A
+  aliases: [key, deadlock key]
+  location: pike
+  description: "A shiny new deadlock key."
+  affordances: [takeable]
+  properties: { mass: 0.05, value: 1 }
+- id: key-3b
+  name: key to 3B
+  aliases: [key]
+  location: dev
+  description: "Dev's key, on a lanyard from a conference about whales."
+  affordances: [takeable]
+  properties: { mass: 0.05, value: 1 }
+- id: bed-2b
+  name: bed
+  location: flat-2b
+  scenery: true
+  description: "Your bed, unmade since about March."
+  affordances: [sleepable]
+  properties: { mass: 40 }
+- id: kettle
+  name: kettle
+  location: flat-2b
+  description: "A dented electric kettle."
+  room_text: "Your kettle sits on the desk next to a jar of teabags."
+  affordances: [takeable, usable]
+  properties: { mass: 1.2, value: 5, temperature: 18 }
+  uses:
+    - when: { flag: power_out }
+      text: "You flick the switch. Nothing: the power's out."
+    - text: "The kettle rumbles to a boil and clicks off. You make a mug of tea."
+      effects:
+        - { set_property: { object: kettle, key: temperature, value: 100 } }
+        - { spawn: { object: mug-of-tea, in: player } }
+- id: mug-of-tea
+  name: mug of tea
+  aliases: [tea, mug]
+  description: "Builder's tea in a chipped mug that says WORLD'S OKAYEST."
+  affordances: [takeable]
+  properties: { mass: 0.4, value: 1 }
+  consumable:
+    fatigue: 1
+    text: "You drink the tea. The day comes slightly more into focus."
+- id: desk-2b
+  name: desk
+  location: flat-2b
+  scenery: true
+  description: "A desk with one drawer."
+  affordances: [surface]
+  properties: { mass: 25 }
+- id: drawer-2b
+  name: drawer
+  location: desk-2b
+  description: "The desk drawer."
+  affordances: [container, openable]
+  properties: { open: false, mass: 3 }
+- id: rent-book
+  name: rent book
+  aliases: [book]
+  location: drawer-2b
+  description: "Your rent book. The last three boxes are empty."
+  affordances: [takeable]
+  properties: { mass: 0.2, value: 0 }
+- id: lobby-window
+  name: lobby window
+  aliases: [window]
+  location: lobby
+  scenery: true
+  description:
+    - when: { property: { object: lobby-window, key: broken, value: true } }
+      text: "The window is smashed."
+    - text: "A tall sash window onto the street, its glass rippled with age."
+  break_at: 10
+  properties: { mass: 15, broken: false }
+- id: broom
+  name: broom
+  location: okafor
+  description: "Mrs Okafor's broom, worn to a slant."
+  affordances: [takeable]
+  properties: { mass: 1, value: 2 }
+- id: fuse-box
+  name: fuse box
+  aliases: [fuses, fusebox]
+  location: basement
+  scenery: true
+  description: "A grey fuse box with a big master switch."
+  affordances: [usable]
+  properties: { mass: 10 }
+  uses:
+    - when: { flag: power_out }
+      text: "You throw the master switch. Light comes back up through the building like a breath."
+      effects: [ { clear_flag: power_out } ]
+    - text: "You throw the master switch. The building goes dark around you."
+      effects: [ { set_flag: power_out } ]
+- id: loose-floorboard
+  name: loose floorboard
+  aliases: [floorboard, board]
+  location: flat-3b
+  scenery: true
+  hidden_unless: { special: { PE: { gte: 6 } } }
+  description: "A floorboard that sits slightly proud of the others."
+  affordances: [container, openable]
+  properties: { open: false, mass: 2 }
+- id: unstamped-letters
+  name: bundle of unstamped letters
+  aliases: [letters, bundle, envelopes]
+  location: loose-floorboard
+  description: "A dozen letters in the same hand, none of them stamped. 'Dear Devendra, I know you won't answer…' Each is signed 'Dad'. The last mentions selling the building 'to Mr Pike's buyers' and that 'the paperwork is in hand'."
+  affordances: [takeable]
+  properties: { mass: 0.3, value: 0 }
+- id: filing-box
+  name: filing box
+  aliases: [box, files]
+  location: flat-3a
+  description: "A cardboard filing box."
+  affordances: [container, openable, takeable]
+  properties: { open: false, mass: 4, value: 0 }
+- id: forged-deed
+  name: transfer deed
+  aliases: [deed, papers, transfer]
+  location: filing-box
+  description: "A transfer deed for 41 Carver Street. The landlord's signature is a careful copy of the one on the letters to Dev, but the hand shakes on the capital D."
+  affordances: [takeable]
+  properties: { mass: 0.1, value: 0 }
+  uses:
+    - on: unstamped-letters
+      text: "You lay the deed beside the letters. The D's don't match. Someone traced this."
+      effects: [ { add_belief: { who: player, belief: pike-forged-deed } } ]
+- id: camp-bed
+  name: camp bed
+  location: flat-3a
+  scenery: true
+  description: "A camp bed with a sleeping bag zipped tight like a cocoon."
+  affordances: [sleepable]
+  properties: { mass: 6 }
+- id: bed-3b
+  name: Dev's bed
+  location: flat-3b
+  scenery: true
+  description: "A futon under a duvet patterned with planets."
+  affordances: [sleepable]
+  properties: { mass: 30 }
+- id: bed-okafor
+  name: Mrs Okafor's bed
+  location: okafor-flat
+  scenery: true
+  description: "Tightly made, hospital corners."
+  affordances: [sleepable]
+  properties: { mass: 30 }
+- id: cot-shop
+  name: cot
+  location: corner-shop
+  scenery: true
+  description: "A cot behind the counter. Ravi doesn't talk about it."
+  affordances: [sleepable]
+  properties: { mass: 8 }
+- id: knife
+  name: lock knife
+  aliases: [knife, blade]
+  location: pike
+  description: "A heavy lock knife with a horn handle."
+  affordances: [takeable]
+  properties: { mass: 0.3, value: 15 }
+  weapon: { type: knife, skill: melee_weapons, damage: [2, 6], ap: 3, min_st: 2 }
+- id: bandage
+  name: bandage
+  aliases: [bandages, first aid kit]
+  location: ravi
+  description: "A roll of crepe bandage and some plasters."
+  affordances: [takeable]
+  properties: { mass: 0.2, value: 4 }
+  consumable: { heal: 6 }
+- id: torch
+  name: torch
+  aliases: [flashlight]
+  location: ravi
+  description: "A plastic torch. Batteries included, allegedly."
+  affordances: [takeable]
+  properties: { mass: 0.4, value: 6 }
+- id: hairpin
+  name: hairpin
+  aliases: [pin]
+  location: corner-shop
+  description: "A bent black hairpin on the floor by the till."
+  affordances: [takeable]
+  tags: [lockpick]
+  properties: { mass: 0.01, value: 0 }
+- id: eviction-notice
+  name: eviction notice
+  aliases: [notice, envelope]
+  description: "NOTICE TO QUIT. Signed on behalf of the owner by M. Pike."
+  affordances: [takeable]
+  properties: { mass: 0.05, value: 0 }
+- id: girl-on-the-stairs
+  name: girl on the stairs
+  aliases: [girl, child]
+  perceived_by: player
+  description: "A girl of about nine in a school cardigan, sitting three steps up, watching the front door. When you look straight at her she is harder to see."
+  room_text: "A girl sits on the stairs, watching the front door."
+  properties: {}

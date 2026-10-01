@@ -1,0 +1,71 @@
+- id: lobby
+  name: Lobby
+  tags: [public]
+  description:
+    - when: { flag: power_out }
+      text: "The lobby is dark. Streetlight comes through the window and lies across the tiles in a long yellow bar."
+    - when: { property: { object: lobby-window, key: broken, value: true } }
+      text: "The lobby is cold: the window is a jagged hole with the street's noise coming through. Glass glitters on the tiles."
+    - text: "A narrow lobby with black and white tiles, a wall of dented post boxes and a window onto the street. Stairs go up; a door marked BOILER goes down."
+  exits:
+    - { direction: south, to: street, via: front-door }
+    - { direction: up, to: stairwell }
+    - { direction: down, to: basement }
+    - { direction: west, to: okafor-flat }
+- id: okafor-flat
+  name: Caretaker's Flat
+  description: "Mrs Okafor's flat behind the lobby: a single room, a tidy bed, a calendar of the Saints, a smell of pepper soup."
+  exits:
+    - { direction: east, to: lobby }
+- id: basement
+  name: Basement
+  tags: [dark]
+  description:
+    - when: { flag: power_out }
+      text: "The basement is pitch black. Something drips."
+    - text: "The basement: a boiler like a sleeping animal, the fuse box, a bike nobody owns."
+  exits:
+    - { direction: up, to: lobby }
+- id: stairwell
+  name: Stairwell
+  description:
+    - when: { flag: power_out }
+      text: "The stairwell is black. Somewhere above, a radio keeps playing."
+    - when: { special: { PE: { gte: 7 } } }
+      text: "Fluorescent hum. Fresh scratches around the lock of 3B, and a smell of petrol you can't place."
+    - text: "Fluorescent hum, scuffed lino, the smell of someone's dinner."
+  exits:
+    - { direction: down, to: lobby }
+    - { label: "second floor", direction: "2", to: hall-2 }
+    - { label: "third floor", direction: "3", to: hall-3 }
+- id: hall-2
+  name: Second-floor Landing
+  description: "A landing with two doors: 2A, empty for months, and yours, 2B."
+  exits:
+    - { direction: down, to: stairwell }
+    - { label: 2B, direction: west, to: flat-2b, via: door-2b }
+- id: flat-2b
+  name: Flat 2B
+  description:
+    - when: { flag: act_2 }
+      text: "Your flat: a bed, a desk, a kettle, a window on the street. It feels temporary now."
+    - text: "Your flat: a bed, a desk, a kettle, a window on the street. Rent is due. Rent is always due."
+  exits:
+    - { label: landing, direction: east, to: hall-2, via: door-2b }
+- id: hall-3
+  name: Third-floor Landing
+  description: "The top landing. 3A has a new deadlock. 3B has a rug outside it and a pot plant, dying politely."
+  exits:
+    - { direction: down, to: stairwell }
+    - { label: 3A, direction: west, to: flat-3a, via: door-3a }
+    - { label: 3B, direction: east, to: flat-3b, via: door-3b }
+- id: flat-3a
+  name: Flat 3A
+  description: "Mr Pike's flat is barely lived in: a camp bed, a laptop, a filing box, a good coat on a hanger."
+  exits:
+    - { direction: east, to: hall-3, via: door-3a }
+- id: flat-3b
+  name: Flat 3B
+  description: "Dev's flat: books in towers, a keyboard with no stand, a corkboard of postcards from places nobody visits."
+  exits:
+    - { direction: west, to: hall-3, via: door-3b }
