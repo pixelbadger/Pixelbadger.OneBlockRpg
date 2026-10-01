@@ -734,6 +734,7 @@ function giveShow(c: Ctx, req: ActionRequest, verb: "give" | "show"): ActionResu
     return refuse(c, to && !w.isChar(to) ? "give.not-char" : "not-here");
   }
   if (verb === "give") {
+    if (!w.npcsPerceive(to)) return refuse(c, "give.apparition", { target: w.label(to) });
     if (w.carried(to) + w.mass(item) > w.capacity(to)) return refuse(c, "give.cannot-carry", { target: w.label(to) });
     moveThing(w, item, to, "gave", c.cause, c.actor, [to]);
   } else {
@@ -887,6 +888,8 @@ function attack(c: Ctx, req: ActionRequest): ActionResult {
     return refuse(c, "not-here");
   }
   if (target === c.actor) return fail("cannot attack yourself");
+  // Apparitions are seen, not touched (Q31).
+  if (!w.npcsPerceive(target)) return refuse(c, "attack.apparition", { target: w.label(target) });
   if (w.char(target).status === "dead") return fail(`${w.label(target)} is already dead`);
   const weapon = req.weapon && held(c, req.weapon) ? req.weapon : undefined;
   w.emit("attacked", { actor: c.actor, targets: [target], payload: { weapon: weapon ?? null }, cause: c.cause });

@@ -108,6 +108,9 @@ export const MESSAGES: Record<string, string> = {
   "equip.cannot": "You can't equip {{item}}.",
   "unequip.ok": "You put away {{item}}.",
   "unequip.not": "You don't have {{item}} ready.",
+  // apparitions (Q31): seen, never touched
+  "attack.apparition": "You lunge at {{target}} and close on cold air.",
+  "give.apparition": "You hold it out. {{Target}} doesn't take it. You're not sure {{target}} could.",
   // talk
   "talk.nothing": "{{Target}} has nothing to say to you right now.",
   "talk.asleep": "{{Target}} is asleep.",

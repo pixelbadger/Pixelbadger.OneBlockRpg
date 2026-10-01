@@ -460,3 +460,21 @@ describe("pursuit (§5.6)", () => {
     expect(w.state.combat?.combatants.find((x) => x.id === "brute")?.status).toBe("left");
   });
 });
+
+describe("apparitions are intangible (Q31)", () => {
+  it("can't be attacked or handed things", () => {
+    const p = mini();
+    p.characters.push({
+      ...p.characters[1]!,
+      id: "shade",
+      name: "the shade",
+      perceived_by: "player",
+      location: "hall",
+    });
+    const w = world(p);
+    expect(perform(w, "player", { act: "attack", target: "shade" }, P).ok).toBe(false);
+    expect(w.state.combat).toBeNull();
+    expect(perform(w, "player", { act: "give", item: "mug", to: "shade" }, P).ok).toBe(false);
+    expect(w.isWithin("mug", "player")).toBe(true);
+  });
+});
