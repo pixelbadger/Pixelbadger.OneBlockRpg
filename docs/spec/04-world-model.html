@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Block World Model</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<nav class="top">
+  <a href="index.html">Overview</a>
+  <a href="01-concept.html">1 · Concept</a>
+  <a href="02-pillars.html">2 · Pillars</a>
+  <a href="03-architecture.html">3 · Architecture</a>
+  <a href="04-world-model.html" aria-current="page">4 · World model</a>
+  <a href="05-mechanics.html">5 · Mechanics</a>
+  <a href="06-llm-layer.html">6 · LLM layer</a>
+  <a href="07-game-payload.html">7 · Game payload</a>
+  <a href="08-open-questions.html">8 · Open questions</a>
+</nav>
+<main>
+<h1>4 · World model</h1>
+<p class="subtitle">The grounded layer: rooms, objects, characters, actions, behaviours, beliefs and time. RPG mechanics are in §5. Sketches show shape, not final types.</p>
+
+<h2>4.1 Rooms</h2>
+<p>Rooms are <strong>descriptive and dimensionless</strong>. A room is a name, authored text and a set of exits.</p>
+<pre><code>interface Room {
+  id: RoomId;
+  name: string;
+  description: TextVariants;     // authored; variants chosen by condition (§7.4)
+  exits: Exit[];                 // { direction | label, to: RoomId, via?: ObjectId (a door), when?: Condition }
+  tags: string[];                // 'public', 'dark', 'outdoors', …
+}</code></pre>
+<p>A door, hatch or fire escape is an <em>object</em> referenced by an exit, so it can be locked, broken, opened or described like anything else.</p>
+
+<h2>4.2 Objects</h2>
+<p>Everything else is an object, including characters (4.4) and the player.</p>
+<pre><code>interface GameObject {
+  id: ObjectId;
+  name: string; aliases: string[];
+  location: RoomId | ObjectId;   // in a room, inside a container, or held by a character
+  description: TextVariants;
+  properties: {                  // simulable, typed, declared in the payload
+    mass?: number;               // kg
+    velocity?: number;           // see note below
+    [key: string]: number | boolean | string | undefined;  // open, locked, lit, temperature, charge…
+  };
+  affordances: string[];         // which actions apply: 'takeable', 'container', 'openable', 'lockable', 'usable'…
+  behaviours: BehaviourRef[];    // scripted behaviour (4.5)
+  tags: string[];
+}</code></pre>
+<p>Rules are written against properties and affordances, not individual objects. That lets unplanned solutions work: anything heavy enough can
+hold a door shut. <span class="tag">open</span> Q18: <strong>velocity in a dimensionless world.</strong> It could be an abstract magnitude set by actions such as
+<code>throw</code> and <code>push</code>, decaying each tick and combining with mass on impact to break, knock over or hurt. Is that the intent?</p>
+
+<h2>4.3 Actions</h2>
+<p>There is one vocabulary shared by the player, characters and scripted objects (P4).</p>
+<table>
+<thead><tr><th>Action</th><th>Preconditions (examples)</th><th>Effects (examples)</th></tr></thead>
+<tbody>
+<tr><td><code>go</code></td><td>exit exists, its door is open, the exit's condition holds</td><td>actor's location changes</td></tr>
+<tr><td><code>take</code> / <code>drop</code> / <code>put</code></td><td>takeable, within carry capacity (§5.2), container open; taking from a character needs consent (§5.7)</td><td>location changes</td></tr>
+<tr><td><code>open</code> / <code>close</code> / <code>lock</code> / <code>unlock</code></td><td>affordance, key held</td><td>property changes</td></tr>
+<tr><td><code>use</code> X (on Y)</td><td>affordance, an authored use rule matches</td><td>authored effects</td></tr>
+<tr><td><code>throw</code> / <code>push</code></td><td>Strength vs mass</td><td>sets velocity and location, impact rules</td></tr>
+<tr><td><code>give</code> / <code>show</code></td><td>recipient present</td><td>location change, recipient beliefs</td></tr>
+<tr><td><code>steal</code> / <code>trade</code></td><td>target present; Steal or Barter (§5.7)</td><td>location change, money, witnesses</td></tr>
+<tr><td><code>equip</code> / <code>unequip</code></td><td>item held, ST minimum</td><td>weapon/armour slot</td></tr>
+<tr><td><code>attack</code></td><td>target present, weapon usable</td><td>starts or continues combat (§5.6)</td></tr>
+<tr><td><code>sleep</code></td><td>a <code>sleepable</code> object, or the floor with a penalty</td><td>fatigue reset, healing, <strong>day boundary</strong> for the player (§5.8)</td></tr>
+<tr><td><code>talk</code></td><td>character present and willing</td><td>starts a conversation (§6)</td></tr>
+<tr><td><code>wait</code></td><td>none</td><td>time passes</td></tr>
+</tbody>
+</table>
+<p>Each action has a base time cost, scaled by AP (§5.5). Characters may take any of these actions mid-conversation, within the conversation's allow-list (§6.6). Authors can add <strong>use rules</strong> (X on Y → effects) without new code.</p>
+
+<h2>4.4 Characters</h2>
+<p>A character is an object with a mind attached. Its everyday behaviour is scripted. Its <em>voice</em> in conversation is the LLM.</p>
+<pre><code>interface Character extends GameObject {
+  persona: { identity: string; background: string; personality: string[]; voice: string };
+  special: Special;                       // §5.1; derived stats computed (§5.2)
+  tagSkills: SkillId[];                   // §5.3
+  hp: number; fatigueHours: number; xp: number; level: number; money: number;
+  equipment: { weapon?: ObjectId; armour?: ObjectId };
+  combatProfile: CombatProfile;           // scripted combat behaviour (§5.6)
+  essential?: boolean;                    // knocked out, never killed (§5.6)
+  goals: Goal[];                          // high-level, authored: "keep the building", "find out who took the ring"
+  intent?: Intent;                        // current scripted activity, e.g. sweeping the lobby
+  relationships: Record&lt;ObjectId, { trust: number; affinity: number; notes: string }&gt;;
+  beliefs: Belief[];                      // 4.7
+  dayLog: LogEntry[];                     // today's conversations and witnessed events (§6.8)
+  daySummaries: DaySummary[];             // one per past day, in this character's own perspective
+  conversations: ConversationId[];        // conversation specs this character can hold (§6.2)
+}</code></pre>
+
+<h2>4.5 Behaviours</h2>
+<p>Behaviours are declarative scripts in the payload. There is no code. A behaviour is a list of <strong>rules</strong>:
+<em>when</em> (an event, a time, or a condition) → <em>do</em> (a sequence of actions and effects), with optional cooldown, once-only or priority settings.</p>
+<pre><code># a character's routine and a reaction, in payload YAML
+behaviours:
+  - id: okafor-routine
+    rules:
+      - when: { time: "07:30" }
+        do: [ { act: go, to: lobby }, { set_intent: "sweeping the lobby" } ]
+      - when: { time: "09:00" }
+        do: [ { act: go, to: flat-2b } ]
+      - when: { event: thrown, target: lobby-window }
+        do: [ { act: go, to: lobby }, { start_conversation: okafor-angry } ]</code></pre>
+<p>Schedules, reactions, machines and ambient life all come from behaviours. Former "utilities" become behaviours too: a fuse box object can switch
+<code>powered</code> off in every room tagged <code>floor-2</code>.</p>
+
+<h2>4.6 Character mechanics</h2>
+<p>SPECIAL attributes, derived statistics, skills, checks, combat, items, fatigue and progression are specified in <a href="05-mechanics.html">§5</a>.
+They apply identically to the player and every character.</p>
+
+<h2>4.7 Flags, beliefs and memory</h2>
+<ul>
+  <li><strong>Flags</strong>: world-level named values (<code>rent_paid</code>, <code>act</code>, <code>ring_found</code>). They are the main currency of triggers.</li>
+  <li><strong>Beliefs</strong>: per-character propositions with a source and confidence. They can be false. This is where constructed social reality is stored.
+      They change through conversation hooks (<code>add_belief</code>) and authored effects.</li>
+  <li><strong>Memory</strong>: a raw <em>day log</em> per character, condensed into a <em>day summary</em> when the player sleeps. All previous summaries
+      go at the front of later LLM calls for that character (§6.8).</li>
+</ul>
+
+<h2>4.8 Time</h2>
+<p>A world clock in minutes, grouped into <strong>days</strong>. Actions cost time, scaled by AP. Behaviours fire on time and events. Conversations and combat
+take time, which is applied when they end. Fatigue makes sleep mandatory, and <strong>the player's sleep is the day boundary</strong> (§5.8, §3.6).</p>
+
+<h2>4.9 Events</h2>
+<pre><code>interface WorldEvent {
+  seq: number; at: GameTime; kind: string;    // 'moved' | 'took' | 'thrown' | 'flag-set' | 'said' | …
+  actor?: ObjectId; targets: ObjectId[];
+  payload: unknown;
+  cause: { by: 'player' | 'behaviour' | 'trigger' | 'hook' | 'rule'; ref?: string };
+}</code></pre>
+
+<footer>§4 of the One Block CRPG specification</footer>
+</main>
+</body>
+</html>

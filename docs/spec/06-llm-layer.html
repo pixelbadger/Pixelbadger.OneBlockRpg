@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Block LLM Layer</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<nav class="top">
+  <a href="index.html">Overview</a>
+  <a href="01-concept.html">1 · Concept</a>
+  <a href="02-pillars.html">2 · Pillars</a>
+  <a href="03-architecture.html">3 · Architecture</a>
+  <a href="04-world-model.html">4 · World model</a>
+  <a href="05-mechanics.html">5 · Mechanics</a>
+  <a href="06-llm-layer.html" aria-current="page">6 · LLM layer</a>
+  <a href="07-game-payload.html">7 · Game payload</a>
+  <a href="08-open-questions.html">8 · Open questions</a>
+</nav>
+<main>
+<h1>6 · LLM layer</h1>
+<p class="subtitle">Where the LLM works: conversations, set pieces, callouts and day summaries. Also the memory model and provider interface underneath them.</p>
+
+<h2>6.1 Scope</h2>
+<p>The LLM is used in four places only:</p>
+<ol>
+  <li><strong>Conversations</strong> voice a character, choose its actions and hooks, and suggest player options (6.2–6.6).</li>
+  <li><strong>Set pieces</strong> run a director that orchestrates a declared scenario (6.7).</li>
+  <li><strong>Scripted callouts</strong> are payload-declared one-off generations (6.5).</li>
+  <li><strong>Day summaries</strong> condense each character's day when the player sleeps (6.8).</li>
+</ol>
+<p>All other text is authored in the payload. All other behaviour, including NPC combat decisions, is scripted (P5).</p>
+
+<h2>6.2 Conversation specs</h2>
+<p>The payload declares conversations per character. Each spec gives the LLM a frame, and gives the engine its guard rails.</p>
+<pre><code>conversations:
+  - id: okafor-rent
+    character: okafor
+    when: { flag: rent_overdue }                # availability condition
+    goals:                                      # conversation-specific, on top of the character's high-level goals
+      - "Get the player to promise to pay by Friday"
+      - "Do not reveal that the landlord is selling the building"
+    opening: "Mrs Okafor leans on her broom. 'You. Rent.'"
+    options:                                    # authored player options, merged with LLM ones
+      - text: "[Speech] I can get you the money, but I need to know why the rush."
+        when: { special: { CH: { gte: 6 } } }
+        check: { skill: speech, tier: hard,
+                 pass: [ { add_belief: { who: player, belief: landlord-selling } } ] }
+      - text: "I'll pay Friday."
+        effects: [ { set_flag: promised_rent }, { end_conversation: {} } ]
+    hooks: [ reveal-landlord-sale, adjust-trust ]   # what the LLM may invoke
+    actions: [ go, give, take, attack, use ]        # which actions the character may take here (6.6)
+    ends_when: { any: [ { flag: promised_rent }, { turns: { gte: 12 } } ] }</code></pre>
+
+<h2>6.3 A conversation turn</h2>
+<p>Each character turn is one structured LLM call. The context is ordered from stable to volatile so prompt caching works:</p>
+<ol>
+  <li>Engine rules and style guide (fixed)</li>
+  <li>Story synopsis and tone (per payload)</li>
+  <li>Persona, SPECIAL and derived stats, high-level goals, relationships (per character)</li>
+  <li><strong>All previous day summaries</strong> for this character (6.8; this part only changes overnight)</li>
+  <li>Conversation goals, hook and action catalogue, current beliefs (per conversation)</li>
+  <li>Today's log for this character, the transcript so far, and the results of the last actions, hooks and checks (per turn)</li>
+</ol>
+<pre><code>interface CharacterTurn {                // structured output, validated with zod
+  line: string;                          // what the character says; tone unbounded
+  emotion?: string;
+  actions: ActionRequest[];              // 6.6: physical actions, e.g. give the key, walk out, throw a punch
+  hooks: { id: string; args: Record&lt;string, unknown&gt; }[];
+  playerOptions: {                       // 2–4 suggestions, merged with authored options
+    text: string;
+    action?: ActionRequest;              // e.g. "[Hand over the envelope]"
+    check?: { skill: SkillId; tier: Tier };   // e.g. "[Speech] You're lying." — engine rolls
+  }[];
+  wantsToEnd?: boolean;
+}</code></pre>
+<p>The engine resolves the character's actions and hooks, then merges player options. Authored options win ties. Gated options show their gate
+(<code>[Speech]</code>, <code>[CH 6]</code>). The player can always leave. <span class="tag">open</span> Q20: should there also be a free-text option?</p>
+
+<h2>6.4 Hooks: where the constructed touches the ground</h2>
+<pre><code>hooks:
+  - id: reveal-landlord-sale
+    description: "Okafor admits the landlord is selling the building."   # shown to the LLM
+    guard: { relationship: { who: okafor, with: player, trust: { gte: 60 } } }
+    effects: [ { add_belief: { who: player, belief: landlord-selling } }, { set_flag: sale_known } ]
+    once: true</code></pre>
+<ul>
+  <li>Hooks change <em>story state</em> (flags, beliefs, relationships, spawning, starting set pieces). Physical acts use actions (6.6).</li>
+  <li>The LLM chooses whether and when to use a hook. The engine checks the guard and applies it. A failed guard is reported back so the character can react.</li>
+  <li>Anything said without a hook is <em>speech</em>. It is remembered (6.8), but it is not fact.</li>
+</ul>
+
+<h2>6.5 Scripted callouts</h2>
+<p>A callout is a payload-declared LLM generation for moments where authored text would be too rigid, such as a dream or a radio broadcast.
+It is fired by a trigger or behaviour effect.</p>
+<pre><code>callouts:
+  - id: dream-sequence
+    prompt: "Render the player's dream tonight, drawing on: {{summaries.player.today}}. Magical realism; 80–120 words."
+    output: text
+    cache: per-save                  # generated once per save, then fixed</code></pre>
+
+<h2>6.6 Character actions in conversation</h2>
+<p>Characters can <em>do</em> things mid-conversation, using the same action vocabulary as everyone else (§4.3). Each one is checked and resolved by the engine:</p>
+<pre><code>type ActionRequest =
+  | { act: 'give'; item: ObjectId; to: ObjectId }
+  | { act: 'take'; item: ObjectId; from?: ObjectId }   // from a character → needs consent, a Steal check, or a downed target
+  | { act: 'go'; to: RoomId }                          // leaving ends the conversation unless followed
+  | { act: 'attack'; target: ObjectId; weapon?: ObjectId }   // starts combat (§5.6)
+  | { act: 'use' | 'open' | 'close' | 'drop' | 'equip'; target: ObjectId; on?: ObjectId };</code></pre>
+<ul>
+  <li><strong>Allow-list.</strong> The conversation spec lists which actions are allowed. The default is <code>go, give, take, use</code>, and <code>attack</code> must be granted explicitly.</li>
+  <li><strong>Validation is the same as anywhere else:</strong> possession, location, carry capacity, AP and SPECIAL. Failures are reported back on the next turn
+      ("she reaches for the key, but it isn't in her pocket").</li>
+  <li><strong>Attack suspends the conversation</strong> and enters combat. Afterwards the conversation may resume if both parties are conscious and the
+      character is willing. The resumed turn sees the combat outcome.</li>
+  <li><strong>Time</strong> spent on actions is added to the conversation's duration.</li>
+</ul>
+
+<h2>6.7 Set pieces and the director</h2>
+<p>A <strong>set piece</strong> is a payload-declared scenario: the player gets a loose objective, and an LLM <strong>director</strong> orchestrates
+the cast to make it play out. It is the only place a director exists, and its scope is bounded by the declaration.</p>
+<pre><code>set_pieces:
+  - id: the-fire
+    starts_when: { all: [ { flag: act_2 }, { time: "02:00" } ] }
+    objective: "Get everyone out of the building."         # shown to the player, loosely
+    stage: [ stairwell, hall-2, flat-2b, flat-3b, street ]
+    cast: [ okafor, dev, mr-pike ]
+    director_brief: >
+      Panic and revelation. Dev should try to go back for the letters; Pike blocks the stairs
+      until someone persuades or forces him. Somebody should see something they shouldn't.
+    beats: [ alarm, smoke-spreads, the-letters, the-way-out ]   # ordered, director chooses pacing
+    moves:                                                    # what the director may do
+      actions: [ go, give, take, use, attack ]                # on behalf of cast members
+      effects: [ narrate, set_property, set_flag, add_belief ]
+      hooks: [ fire-spreads, stairwell-collapses ]
+    ends_when: { any: [ { flag: building_evacuated }, { time_after: "03:00" } ] }
+    outcomes:
+      - when: { flag: building_evacuated }
+        do: [ { award_xp: 300 }, { set_flag: fire_survived } ]</code></pre>
+<ul>
+  <li><strong>Cadence.</strong> After each player turn inside the set piece, the director gets one call. It sees the brief, the beats so far, the stage state
+      and the cast's SPECIAL and goals. It returns cast actions, effects, hooks, narration (unbounded in tone) and beat progress. All of it is validated as usual.</li>
+  <li><strong>Conversations inside a set piece</strong> get the director brief and current beat in their context, so characters stay in the scene.</li>
+  <li><strong>Combat</strong> inside a set piece uses §5.6. The director may set cast targets and intentions between rounds.</li>
+  <li><strong>On end</strong>, an outcome summary goes into every participant's day log.</li>
+</ul>
+
+<h2>6.8 Memory: days are chapters</h2>
+<ul>
+  <li><strong>During the day</strong>, each character keeps a <strong>day log</strong>: structured entries for the conversations they had (full transcripts),
+      events they witnessed, actions taken on or near them, hook results and set-piece outcomes. Conversations within the same day see the raw log.</li>
+  <li><strong>When the player sleeps</strong> (§5.8), the day ends. Each character who had activity gets one summary call, producing a bounded <em>day summary</em>
+      (target ≤ 250 words) written in their own perspective. It records what they now think of people, what was promised, and what they suspect.
+      The player gets one too, which can be shown as a journal on waking.</li>
+  <li><strong>All previous day summaries</strong> are put at the front of that character's context in every later call (6.3). Summaries are per character,
+      so a character never knows what they didn't experience.</li>
+  <li><strong>Structured state outranks summaries.</strong> Flags, beliefs and relationships set by hooks are authoritative. Summaries carry tone and detail.</li>
+  <li><strong>Raw logs are kept</strong> in the event log for replay and debugging, but never fed back into prompts after their day.</li>
+  <li>Safety valve: if a single day's log outgrows its budget (a very talkative day), older entries in it are summarised early. <span class="tag">open</span> Q28:
+      should summaries from many days ago be rolled up into a chapter summary?</li>
+</ul>
+
+<h2>6.9 Provider interface</h2>
+<pre><code>interface LlmProvider {
+  readonly id: string;               // 'claude-subscription', 'anthropic-api', 'scripted', 'replay', …
+  readonly capabilities: { structuredOutput: boolean; promptCaching: boolean; streaming: boolean; maxContextTokens: number };
+  complete&lt;T&gt;(req: CompletionRequest&lt;T&gt;): Promise&lt;CompletionResult&lt;T&gt;&gt;;
+}
+interface CompletionRequest&lt;T&gt; {
+  purpose: 'conversation' | 'director' | 'callout' | 'day-summary';
+  system: PromptPart[];              // ordered stable → volatile
+  messages: { role: 'user' | 'assistant'; content: string }[];
+  schema?: ZodType&lt;T&gt;;               // validated engine-side regardless of provider
+  maxOutputTokens?: number;
+}</code></pre>
+<ul>
+  <li>Invalid output gets one retry, then a safe fallback. A conversation falls back to an authored "they don't answer" line plus authored options.
+      A director falls back to a no-op turn, so the set piece continues on behaviours. A turn never crashes.</li>
+  <li><code>refusal</code> stop reasons are handled the same way.</li>
+</ul>
+<table>
+<thead><tr><th>Provider</th><th>Mechanism</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><strong>claude-subscription</strong> (default)</td><td>Claude Agent SDK, or <code>claude -p --output-format json</code>, using the user's Claude Code login</td>
+<td>Tools disabled. <span class="tag">open</span> Q10: mechanism, and confirming terms for subscription use from a personal app.</td></tr>
+<tr><td><strong>anthropic-api</strong></td><td><code>@anthropic-ai/sdk</code> Messages API</td><td>Structured outputs, prompt caching and streaming. Default model <code>claude-opus-5-5</code>.</td></tr>
+<tr><td><strong>scripted</strong></td><td>Deterministic fake</td><td>Tests and offline development</td></tr>
+<tr><td><strong>replay</strong></td><td>Recorded cassettes</td><td>Regression tests</td></tr>
+</tbody>
+</table>
+
+<h2>6.10 Cost</h2>
+<p>LLM calls happen once per conversation turn, once per player turn inside a set piece, once per callout, and once per active character each night.
+Exploration and ordinary combat are free. Day summaries keep context growth linear and small, at roughly 250 words per character per day.
+Usage is logged per purpose so that model choice can be based on measurements.</p>
+
+<footer>§6 of the One Block CRPG specification</footer>
+</main>
+</body>
+</html>

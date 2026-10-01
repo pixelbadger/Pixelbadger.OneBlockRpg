@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Block Mechanics</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<nav class="top">
+  <a href="index.html">Overview</a>
+  <a href="01-concept.html">1 · Concept</a>
+  <a href="02-pillars.html">2 · Pillars</a>
+  <a href="03-architecture.html">3 · Architecture</a>
+  <a href="04-world-model.html">4 · World model</a>
+  <a href="05-mechanics.html" aria-current="page">5 · Mechanics</a>
+  <a href="06-llm-layer.html">6 · LLM layer</a>
+  <a href="07-game-payload.html">7 · Game payload</a>
+  <a href="08-open-questions.html">8 · Open questions</a>
+</nav>
+<main>
+<h1>5 · Mechanics: SPECIAL</h1>
+<p class="subtitle">The RPG system. Every number the engine rolls against lives here. It applies identically to the player and every character.</p>
+
+<div class="note"><p><strong>Baseline:</strong> the formulas below are the classic <em>Fallout 2</em> values, adopted as a starting point and
+expected to be tuned. "SPECIAL" is a Bethesda/ZeniMax trademark, so use the name as internal shorthand only and choose a public name before any release.</p></div>
+
+<h2>5.1 Attributes</h2>
+<p>Seven attributes, each 1–10. A typical person is 5.</p>
+<table>
+<thead><tr><th>Attribute</th><th>Governs</th></tr></thead>
+<tbody>
+<tr><td><strong>S</strong>trength</td><td>Carry capacity, melee damage, weapon handling, forcing and throwing</td></tr>
+<tr><td><strong>P</strong>erception</td><td>Noticing (perception-gated text, hidden objects, tells), combat sequence, detection of sneaking and stealing</td></tr>
+<tr><td><strong>E</strong>ndurance</td><td>Hit points, healing, how long you can stay awake</td></tr>
+<tr><td><strong>C</strong>harisma</td><td>Speech and barter, conversation gates, relationship deltas</td></tr>
+<tr><td><strong>I</strong>ntelligence</td><td>Technical skills, conversation gates, skill points per level</td></tr>
+<tr><td><strong>A</strong>gility</td><td>Action points (and therefore action time), armour class, most physical skills</td></tr>
+<tr><td><strong>L</strong>uck</td><td>Critical chance, gambling, small nudges on seeded rolls</td></tr>
+</tbody>
+</table>
+<p>Characters' SPECIAL is authored in the payload. <span class="tag">open</span> Q26: is the player character fixed by the payload, or created
+with Fallout's point-buy (every attribute starts at 5, plus 5 free points, all within 1–10)?</p>
+
+<h2>5.2 Derived statistics</h2>
+<table>
+<thead><tr><th>Statistic</th><th>Formula</th><th>Used by</th></tr></thead>
+<tbody>
+<tr><td>Hit points (HP)</td><td>15 + ST + 2×EN, plus 2 + ⌊EN/2⌋ per level</td><td>Combat, injury</td></tr>
+<tr><td>Action points (AP)</td><td>5 + ⌊AG/2⌋</td><td>Combat rounds, action time (5.5)</td></tr>
+<tr><td>Armour class (AC)</td><td>AG + armour AC</td><td>Hit chance against you</td></tr>
+<tr><td>Carry capacity</td><td>11 + 11×ST kg (Fallout's 25 + 25×ST lb)</td><td><code>take</code> / <code>put</code> preconditions</td></tr>
+<tr><td>Melee damage bonus</td><td>max(1, ST − 5)</td><td>Unarmed and melee damage</td></tr>
+<tr><td>Sequence</td><td>2×PE</td><td>Combat turn order</td></tr>
+<tr><td>Healing rate</td><td>max(1, ⌊EN/3⌋) HP per 6 hours; doubled while asleep</td><td>Recovery (5.8)</td></tr>
+<tr><td>Critical chance</td><td>LK %</td><td>Combat (5.6)</td></tr>
+<tr><td>Waking hours</td><td>14 + EN hours <em>(ours, not Fallout)</em></td><td>Fatigue (5.8)</td></tr>
+<tr><td>Skill points per level</td><td>5 + 2×IN</td><td>Progression (5.9)</td></tr>
+</tbody>
+</table>
+
+<h2>5.3 Skills</h2>
+<p>Skills are percentages derived from attributes. Three <strong>tag skills</strong> per character get +20 and gain double from skill points.
+The core set trims Fallout's list to what suits a city block. A payload can enable more, for example Big Guns for a different setting.</p>
+<table>
+<thead><tr><th>Skill</th><th>Base</th><th>Skill</th><th>Base</th></tr></thead>
+<tbody>
+<tr><td>Small Guns</td><td>5 + 4×AG</td><td>Sneak</td><td>5 + 3×AG</td></tr>
+<tr><td>Melee Weapons</td><td>20 + 2×(AG+ST)</td><td>Lockpick</td><td>10 + PE + AG</td></tr>
+<tr><td>Unarmed</td><td>30 + 2×(AG+ST)</td><td>Steal</td><td>3×AG</td></tr>
+<tr><td>Throwing</td><td>4×AG</td><td>Traps</td><td>10 + PE + AG</td></tr>
+<tr><td>First Aid</td><td>2×(PE+IN)</td><td>Science</td><td>4×IN</td></tr>
+<tr><td>Doctor</td><td>5 + PE + IN</td><td>Repair</td><td>3×IN</td></tr>
+<tr><td>Speech</td><td>5×CH</td><td>Barter</td><td>4×CH</td></tr>
+<tr><td>Gambling</td><td>5×LK</td><td></td><td></td></tr>
+</tbody>
+</table>
+
+<h2>5.4 Checks</h2>
+<ul>
+  <li><strong>Skill check:</strong> roll d100 (seeded) ≤ skill + tier modifier. Tiers: trivial +30, easy +15, normal 0, hard −15, very hard −30,
+      heroic −50. The margin is reported, so effects can distinguish a narrow pass from a clear pass.</li>
+  <li><strong>Attribute check:</strong> roll d10 ≤ attribute + modifier. Used for raw tests such as forcing a door (ST), spotting something (PE),
+      or holding liquor (EN).</li>
+  <li><strong>Opposed check:</strong> actor's skill roll against a defender value: Sneak vs 10×PE of observers, Steal vs 10×PE of the target
+      (−1 per kg of the item), Speech vs the target's relationship trust plus 5×IN.</li>
+  <li><strong>Who may request a check:</strong> engine rules, authored options, hooks and use rules, LLM-suggested options (tier only, §6.3),
+      and the director's allowed moves (§6.7). The engine always resolves the roll. The LLM never decides an outcome.</li>
+</ul>
+
+<h2>5.5 Action points and time</h2>
+<p>AP is the bridge between turn-based combat and the exploration clock:</p>
+<ul>
+  <li><strong>In combat</strong>, each round grants full AP, and actions spend it (5.6). A round is 10 game seconds.</li>
+  <li><strong>Outside combat</strong>, every action has a base time in minutes, scaled by <code>8 / AP</code>. That makes AP 8 neutral (AG 6–7),
+      AP 5 1.6× slower and AP 10 0.8×. Agile characters get more done in a day.</li>
+</ul>
+
+<h2>5.6 Combat</h2>
+<p>Combat begins whenever an <code>attack</code> action resolves: in exploration, in conversation (§6.6) or in a set piece (§6.7).</p>
+<ol>
+  <li><strong>Combatants</strong>: attacker and target, plus anyone in the room whose behaviour rules or relationships make them join or flee.</li>
+  <li><strong>Order</strong>: by Sequence, then AG, then a seeded roll.</li>
+  <li><strong>Turns</strong>: each combatant spends AP: unarmed 3, melee 3–4, firearm 4–5 (per weapon), aimed shot +1, reload 2, use or equip item 2,
+      leave the room 4 (which exits combat unless pursued), bark 0.</li>
+  <li><strong>Hit chance</strong> = weapon skill − target AC + weapon accuracy − 20 per point of ST below the weapon's minimum, clamped to 5–95%.</li>
+  <li><strong>Critical</strong>: a hit roll ≤ critical chance doubles damage and ignores DT. Crit tables are deferred.</li>
+  <li><strong>Damage</strong> = (weapon roll + melee damage bonus for melee/unarmed − armour DT) × (1 − armour DR%), minimum 0.</li>
+  <li><strong>Down</strong>: at HP ≤ 0 a character is unconscious, and at HP ≤ −EN dead. Characters the payload marks <code>essential</code> are only ever knocked
+      out, which protects the authored story. <span class="tag">open</span> Q27: what happens when the player is downed?</li>
+  <li><strong>NPC decisions</strong> are scripted. Each character has a <em>combat profile</em> (aggressive, defensive, coward, flee at X% HP, preferred weapon).
+      There are no LLM calls per round. Inside a set piece the director may override targets and intentions.</li>
+  <li><strong>Range</strong>: everyone in the same room can be targeted. <span class="tag">open</span> Q24: may ranged weapons fire through an open exit into an adjacent room?</li>
+  <li><strong>Text</strong>: hit, miss, crit and down messages are authored templates per weapon type. All combat time is added to the clock when combat ends.</li>
+</ol>
+
+<h2>5.7 Items, sharing and trade</h2>
+<table>
+<thead><tr><th>Kind</th><th>Mechanical fields</th></tr></thead>
+<tbody>
+<tr><td>Weapon</td><td>skill, damage min–max, AP cost, accuracy, min ST, melee/ranged, ammo type and capacity</td></tr>
+<tr><td>Armour</td><td>AC bonus, DT, DR%</td></tr>
+<tr><td>Consumable</td><td>effects: heal HP, reduce fatigue, timed attribute or skill modifiers</td></tr>
+<tr><td>Any item</td><td>mass (kg), value</td></tr>
+</tbody>
+</table>
+<ul>
+  <li><strong>Give</strong> is voluntary and needs the item to be held. <strong>Take from a character</strong> needs consent: a give from them,
+      a successful Steal check, or the character being down.</li>
+  <li><strong>Steal</strong> is an opposed check (5.4). If caught, the theft is witnessed: the target's trust drops and the event enters their memory and day log.</li>
+  <li><strong>Trade</strong>: buy price = value × (1 + (merchant Barter − buyer Barter) / 200), clamped to 0.5×–2×. Sell price is the mirror. Money is a numeric
+      character property.</li>
+</ul>
+
+<h2>5.8 Fatigue, sleep and healing</h2>
+<ul>
+  <li><strong>Fatigue</strong> is hours awake. Past <em>waking hours</em> (14 + EN): −1 AG and −1 PE per extra hour (minimum 1). At waking hours + 4,
+      the character collapses and sleeps where they stand.</li>
+  <li><strong>Sleep</strong> is an action on anything with the <code>sleepable</code> affordance (bed, sofa), or on the floor with a penalty
+      (only half the fatigue recovered). Sleep lasts 8 hours or until a trigger wakes the sleeper.</li>
+  <li><strong>The player's sleep ends the day.</strong> It is the summarisation point for day-based memory (§6.8).</li>
+  <li><strong>Healing</strong>: Healing rate per 6 hours, doubled while asleep. First Aid (once per day per wound) and Doctor checks heal immediately.</li>
+  <li>NPCs obey the same rules. Their schedules include sleep.</li>
+</ul>
+
+<h2>5.9 Progression</h2>
+<ul>
+  <li><strong>XP</strong> comes mainly from authored awards (an <code>award_xp</code> effect on triggers, hooks and set-piece outcomes), plus small
+      amounts for successful checks and won fights. The payload controls the economy.</li>
+  <li><strong>Levels</strong> follow Fallout's curve: level <em>n</em> needs <em>n</em>(<em>n</em>−1)/2 × 1000 XP. Each level grants 5 + 2×IN skill points
+      and 2 + ⌊EN/2⌋ HP.</li>
+  <li><span class="tag">open</span> Q25: perks and traits. They are deferred for now, and a one-block game will have few levels.</li>
+</ul>
+
+<h2>5.10 What the engine core must implement</h2>
+<ul>
+  <li>SPECIAL, derived statistics and skills as pure functions, recomputed when attributes, equipment or modifiers change</li>
+  <li>A seeded check resolver (skill, attribute, opposed) returning pass/fail plus margin</li>
+  <li>AP-based combat with sequence, hit, crit, damage, down/death, combat profiles and authored message templates</li>
+  <li>Item kinds (weapon, armour, consumable), equipment slots, carry capacity</li>
+  <li>Give / steal / trade, with witnesses</li>
+  <li>Fatigue, sleep, healing, and the day boundary</li>
+  <li>XP, levels, skill points, tag skills</li>
+  <li>Timed modifiers (consumables, fatigue penalties)</li>
+</ul>
+
+<footer>§5 of the One Block CRPG specification</footer>
+</main>
+</body>
+</html>
