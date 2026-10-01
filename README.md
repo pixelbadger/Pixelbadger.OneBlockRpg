@@ -52,9 +52,43 @@ The implementation baseline is in [`docs/spec/`](docs/spec/index.html):
 
 ## Status
 
-Pre-implementation. The spec is a draft. Most open questions are resolved (see §8).
+v0.1: the engine implements the spec end to end. The exploration, conversation, combat, set-piece and day loops run
+on a deterministic simulation; conversations, the director, callouts and day summaries run through the provider
+interface; saves are SQLite and replay identically. Open questions Q30 and Q31 are still open (see §8). Q31 is
+implemented as its suggested starting point (`perceived_by: player`).
+
+## Quick start
+
+```sh
+pnpm install
+pnpm build
+node bin/oneblock.js validate examples/carver-street
+node bin/oneblock.js play examples/carver-street                      # Claude via your Claude Code login
+node bin/oneblock.js play examples/carver-street --provider offline   # no model: authored options only
+node bin/oneblock.js replay examples/carver-street carver-street.db   # check a save replays identically
+```
+
+`play` saves after every turn to `<game id>.db` and resumes it next time (`--new` starts over). Type `help` in game.
+During development, `pnpm oneblock <command>` runs the CLI from source.
+
+[`examples/carver-street`](examples/carver-street) is a small demo block built from the examples in the spec. It is
+also the playthrough fixture. The Pier ([brief](examples/the-pier/brief.md)) is the first full story and is still to
+be built.
+
+## Layout
+
+| Path | What |
+|---|---|
+| `src/payload` | zod schema (the source of truth), loader, validator and lints (§7) |
+| `src/mechanics` | SPECIAL, skills, checks, combat maths, trade, fatigue, progression, seeded PRNG (§5) |
+| `src/core` | world state, event log and ops, conditions, effects, actions, behaviours, triggers, combat, clock (§4) |
+| `src/llm` | provider interface; `claude-subscription`, `anthropic-api`, scripted, record and replay (§6.9) |
+| `src/narrative` | conversations, hooks, director, callouts, day summaries, context builder (§6) |
+| `src/session` | the loops, UI port, parser, action menu and SQLite saves (§3) |
+| `src/cli` | the readline CLI, the only frontend adapter |
+| `schema/payload.schema.json` | the published payload JSON Schema (`pnpm schema` regenerates it) |
 
 ## Development
 
-Node 22+, TypeScript, pnpm, vitest and biome (spec §3.10). Commits follow [Conventional Commits](https://www.conventionalcommits.org/).
-See [`CLAUDE.md`](CLAUDE.md) for the git workflow.
+Node 22.13+, TypeScript, pnpm, vitest and biome (spec §3.10). `pnpm test`, `pnpm lint`, `pnpm format`.
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/). See [`CLAUDE.md`](CLAUDE.md) for the git workflow.
