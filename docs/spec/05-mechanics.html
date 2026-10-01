@@ -39,8 +39,8 @@ expected to be tuned. "SPECIAL" is a Bethesda/ZeniMax trademark, so use the name
 <tr><td><strong>L</strong>uck</td><td>Critical chance, gambling, small nudges on seeded rolls</td></tr>
 </tbody>
 </table>
-<p>Characters' SPECIAL is authored in the payload. <span class="tag">open</span> Q26: is the player character fixed by the payload, or created
-with Fallout's point-buy (every attribute starts at 5, plus 5 free points, all within 1–10)?</p>
+<p>Characters' SPECIAL is authored in the payload. For the player character the <strong>payload chooses</strong> (Q26): either a fixed character, or
+Fallout's point-buy (every attribute starts at 5, plus 5 free points, all within 1–10) with an optional preset.</p>
 
 <h2>5.2 Derived statistics</h2>
 <table>
@@ -92,7 +92,7 @@ The core set trims Fallout's list to what suits a city block. A payload can enab
 <p>AP is the bridge between turn-based combat and the exploration clock:</p>
 <ul>
   <li><strong>In combat</strong>, each round grants full AP, and actions spend it (5.6). A round is 10 game seconds.</li>
-  <li><strong>Outside combat</strong>, every action has a base time in minutes, scaled by <code>8 / AP</code>. That makes AP 8 neutral (AG 6–7),
+  <li><strong>Outside combat</strong>, every action has a base time of 1–5 game minutes (Q8), scaled by <code>8 / AP</code>. That makes AP 8 neutral (AG 6–7),
       AP 5 1.6× slower and AP 10 0.8×. Agile characters get more done in a day.</li>
 </ul>
 
@@ -107,10 +107,11 @@ The core set trims Fallout's list to what suits a city block. A payload can enab
   <li><strong>Critical</strong>: a hit roll ≤ critical chance doubles damage and ignores DT. Crit tables are deferred.</li>
   <li><strong>Damage</strong> = (weapon roll + melee damage bonus for melee/unarmed − armour DT) × (1 − armour DR%), minimum 0.</li>
   <li><strong>Down</strong>: at HP ≤ 0 a character is unconscious, and at HP ≤ −EN dead. Characters the payload marks <code>essential</code> are only ever knocked
-      out, which protects the authored story. <span class="tag">open</span> Q27: what happens when the player is downed?</li>
+      out, which protects the authored story. When the <strong>player</strong> is downed, the payload decides (Q27). The default is waking up hurt and robbed
+      somewhere in the block. A payload may instead end the game.</li>
   <li><strong>NPC decisions</strong> are scripted. Each character has a <em>combat profile</em> (aggressive, defensive, coward, flee at X% HP, preferred weapon).
       There are no LLM calls per round. Inside a set piece the director may override targets and intentions.</li>
-  <li><strong>Range</strong>: everyone in the same room can be targeted. <span class="tag">open</span> Q24: may ranged weapons fire through an open exit into an adjacent room?</li>
+  <li><strong>Range</strong>: everyone in the same room can be targeted, and only them. Ranged weapons cannot fire into adjacent rooms in v1 (Q24).</li>
   <li><strong>Text</strong>: hit, miss, crit and down messages are authored templates per weapon type. All combat time is added to the clock when combat ends.</li>
 </ol>
 
@@ -149,7 +150,7 @@ The core set trims Fallout's list to what suits a city block. A payload can enab
       amounts for successful checks and won fights. The payload controls the economy.</li>
   <li><strong>Levels</strong> follow Fallout's curve: level <em>n</em> needs <em>n</em>(<em>n</em>−1)/2 × 1000 XP. Each level grants 5 + 2×IN skill points
       and 2 + ⌊EN/2⌋ HP.</li>
-  <li><span class="tag">open</span> Q25: perks and traits. They are deferred for now, and a one-block game will have few levels.</li>
+  <li><strong>Perks and traits</strong> are deferred past v1 (Q25). A one-block game will have few levels.</li>
 </ul>
 
 <h2>5.10 What the engine core must implement</h2>

@@ -52,9 +52,9 @@ The implementation baseline is in [`docs/spec/`](docs/spec/index.html):
 
 ## Status
 
-Pre-implementation. The spec is a draft and the open questions are under discussion.
+Pre-implementation. The spec is a draft. Most open questions are resolved (see §8).
 
 ## Development
 
-Tooling is still to be decided (see open question Q13). This repository uses [Jujutsu](https://jj-vcs.github.io/jj/) (`jj`) colocated with
-git. See [`CLAUDE.md`](CLAUDE.md) for the version control workflow.
+Node 22+, TypeScript, pnpm, vitest and biome (spec §3.10). Commits follow [Conventional Commits](https://www.conventionalcommits.org/).
+See [`CLAUDE.md`](CLAUDE.md) for the git workflow.

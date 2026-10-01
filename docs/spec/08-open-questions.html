@@ -20,30 +20,13 @@
 </nav>
 <main>
 <h1>8 · Open questions</h1>
-<p class="subtitle">Decisions for the implementation drill-down. Where I have a recommendation, it's given as a starting point, not a decision.</p>
+<p class="subtitle">Decisions for the implementation drill-down. Where a recommendation exists, it's a starting point, not a decision.</p>
 
 <table>
 <thead><tr><th>#</th><th>Question</th><th>Suggested starting point</th></tr></thead>
 <tbody>
-<tr><td>Q6</td><td>Edge of the block: impassable, or an ending? (P1)</td><td>Payload decides, using an exit with an <code>end_game</code> effect.</td></tr>
-<tr><td>Q8</td><td>Base time costs of actions and the default clock pace? (§4.8, §5.5)</td><td>1–5 game minutes per action at AP 8.</td></tr>
-<tr><td>Q10</td><td>Subscription access: Agent SDK or <code>claude -p</code> subprocess? Are the terms OK for this use? (§6.9)</td><td>Agent SDK. Terms need confirming.</td></tr>
-<tr><td>Q11</td><td>Frontend: plain readline CLI, a TUI (e.g. Ink), or web?</td><td>Plain readline first. Multiple choice and combat suit a TUI later.</td></tr>
-<tr><td>Q12</td><td>Persistence: JSON files or SQLite? (§3.7)</td><td>JSON files until they hurt.</td></tr>
-<tr><td>Q13</td><td>Tooling: package manager, lint/format and test runner (fills the CLAUDE.md placeholders)? (§3.10)</td><td>npm + vitest + biome.</td></tr>
-<tr><td>Q14</td><td>Engine-level content boundaries for LLM output, beyond what a payload's tone allows?</td><td>Need your call.</td></tr>
-<tr><td>Q15</td><td>Commit message and PR conventions for CLAUDE.md?</td><td>Conventional Commits?</td></tr>
-<tr><td>Q18</td><td>What does velocity mean in dimensionless rooms? (§4.2)</td><td>An abstract magnitude set by throw/push, decaying per tick and combined with mass on impact. Thrown objects use the Throwing skill (§5.3).</td></tr>
-<tr><td>Q19</td><td>Exploration input: classic verb–noun parser, an action menu, or both? (§3.2)</td><td>Both.</td></tr>
-<tr><td>Q20</td><td>Conversations: offer a free-text "say something else" option alongside the choices? (§6.3)</td><td>No for v1.</td></tr>
-<tr><td>Q21</td><td>Can other characters join or overhear a conversation? (§3.3)</td><td>v1: two-party only. Set pieces cover multi-character scenes.</td></tr>
-<tr><td>Q22</td><td>The first example story, which serves as the test fixture and the authoring guide's worked example. (§7.9)</td><td>Need your brief.</td></tr>
-<tr><td>Q24</td><td>Can ranged weapons fire through an open exit into an adjacent room? (§5.6)</td><td>No for v1: same room only.</td></tr>
-<tr><td>Q25</td><td>Perks and traits in v1? (§5.9)</td><td>Deferred.</td></tr>
-<tr><td>Q26</td><td>Player character: fixed by the payload, or Fallout-style point-buy at the start? (§5.1)</td><td>Payload chooses: a fixed character, or point-buy with an optional preset.</td></tr>
-<tr><td>Q27</td><td>When the player is downed: game over, wake up somewhere with consequences, or payload-defined? (§5.6)</td><td>Payload-defined, defaulting to waking up hurt and robbed.</td></tr>
-<tr><td>Q28</td><td>Summary growth: roll old day summaries into chapter summaries after N days? (§6.8)</td><td>Not for v1. Revisit if games run past ~2–3 weeks of in-game time.</td></tr>
-<tr><td>Q29</td><td>Director cadence in set pieces: every player turn, or only on events or beats? (§6.7)</td><td>Every player turn, which is simple and predictable. Optimise later.</td></tr>
+<tr><td>Q30</td><td>Do the Claude subscription terms allow the <code>claude-subscription</code> provider's use from a personal app? (§6.9)</td><td>Confirm before release. <code>anthropic-api</code> is the fallback.</td></tr>
+<tr><td>Q31</td><td>Player-only perception: how does a character or object exist only for the player? This is for apparitions such as The Pier's ghosts. Other characters must not see them, react to them or record them in their day logs. (§4, §6.8)</td><td>A <code>perceivedBy: player</code> field on characters and objects. The engine excludes such entities from NPC perception, witnessed events and day logs.</td></tr>
 </tbody>
 </table>
 
@@ -56,11 +39,30 @@
 <tr><td>Q3</td><td>Where the block comes from</td><td>Authored as a game payload. A coding agent builds it from the user's story brief (§7).</td></tr>
 <tr><td>Q4</td><td>Lazy concretisation at runtime</td><td>No. All detail is authored ahead of time. A declared callout (§6.5) is the escape hatch.</td></tr>
 <tr><td>Q5</td><td>Player goal and plot</td><td>The user supplies plot, characters, tensions, trigger points and set pieces (§7.2).</td></tr>
+<tr><td>Q6</td><td>Edge of the block</td><td>Always impassable. No payload can declare an exit off the block (P1).</td></tr>
 <tr><td>Q7</td><td>Simulation scope</td><td>Descriptive rooms, objects with simulable properties, and scripted behaviours. No utility networks (§4).</td></tr>
+<tr><td>Q8</td><td>Base action time and clock pace</td><td>1–5 game minutes per action at AP 8, scaled by 8 / AP. Tune in playtesting (§4.8, §5.5).</td></tr>
 <tr><td>Q9</td><td>LLM interpreter</td><td>None. Exploration input is now Q19.</td></tr>
+<tr><td>Q10</td><td>Subscription access mechanism</td><td>Claude Agent SDK, in-process, tools disabled (§6.9). Confirming the terms is now Q30.</td></tr>
+<tr><td>Q11</td><td>Frontend</td><td>Plain readline CLI, behind a UI port that fully decouples it, so it can be replaced by a TUI or web frontend (§3.1).</td></tr>
+<tr><td>Q12</td><td>Persistence</td><td>SQLite, one database per save game (§3.7).</td></tr>
+<tr><td>Q13</td><td>Tooling</td><td>pnpm + vitest + biome (§3.10).</td></tr>
+<tr><td>Q14</td><td>Engine-level content boundaries</td><td>None from the engine. The payload's tone and the provider's own policies govern output (§6.1).</td></tr>
+<tr><td>Q15</td><td>Commit and PR conventions</td><td>Conventional Commits (CLAUDE.md).</td></tr>
 <tr><td>Q16</td><td>CRPG mechanics</td><td>SPECIAL is the only rule system, with Fallout 2 formulas as the baseline (§5).</td></tr>
 <tr><td>Q17</td><td>Scarce, significant objects</td><td>The payload author's choice.</td></tr>
+<tr><td>Q18</td><td>Velocity in dimensionless rooms</td><td>An abstract magnitude set by throw/push, decaying per tick and combined with mass on impact. Throws use the Throwing skill (§4.2).</td></tr>
+<tr><td>Q19</td><td>Exploration input</td><td>Both a verb–noun parser and an action menu (§3.2).</td></tr>
+<tr><td>Q20</td><td>Free-text conversation option</td><td>No for v1 (§6.3).</td></tr>
+<tr><td>Q21</td><td>Joining or overhearing conversations</td><td>Overhear only. Others in the room get the transcript in their day log but can't take part (§3.3).</td></tr>
+<tr><td>Q22</td><td>First example story</td><td><strong>The Pier</strong>: a present-day ghost story on a Victorian pier, with silent apparitions, madness as flags plus SPECIAL modifiers, and a discovery-paced inevitable ending with a deadline (<a href="../../examples/the-pier/brief.md">brief</a>, §7.9).</td></tr>
 <tr><td>Q23</td><td>Conversation memory</td><td>Day-based. A raw day log during the day, a per-character summary when the player sleeps, and all previous summaries put at the front of later calls (§6.8).</td></tr>
+<tr><td>Q24</td><td>Ranged fire into adjacent rooms</td><td>No for v1: same room only (§5.6).</td></tr>
+<tr><td>Q25</td><td>Perks and traits</td><td>Deferred past v1 (§5.9).</td></tr>
+<tr><td>Q26</td><td>Player character creation</td><td>Payload chooses: a fixed character, or point-buy with an optional preset (§5.1).</td></tr>
+<tr><td>Q27</td><td>Player downed</td><td>Payload-defined, defaulting to waking up hurt and robbed (§5.6).</td></tr>
+<tr><td>Q28</td><td>Chapter roll-up of day summaries</td><td>Not for v1. Revisit if games run past ~2–3 weeks of in-game time (§6.8).</td></tr>
+<tr><td>Q29</td><td>Director cadence</td><td>Every player turn in a set piece. Optimise later (§6.7).</td></tr>
 <tr><td>—</td><td>LLM scope</td><td>Conversations, set-piece director, declared callouts and day summaries. Flavour text is authored (P5).</td></tr>
 <tr><td>—</td><td>Director</td><td>Only within declared set pieces: a loose player objective, a brief, beats and allowed moves (§6.7).</td></tr>
 <tr><td>—</td><td>Actions in conversation</td><td>Yes. The shared action vocabulary, per-conversation allow-list, engine-validated. Attack enters combat (§6.6).</td></tr>

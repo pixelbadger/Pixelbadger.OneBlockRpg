@@ -31,6 +31,8 @@
   <li><strong>Day summaries</strong> condense each character's day when the player sleeps (6.8).</li>
 </ol>
 <p>All other text is authored in the payload. All other behaviour, including NPC combat decisions, is scripted (P5).</p>
+<p><strong>Content boundaries</strong> (Q14): the engine adds no content filter of its own. LLM output is governed by the payload's tone and
+style guide, and by the provider's own policies. A refusal is handled like any other invalid output (6.9).</p>
 
 <h2>6.2 Conversation specs</h2>
 <p>The payload declares conversations per character. Each spec gives the LLM a frame, and gives the engine its guard rails.</p>
@@ -76,7 +78,7 @@
   wantsToEnd?: boolean;
 }</code></pre>
 <p>The engine resolves the character's actions and hooks, then merges player options. Authored options win ties. Gated options show their gate
-(<code>[Speech]</code>, <code>[CH 6]</code>). The player can always leave. <span class="tag">open</span> Q20: should there also be a free-text option?</p>
+(<code>[Speech]</code>, <code>[CH 6]</code>). The player can always leave. There is no free-text "say something else" option in v1 (Q20).</p>
 
 <h2>6.4 Hooks: where the constructed touches the ground</h2>
 <pre><code>hooks:
@@ -139,7 +141,7 @@ the cast to make it play out. It is the only place a director exists, and its sc
       - when: { flag: building_evacuated }
         do: [ { award_xp: 300 }, { set_flag: fire_survived } ]</code></pre>
 <ul>
-  <li><strong>Cadence.</strong> After each player turn inside the set piece, the director gets one call. It sees the brief, the beats so far, the stage state
+  <li><strong>Cadence</strong> (Q29). After each player turn inside the set piece, the director gets one call. It sees the brief, the beats so far, the stage state
       and the cast's SPECIAL and goals. It returns cast actions, effects, hooks, narration (unbounded in tone) and beat progress. All of it is validated as usual.</li>
   <li><strong>Conversations inside a set piece</strong> get the director brief and current beat in their context, so characters stay in the scene.</li>
   <li><strong>Combat</strong> inside a set piece uses §5.6. The director may set cast targets and intentions between rounds.</li>
@@ -148,7 +150,7 @@ the cast to make it play out. It is the only place a director exists, and its sc
 
 <h2>6.8 Memory: days are chapters</h2>
 <ul>
-  <li><strong>During the day</strong>, each character keeps a <strong>day log</strong>: structured entries for the conversations they had (full transcripts),
+  <li><strong>During the day</strong>, each character keeps a <strong>day log</strong>: structured entries for the conversations they had or overheard (full transcripts, §3.3),
       events they witnessed, actions taken on or near them, hook results and set-piece outcomes. Conversations within the same day see the raw log.</li>
   <li><strong>When the player sleeps</strong> (§5.8), the day ends. Each character who had activity gets one summary call, producing a bounded <em>day summary</em>
       (target ≤ 250 words) written in their own perspective. It records what they now think of people, what was promised, and what they suspect.
@@ -157,8 +159,8 @@ the cast to make it play out. It is the only place a director exists, and its sc
       so a character never knows what they didn't experience.</li>
   <li><strong>Structured state outranks summaries.</strong> Flags, beliefs and relationships set by hooks are authoritative. Summaries carry tone and detail.</li>
   <li><strong>Raw logs are kept</strong> in the event log for replay and debugging, but never fed back into prompts after their day.</li>
-  <li>Safety valve: if a single day's log outgrows its budget (a very talkative day), older entries in it are summarised early. <span class="tag">open</span> Q28:
-      should summaries from many days ago be rolled up into a chapter summary?</li>
+  <li>Safety valve: if a single day's log outgrows its budget (a very talkative day), older entries in it are summarised early. Old day summaries are <strong>not</strong> rolled up into chapter summaries in v1 (Q28).
+      Revisit if games run past ~2–3 weeks of in-game time.</li>
 </ul>
 
 <h2>6.9 Provider interface</h2>
@@ -182,8 +184,8 @@ interface CompletionRequest&lt;T&gt; {
 <table>
 <thead><tr><th>Provider</th><th>Mechanism</th><th>Notes</th></tr></thead>
 <tbody>
-<tr><td><strong>claude-subscription</strong> (default)</td><td>Claude Agent SDK, or <code>claude -p --output-format json</code>, using the user's Claude Code login</td>
-<td>Tools disabled. <span class="tag">open</span> Q10: mechanism, and confirming terms for subscription use from a personal app.</td></tr>
+<tr><td><strong>claude-subscription</strong> (default)</td><td>Claude Agent SDK (Q10), in-process, using the user's Claude Code login</td>
+<td>Tools disabled. <span class="tag">open</span> Q30: confirm the subscription terms allow this use from a personal app.</td></tr>
 <tr><td><strong>anthropic-api</strong></td><td><code>@anthropic-ai/sdk</code> Messages API</td><td>Structured outputs, prompt caching and streaming. Default model <code>claude-opus-5-5</code>.</td></tr>
 <tr><td><strong>scripted</strong></td><td>Deterministic fake</td><td>Tests and offline development</td></tr>
 <tr><td><strong>replay</strong></td><td>Recorded cassettes</td><td>Regression tests</td></tr>

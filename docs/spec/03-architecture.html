@@ -24,7 +24,7 @@
 
 <h2>3.1 Layers</h2>
 <pre><code>┌──────────────────────────────────────────────────────────┐
-│ Frontend          CLI first · web later                  │
+│ Frontend          CLI first · swappable (UI port)        │
 ├──────────────────────────────────────────────────────────┤
 │ Session           loops · save/load · replay             │
 ├────────────────────────────────┬─────────────────────────┤
@@ -43,10 +43,14 @@
 └──────────────────────────────────────────────────────────┘</code></pre>
 <p>Dependency rule: the <strong>engine core has no dependency on the LLM layer</strong>. Exploration and combat are plain, deterministic TypeScript.
 The narrative system only changes the world through the action/hook executor, which calls ordinary core actions and effects.</p>
+<p>The <strong>frontend is fully decoupled</strong> (Q11). The session exposes a UI port: it emits view models (narration, room view, available actions,
+conversation options, combat state) and accepts player intents (a typed command, a menu pick, an option choice). It never formats text for a
+particular display. Nothing outside <code>src/cli</code> imports from it. v1 ships a plain readline CLI as the only adapter. A TUI or web frontend
+is another adapter on the same port, with no engine changes.</p>
 
 <h2>3.2 Exploration loop (one turn)</h2>
 <ol>
-  <li><strong>Input.</strong> The player enters a command. <span class="tag">open</span> Q19: a parser, an action menu, or both.</li>
+  <li><strong>Input.</strong> The player enters a command. Both are offered (Q19): a classic verb–noun parser and a menu of the actions available right now. Both produce the same <code>Action</code>.</li>
   <li><strong>Resolve.</strong> The command becomes an <code>Action</code>. Preconditions and checks are resolved (§5.4), and effects applied as events.</li>
   <li><strong>Advance time</strong> by the action's cost, scaled by AP (§5.5). Fatigue accrues.</li>
   <li><strong>Behaviours</strong> tick for every scripted object and character, acting through the same action vocabulary.</li>
@@ -62,9 +66,11 @@ The narrative system only changes the world through the action/hook executor, wh
   <li><strong>Resolve</strong> actions (§6.6) and hooks (§6.4). An <code>attack</code> suspends the conversation and enters combat (3.4).</li>
   <li><strong>Merge options</strong>: authored options whose conditions hold, plus LLM options. Options may carry actions or checks.</li>
   <li><strong>Player chooses</strong>. Attached actions and checks are resolved by the engine.</li>
-  <li><strong>Loop or end</strong>. The transcript goes into both parties' day logs. Time advances by the conversation's length plus action time.</li>
+  <li><strong>Loop or end</strong>. The transcript goes into both parties' day logs, and into the day log of anyone overhearing. Time advances by the conversation's length plus action time.</li>
 </ol>
-<p>The rest of the world pauses during a conversation. <span class="tag">open</span> Q21: overhearing and joining.</p>
+<p>The rest of the world pauses during a conversation. Conversations are two-party, but others can <strong>overhear</strong> (Q21): characters in the
+same room are passive listeners. The transcript goes into their day logs marked as overheard, so it shapes their later conversations and
+day summaries. They cannot speak or act until the conversation ends. Multi-character scenes are what set pieces are for.</p>
 
 <h2>3.4 Combat loop</h2>
 <p>Entered from any loop when an attack resolves (§5.6). Each round, combatants act in Sequence order and spend AP. NPCs act from their scripted combat profiles,
@@ -87,7 +93,7 @@ and a summary goes into participants' day logs.</p>
 <h2>3.7 State &amp; persistence</h2>
 <ul>
   <li><strong>Event-sourced.</strong> An append-only event log, with snapshots. The current state is a fold over it.</li>
-  <li><strong>Save file</strong> = payload id and version + seed + snapshot + event tail + day summaries + LLM exchange log. <span class="tag">open</span> Q12: JSON files or SQLite.</li>
+  <li><strong>Save game</strong> = one <strong>SQLite</strong> database (Q12) holding the payload id and version, seed, snapshots, the event log, day summaries and the LLM exchange log.</li>
   <li>The payload is immutable at runtime. State holds only what has changed from it.</li>
 </ul>
 
@@ -109,10 +115,10 @@ and a summary goes into participants' day logs.</p>
 </tbody>
 </table>
 
-<h2>3.10 Proposed tooling</h2>
-<p><span class="tag">open</span> Q13: Node 22+, TypeScript strict and ESM, <code>npm</code>, <code>vitest</code>, <code>zod</code>
+<h2>3.10 Tooling</h2>
+<p>Decided (Q13): Node 22+, TypeScript strict and ESM, <code>pnpm</code>, <code>vitest</code>, <code>zod</code>
 (runtime validation, a generated JSON Schema for payloads, and LLM structured output), and <code>biome</code>.
-A single package with <code>src/{core,mechanics,narrative,llm,payload,session,cli}</code>, plus a CLI with <code>validate</code>, <code>play</code> and <code>replay</code>.</p>
+A single package with <code>src/{core,mechanics,narrative,llm,payload,session,cli}</code>, plus a CLI with <code>validate</code>, <code>play</code> and <code>replay</code>. <code>src/cli</code> is the only frontend adapter (3.1).</p>
 
 <footer>§3 of the One Block CRPG specification</footer>
 </main>
