@@ -503,3 +503,14 @@ describe("apparitions have no bodies (Q31)", () => {
     expect(w.char("shade").asleepUntil).toBeNull();
   });
 });
+
+describe("parser: look at (§3.2)", () => {
+  it("treats look at/out/in X as examine", () => {
+    const w = world();
+    for (const cmd of ["look at key", "look in box", "look through window"]) {
+      const r = parseCommand(w, cmd);
+      expect(r.ok && r.intent.type === "action" && r.intent.action.act, cmd).toBe("examine");
+    }
+    expect(parseCommand(w, "look")).toEqual({ ok: true, intent: { type: "meta", command: "look" } });
+  });
+});

@@ -7,7 +7,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { applyOps, clone } from "../core/ops.js";
 import type { WorldState } from "../core/state.js";
 import { resetCursors } from "../core/tick.js";
-import { initialState, World, type WorldEvent } from "../core/world.js";
+import { addNewEntities, initialState, World, type WorldEvent } from "../core/world.js";
 import type { CompletionRequest, UsageRecord } from "../llm/provider.js";
 import type { Cassette } from "../llm/scripted.js";
 import type { Payload } from "../payload/schema.js";
@@ -190,6 +190,8 @@ export class SaveStore {
     const from = snap ? snap.seq + 1 : 0;
     state = clone(state);
     for (const e of events) if (e.seq >= from) applyOps(state, e.ops);
+    // A compatible newer payload may add objects and characters the save has never seen.
+    addNewEntities(state, payload);
     const w = new World(payload, state);
     w.log = events;
     resetCursors(w);

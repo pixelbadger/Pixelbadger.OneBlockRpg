@@ -4,7 +4,9 @@
 id: the-pier
 title: "The Pier"
 schema_version: "1.0"
-version: "0.1.0"
+version: "0.2.0"
+# 0.2.0 makes everything the room descriptions mention examinable; it only adds objects, so 0.1.0 saves still load.
+compatible_with: ["0.1.0"]
 start: digs
 player:
   character: player

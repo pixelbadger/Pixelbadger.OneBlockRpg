@@ -28,6 +28,8 @@
       text: "Your room. You've pinned things to the wall: the photograph, a page from the register, a drawing of the glass house you don't remember doing. The bed hasn't been slept in properly for days."
     - when: { flag: obsession }
       text: "Your room at the Seaview: single bed, kettle, a window that looks straight at the pier. You keep the curtain open now. You want to see if the lamps come on."
+    - when: { holds: { who: player, what: work-boots } }
+      text: "Your room at the Seaview: single bed, kettle, a telly that only gets three channels, and a window that looks straight out at the pier."
     - text: "Your room at the Seaview: single bed, kettle, a telly that only gets three channels, and a window that looks straight out at the pier. Work boots by the door."
   exits:
     - { direction: down, to: seaview-hall }

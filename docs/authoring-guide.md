@@ -207,7 +207,12 @@ always worth having. Placeholders: `{{Attacker}}`, `{{target}}`, `{{Target}}`, `
 - **Text variants**: put the most specific first and end with an unconditional fallback (the validator insists).
   Typical gates are plot flags, then time of day, then SPECIAL.
 - **Never mention mechanics** (numbers, checks, flags) in flavour text. Show stats through what the character notices.
-- **Use `scenery: true`** for fixtures the room text already describes, and give them `aliases`.
+- **If the text names it, it exists.** Every thing a room description mentions (the boots by the door, the rules on
+  the wall, the gulls) must be an object the player can examine, usually `scenery: true` with `aliases`. Players
+  will try `read rules` and `take boots`, and "You don't see any rules here" breaks the illusion at once. Give the
+  best ones a use rule, such as a kettle that makes tea or a fruit machine that takes a quid. Keep it all in
+  `objects/scenery.yaml`, grouped by room (see The Pier's). If an object can move, make the room text that mentions
+  it a variant that depends on where it is.
 - **Ending text: 80–150 words.** It is the last thing the player reads, so make it count.
 
 ## 5. Gotchas
@@ -315,6 +320,7 @@ Copy the shape of [`tests/pier.test.ts`](../tests/pier.test.ts):
 - [ ] `pnpm oneblock validate <dir>`: ok, zero warnings
 - [ ] Every ending is reached by a test, and the critical path also works offline
 - [ ] Every brief decision is honoured. Everything you decided is listed in your report
+- [ ] Every thing a room description names is an examinable object
 - [ ] Every character sleeps, has a routine and at least one conversation (apparitions excepted)
 - [ ] Every timed set piece and window has a timeout, and every spawn has a matching remove
 - [ ] `pnpm test` and `pnpm lint` pass

@@ -140,8 +140,10 @@ export function parseCommand(w: World, input: string): ParseResult {
     case "examine":
     case "inspect":
     case "read":
-    case "check": {
-      const r = noun(rest.replace(/^at\s+/, ""), [...scope, w.playerId]);
+    case "check":
+    case "look": {
+      // "look" alone is the meta command above; "look at/out of/in/through X" examines X.
+      const r = noun(rest.replace(/^(at|out of|out|in|into|through|under|behind)\s+/, ""), [...scope, w.playerId]);
       return r.id ? act({ type: "action", action: { act: "examine", target: r.id } }) : err(r.error!);
     }
     case "take":
