@@ -1,0 +1,407 @@
+# Everything the room descriptions mention, made real (P3: "an inch wide and a mile deep"). If a room's text names
+# a thing, the player can examine it, and where it makes sense, use it.
+
+# ─── Your Room ───
+- id: work-boots
+  name: work boots
+  aliases: [boots, steel toecaps, toecaps]
+  location: digs
+  scenery: true
+  description: "Steel toecaps, split across the left toe, laces knotted where they snapped. They smell of plaster and the inside of a van."
+  affordances: [takeable]
+  properties: { mass: 1.8, value: 5 }
+  messages:
+    take: "You pull the boots on and lace them tight. Now you're dressed for it."
+- id: digs-kettle
+  name: kettle
+  aliases: [kettle]
+  location: digs
+  scenery: true
+  description: "A white plastic kettle furred with limescale, and a saucer of teabags beside it."
+  properties: { mass: 1 }
+  uses:
+    - text: "The kettle roars, clicks, and you make a tea strong enough to stand up in."
+      effects: [ { spawn: { object: mug-of-tea, in: player } } ]
+      minutes: 4
+- id: mug-of-tea
+  name: mug of tea
+  aliases: [tea, mug, brew]
+  description: "Builder's tea in a Seaview mug. The handle has been glued back on."
+  affordances: [takeable]
+  properties: { mass: 0.4, value: 0 }
+  consumable: { fatigue: 1, text: "You drink it too hot. It helps." }
+- id: digs-telly
+  name: telly
+  aliases: [tv, television, telly]
+  location: digs
+  scenery: true
+  description: "A portable telly with a coat-hanger aerial. Three channels, all of them snow at the edges."
+  properties: { mass: 6 }
+  uses:
+    - when: { flag: obsession }
+      text: "Snow. And in the snow, if you let your eyes go loose, the long dark line of a pier with a light at the end. You switch it off and the light is still there for a second."
+    - text: "Breakfast news, a cookery thing, a man selling a hoover. You switch it off."
+- id: digs-window
+  name: window
+  aliases: [window, curtain, view, pier]
+  location: digs
+  scenery: true
+  description:
+    - when: { flag: breakdown }
+      text: "The pier, and at its end the glass house with its lamps lit. They stay lit when you blink."
+    - when: { time_between: { from: "20:00", to: "06:00" } }
+      text: "The pier is a black line on black water. Out at the end, the glass house catches what light there is."
+    - text: "A thin curtain and, straight out across the road, the pier on its iron legs, the glass house at the far end. You could draw it from memory by now."
+
+# ─── Seaview Guest House ───
+- id: house-rules
+  name: list of rules
+  aliases: [rules, house rules, list, laminated list, notice]
+  location: seaview-hall
+  scenery: true
+  description: >
+    SEAVIEW GUEST HOUSE — RULES FOR GUESTS. 1. Breakfast 7–8.30. No exceptions. 2. No work boots past the hall.
+    3. No visitors in rooms after 10pm. 4. Towels are NOT to be taken to the beach. 5. The payphone is for
+    EMERGENCIES and does not work. 6. Rent Fridays, cash, in the tin. 7. Guests are asked not to sit in the
+    front window after dark. 8. Please do not open the front window. 9. Please do not wave. — Mrs D. Prothero, Prop.
+- id: payphone
+  name: payphone
+  aliases: [phone, telephone]
+  location: seaview-hall
+  scenery: true
+  description: "A grey BT payphone bolted to the wall, its receiver on a steel cord. A sticker on it says OUT OF ORDER in three different decades of handwriting."
+  properties: { mass: 10 }
+  uses:
+    - when: { flag: obsession }
+      text: "You lift the receiver. No dial tone. Behind the silence, a long way off, someone is humming a lullaby. You put it down very carefully."
+    - text: "You lift the receiver. Nothing at all. Not even a dial tone."
+- id: tray
+  name: tray of complimentary nothing
+  aliases: [tray, complimentary nothing]
+  location: dresser
+  scenery: true
+  description: "A doily, an empty sugar bowl, and a card that says 'Complimentary' in gold script. Whatever it was, it's gone."
+  properties: { mass: 0.5 }
+
+# ─── The Lads' Room ───
+- id: rosary
+  name: rosary
+  aliases: [beads, rosary beads]
+  location: lads-room
+  scenery: true
+  description: "Marek's rosary, wooden beads worn smooth, hung over his bedpost."
+  properties: { mass: 0.05 }
+- id: energy-cans
+  name: energy-drink cans
+  aliases: [cans, energy drinks, can]
+  location: lads-room
+  scenery: true
+  description: "A pyramid of empty energy-drink cans, carefully built, on Tommo's windowsill. It's the only careful thing on his side."
+  properties: { mass: 1 }
+- id: hi-vis
+  name: heap of hi-vis
+  aliases: [hi-vis, hivis, vest, vests]
+  location: lads-room
+  scenery: true
+  description: "Tommo's hi-vis vests in a heap, one with TOMMO THE LEGEND in marker on the back."
+  properties: { mass: 1 }
+
+# ─── Marine Parade ───
+- id: pier-view
+  name: the pier
+  aliases: [pier, glass house, pavilion]
+  location: promenade
+  scenery: true
+  description:
+    - when: { flag: breakdown }
+      text: "The pier runs out into the sea and into 1893 at once, and the glass house at the end is lit in both."
+    - text: "The pier walks out into the Channel on spindly iron legs, a quarter-mile of boards and white rail, and at the end, the glass house. Everyone says it's beautiful. You've stopped being sure."
+- id: railings
+  name: railings
+  aliases: [railing, rail]
+  location: promenade
+  scenery: true
+  description:
+    - when: { special: { PE: { gte: 7 } } }
+      text: "Green paint over cream over Victorian maroon. Where it's chipped by the steps you can read the layers like rings in a tree."
+    - text: "Green-painted railings along the sea wall, chipped and salted. Gulls sit on them in a line and dare you."
+- id: shelter
+  name: shelter
+  aliases: [seafront shelter, bench]
+  location: promenade
+  scenery: true
+  description: "A Victorian seafront shelter with a glass back and a bench on each side, full of wind and chip papers. Someone has scratched KEZ 4 SHAUN into the paint, and someone else has crossed out SHAUN."
+- id: kiosk
+  name: kiosk
+  aliases: [kiosk, chip kiosk, hut]
+  location: promenade
+  scenery: true
+  description: "A seafront kiosk, shuttered. SHUT TIL EASTER, CHEERS — BEV. A faded board lists ice creams that haven't existed for years."
+- id: gulls
+  name: gulls
+  aliases: [gull, seagulls, seagull, birds]
+  location: promenade
+  scenery: true
+  description: "Herring gulls the size of small dogs, working the bins with professional contempt. One has a leg missing and is the boss of all the others."
+
+# ─── The Beach Under the Pier ───
+- id: pier-legs
+  name: pier legs
+  aliases: [legs, iron legs, pier, ironwork, piles]
+  location: beach
+  scenery: true
+  description:
+    - when: { special: { PE: { gte: 8 } } }
+      text: "Cast-iron legs in rows, scabbed with barnacles. On the nearest, under the weed, two letters and a date scratched deep into the iron: C.A. — 9.VI.93. Someone wanted it to last."
+    - text: "Cast-iron legs going out into the water in rows, scabbed with barnacles and hung with weed. Up close they are enormous and very old."
+- id: shingle
+  name: shingle
+  aliases: [stones, pebbles, weed, beach, seaweed]
+  location: beach
+  scenery: true
+  description: "Grey shingle, black weed, a lost flip-flop, a crisp packet from the nineties. The tide line is a ribbon of plastic and bladderwrack."
+
+# ─── Pier Tollhouse ───
+- id: turnstile
+  name: turnstile
+  aliases: [turnstile, gate, pier gate, chain]
+  location: pier-tollhouse
+  scenery: true
+  description:
+    - when: { not: { time_between: { from: "09:00", to: "21:00" } } }
+      text: "The turnstile is locked and the side gate is chained. The gate's not high. The railings either side give you footholds."
+    - text: "A chrome turnstile that clanks once per visitor. Edith waves you through: builders are honorary locals."
+- id: pier-sign
+  name: sign
+  aliases: [sign, opening hours]
+  location: pier-tollhouse
+  scenery: true
+  description: "PIER OPEN 9 TIL 9. SUPPORT YOUR PIER. Underneath, smaller: NO CYCLING. NO FISHING FROM THE GLASS HOUSE."
+- id: ticket-kiosk
+  name: ticket kiosk
+  aliases: [kiosk window, ticket window, window]
+  location: pier-tollhouse
+  scenery: true
+  description: "A little ticket window with a brass dish worn hollow by a hundred and fifty years of coins, a donations jar, and a rack of leaflets."
+
+# ─── The Pier ───
+- id: benches
+  name: benches
+  aliases: [bench, plaques, plaque]
+  location: pier-deck
+  scenery: true
+  description: "Benches every twenty yards, each with a brass plaque. FOR JOAN, WHO LOVED THIS VIEW. DEREK — GONE FISHING. On the last one before the pier head, an older plaque, green with age: IN MEMORY. 1893. No names."
+- id: deck-rail
+  name: rail
+  aliases: [rail, railing, railings, gas pipes, pipes, ironwork, boards]
+  location: pier-deck
+  scenery: true
+  description:
+    - when: { special: { PE: { gte: 7 } } }
+      text: "New boards, old iron. Under the top rail, capped gas pipes run the length of the pier: there used to be lamps all the way out."
+    - text: "A white-painted rail, waist high, and new hardwood boards with the sea showing between them."
+
+# ─── The Pier Head ───
+- id: landing-stage
+  name: landing stage
+  aliases: [landing, stage, steps]
+  location: pier-head
+  scenery: true
+  description: "Iron steps going down to a landing stage the steamers used to tie up at. The bottom steps are green and slick and the sea slaps at them."
+- id: lifebuoy
+  name: lifebuoy
+  aliases: [buoy, life ring, ring, box]
+  location: pier-head
+  scenery: true
+  description: "An orange lifebuoy in a glass-fronted box. IN EMERGENCY BREAK GLASS. The glass has been broken and replaced so often the putty is three colours."
+- id: glass-house-outside
+  name: glass house
+  aliases: [glass house, pavilion, panes, glasshouse]
+  location: pier-head
+  scenery: true
+  description:
+    - when: { flag: breakdown }
+      text: "Every pane is lit from inside. The door stands open. It is waiting with infinite patience."
+    - text: "A pavilion of white ironwork and glass: a hundred panes, half of them boarded, a little cupola on top like a birdcage. The door's on a bent hasp that doesn't lock."
+
+# ─── The Glass House ───
+- id: candyfloss-machine
+  name: candyfloss machine
+  aliases: [candyfloss, machine, candy floss]
+  location: glass-house
+  scenery: true
+  description: "A broken candyfloss machine under a sheet, its bowl furred with old pink sugar. Somebody's summer business, stored and forgotten."
+- id: tea-room-sign
+  name: tea room sign
+  aliases: [sign, tea room]
+  location: glass-house
+  scenery: true
+  description: "THE PAVILION TEA ROOM — CREAM TEAS — EST. 1894. Closed in 1994. Rebuilt in 1894, it means. After."
+
+# ─── Site Compound ───
+- id: heras-fencing
+  name: Heras fencing
+  aliases: [fencing, fence, heras]
+  location: compound
+  scenery: true
+  description: "Steel mesh panels on rubber feet, cable-tied together, rattling in every gust. A sign: DANGER — CONSTRUCTION SITE — PPE MUST BE WORN."
+- id: skip
+  name: skip
+  aliases: [skip, rubbish]
+  location: compound
+  scenery: true
+  description: "A yellow skip full of the hotel's insides: lath and plaster, carpet, a Victorian fire surround smashed in three pieces."
+- id: scaffold-tubes
+  name: scaffold tubes
+  aliases: [scaffold, tubes, scaffolding, poles]
+  location: compound
+  scenery: true
+  description: "A stack of galvanised scaffold tubes. Tommo filmed himself balancing on them last week and got a warning."
+
+# ─── Site Cabin ───
+- id: cabin-kettle
+  name: cabin kettle
+  aliases: [kettle]
+  location: site-office
+  scenery: true
+  description: "The site kettle, brown inside. A jar of coffee welded shut with damp."
+  properties: { mass: 1 }
+  uses:
+    - text: "You make a tea in the least bad mug. Gary will moan about the milk."
+      effects: [ { spawn: { object: mug-of-tea, in: player } } ]
+      minutes: 4
+- id: calendar
+  name: calendar
+  aliases: [calendar, plant hire calendar]
+  location: site-office
+  scenery: true
+  description: "A plant-hire calendar, still on September: a digger at sunset. HANDOVER circled in December in red, with three exclamation marks."
+- id: drawings
+  name: drawings
+  aliases: [plans, drawings, drawing]
+  location: site-office
+  scenery: true
+  description:
+    - when: { special: { PE: { gte: 7 } } }
+      text: "The architect's survey of the first floor. Every room is marked STRIP OUT except one: Room 7, hatched, with a note in pencil: 'Client — leave until last?'"
+    - text: "Architect's drawings of the Grand Atlantic, floor by floor, coffee-ringed and annotated in Gary's capitals."
+
+# ─── Hotel Lobby ───
+- id: dust-sheets
+  name: dust sheets
+  aliases: [sheets, dust sheet, tiles, floor]
+  location: hotel-lobby
+  scenery: true
+  description:
+    - when: { special: { PE: { gte: 7 } } }
+      text: "Under the dust sheets, the old encaustic tiles: blue, terracotta, cream. For a moment there are palms in brass pots on them."
+    - text: "Paint-stiff dust sheets over the floor. Underneath, the edges of an old tiled floor nobody's decided what to do with."
+- id: radio
+  name: radio
+  aliases: [radio, site radio]
+  location: hotel-lobby
+  scenery: true
+  description: "A paint-spattered site radio on Gold, playing a song your mum liked."
+  properties: { mass: 3 }
+  uses:
+    - when: { flag: obsession }
+      text: "You turn the dial. Between the stations, a brass band, very far away, playing on a summer evening a long time ago. You turn it back to Gold."
+    - text: "You turn the dial. Gold, Gold, a phone-in about bins, Gold."
+- id: lobby-staircase
+  name: staircase
+  aliases: [stairs, staircase, banister]
+  location: hotel-lobby
+  scenery: true
+  description: "A grand staircase stripped to the treads, the mahogany banister wrapped in bubble wrap. It goes up into the dark of the first floor."
+
+# ─── First-floor Corridor ───
+- id: stacked-doors
+  name: stacked doors
+  aliases: [doors, numbers, frames, cables]
+  location: hotel-corridor
+  scenery: true
+  description: "Bedroom doors off their hinges, stacked against the wall, each with its brass number still on: 3, 4, 5, 6, 8, 9. Cables taped along the floor to the plugs."
+
+# ─── Room 7 ───
+- id: room-seven-window
+  name: window
+  aliases: [window, sea view, view, pier]
+  location: room-seven
+  scenery: true
+  description: "The window looks straight down the pier to the glass house. You'd see someone walk all the way out, from here. You'd see the light."
+- id: wallpaper
+  name: wallpaper
+  aliases: [paper, walls, wall]
+  location: room-seven
+  scenery: true
+  description:
+    - when: { special: { PE: { gte: 7 } } }
+      text: "Under the woodchip, under the roses, a third paper: tiny lambs and stars, the kind you'd paper a nursery with."
+    - text: "Wallpaper hanging in tongues: woodchip over cabbage roses over something older."
+
+# ─── The Anchor ───
+- id: fruit-machine
+  name: fruit machine
+  aliases: [machine, fruities, bandit, one-armed bandit]
+  location: anchor
+  scenery: true
+  description: "A fruit machine called RAINBOW RICHES, lit up and sighing to itself. Tommo has a theory about it."
+  properties: { mass: 80 }
+  uses:
+    - when: { money: { who: player, gte: 1 } }
+      text: "You feed it a quid and hit the button."
+      effects:
+        - { give_money: { who: player, amount: -1 } }
+        - check:
+            skill: gambling
+            tier: hard
+            pass: [ { give_money: { who: player, amount: 5 } }, { narrate: "Three bells. It spits out a fiver in coins." } ]
+            fail: [ { narrate: "Lemon, cherry, nothing. It plays a sad little tune." } ]
+      minutes: 2
+    - text: "You haven't got a quid."
+- id: dartboard
+  name: dartboard
+  aliases: [darts, board]
+  location: anchor
+  scenery: true
+  description: "A dartboard so old the numbers have worn off. No darts. Nobody remembers who had them last."
+- id: bar
+  name: bar
+  aliases: [bar, counter, pumps]
+  location: anchor
+  scenery: true
+  description: "A long wooden bar, sticky in the same places for thirty years. Three hand pumps, one of them working."
+- id: anchor-window
+  name: window
+  aliases: [window, view]
+  location: anchor
+  scenery: true
+  description: "The pub window looks out across the parade at the pier. From here the glass house looks like a lantern somebody's left out."
+
+# ─── Kez's Flat ───
+- id: flat-telly
+  name: telly
+  aliases: [tv, television, telly]
+  location: anchor-flat
+  scenery: true
+  description: "A big telly on a small table, permanently on a quiz show with the sound down."
+- id: fairy-lights
+  name: fairy lights
+  aliases: [lights]
+  location: anchor-flat
+  scenery: true
+  description: "Fairy lights pinned round the ceiling, half of them dead. Kez says it's on purpose."
+- id: biscuit
+  name: Biscuit
+  aliases: [cat, biscuit]
+  location: anchor-flat
+  scenery: true
+  description:
+    - when: { flag: unease }
+      text: "Biscuit, a fat ginger cat, stares at you without blinking. Then she stares at the empty space just behind your left shoulder, and her tail goes huge."
+    - text: "Biscuit, a fat ginger cat who hates everyone, asleep on the radiator with one eye open."
+  properties: { mass: 5 }
+  uses:
+    - text: "You reach out to stroke her. Biscuit lets you, twice, then bites your thumb with great precision."
+      effects: [ { damage: { who: player, amount: 1 } } ]
+      minutes: 1
