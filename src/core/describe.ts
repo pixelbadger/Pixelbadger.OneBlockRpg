@@ -1,7 +1,7 @@
 /** Rendering authored text for rooms, objects and events (P5: all of it authored or templated, none generated). */
 
 import type { Exit } from "../payload/schema.js";
-import { listJoin } from "./messages.js";
+import { capitalise, listJoin } from "./messages.js";
 import type { World, WorldEvent } from "./world.js";
 
 export interface ExitView {
@@ -97,6 +97,11 @@ export function describeRoom(w: World, room: string): RoomDescription {
 
 /** A plain third-person sentence for an event, used in day logs and prompts (§6.8). */
 export function describeEvent(w: World, e: WorldEvent): string | null {
+  const text = eventSentence(w, e);
+  return text ? capitalise(text) : text;
+}
+
+function eventSentence(w: World, e: WorldEvent): string | null {
   const a = e.actor ? w.label(e.actor) : "Someone";
   const t = (i: number) => (e.targets[i] ? w.label(e.targets[i]!) : "something");
   switch (e.kind) {
