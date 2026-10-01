@@ -141,10 +141,6 @@ function bodies(w: World, minutes: number): void {
 
 // ─── Behaviours, triggers, set pieces, endings ───────────────────────────────
 
-function involvesApparition(w: World, e: WorldEvent): boolean {
-  return [e.actor, ...e.targets].some((id) => id && w.thing(id) && !w.npcsPerceive(id));
-}
-
 function setEdge(w: World, key: string, value: boolean): void {
   if ((w.state.edges[key] ?? false) !== value) {
     w.emit("mode", { payload: { edge: key, value }, ops: [set(["edges", key], value)] });
@@ -188,7 +184,7 @@ function runBehaviours(w: World, window: WorldEvent[]): void {
       if (w.state.combat?.combatants.some((c) => c.id === owner && c.status === "in")) continue;
       if (w.state.conversation?.character === owner) continue;
     }
-    const events = isChar && owner !== w.playerId ? window.filter((e) => !involvesApparition(w, e)) : window;
+    const events = isChar && owner !== w.playerId ? window.filter((e) => !w.missed(e, owner)) : window;
     for (const bid of activeBehaviours(w, owner)) {
       const b = w.ix.behaviours.get(bid);
       if (!b) continue;
@@ -266,7 +262,7 @@ function runEndings(w: World): void {
   }
 }
 
-/** Day logs for what characters saw (§6.8). Apparitions never enter NPC logs (Q31). */
+/** Day logs for what characters saw (§6.8). Apparitions never enter NPC logs (Q31), nor do unnoticed sneakers (§5.4). */
 function recordWitnesses(w: World): void {
   const cur = cursor(w);
   const events = w.log.slice(cur.witness);
@@ -280,9 +276,8 @@ function recordWitnesses(w: World): void {
     if (!room) continue;
     const text = describeEvent(w, e);
     if (!text) continue;
-    const ghostly = involvesApparition(w, e);
     for (const who of w.witnessesIn(room)) {
-      if (who !== w.playerId && ghostly) continue;
+      if (w.missed(e, who)) continue;
       const involved = who === e.actor || e.targets.includes(who);
       w.dayLog(who, involved ? "action" : "witnessed", text);
     }
@@ -300,7 +295,7 @@ function hostiles(w: World): void {
   for (const id of w.charsIn(room)) {
     if (id === p) continue;
     const s = w.char(id);
-    if (s.hostile && s.status === "ok" && s.asleepUntil === null && w.npcsPerceive(id)) {
+    if (s.hostile && s.status === "ok" && s.asleepUntil === null && w.npcsPerceive(id) && w.perceives(id, p)) {
       perform(w, id, { act: "attack", target: p }, { by: "engine", ref: "hostile" });
       return;
     }

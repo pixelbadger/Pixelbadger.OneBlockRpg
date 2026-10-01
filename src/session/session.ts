@@ -39,7 +39,7 @@ const PLAYER: Cause = { by: "player" };
 
 export const HELP = `Type commands like: look, go north (or n), take kettle, open drawer, put key in drawer, use kettle,
 use deed on letters, give letters to dev, show deed to okafor, talk to okafor, buy bandage from ravi,
-throw mug at window, attack pike with knife, wait 30, wait until 22:00, sleep, examine me.
+throw mug at window, attack pike with knife, sneak (toggle), sneak north, wait 30, wait until 22:00, sleep, examine me.
 Also: inventory (i), status, journal, menu (numbered actions available right now), improve <skill> [points].
 In conversation, pick an option by number. In combat: attack <target>, use <item>, flee <direction>, end.`;
 
@@ -134,6 +134,7 @@ export class Session {
       level: s.level,
       xp: s.xp,
       unspentSkillPoints: s.unspentSkillPoints,
+      sneaking: !!s.sneaking,
     };
   }
 

@@ -29,6 +29,7 @@ export type ViewModel =
       level: number;
       xp: number;
       unspentSkillPoints: number;
+      sneaking: boolean;
     }
   | {
       type: "sheet";

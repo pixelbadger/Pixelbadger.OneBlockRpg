@@ -70,6 +70,9 @@ export function actionMenu(w: World): MenuItem[] {
   out.push(
     item(bed ? `sleep on ${w.name(bed)}` : "sleep on the floor", { act: "sleep", ...(bed ? { target: bed } : {}) }),
   );
+  out.push(
+    w.isSneaking(p) ? item("stop sneaking", { act: "sneak", stop: true }) : item("start sneaking", { act: "sneak" }),
+  );
   out.push(item("wait 10 minutes", { act: "wait", minutes: 10 }));
   out.push(item("wait an hour", { act: "wait", minutes: 60 }));
   return out;

@@ -57,6 +57,11 @@ export interface CharState {
   healAccum: number;
   /** Day on which First Aid was last applied to this character. */
   firstAidDay: number | null;
+  /**
+   * The sneaking stance (§5.4): null when not sneaking. `aware` holds the characters who have noticed the sneaker in
+   * their current room; everyone else does not perceive them or their actions.
+   */
+  sneaking?: { aware: string[] } | null;
 }
 
 export type LogKind = "conversation" | "overheard" | "witnessed" | "action" | "hook" | "set-piece" | "note" | "digest";

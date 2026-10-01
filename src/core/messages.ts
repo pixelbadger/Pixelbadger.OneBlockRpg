@@ -114,6 +114,16 @@ export const MESSAGES: Record<string, string> = {
   "talk.down": "{{Target}} is in no state to talk.",
   "talk.hostile": "{{Target}} is in no mood for talking.",
   "talk.not-char": "You can't talk to {{target}}.",
+  // sneak (§5.4)
+  "sneak.ok": "You keep low and move quietly.",
+  "sneak.npc": "{{Actor}} starts creeping about.",
+  "sneak.stop": "You stop sneaking.",
+  "sneak.stop-npc": "{{Actor}} stops creeping about.",
+  "sneak.already": "You're already sneaking.",
+  "sneak.not": "You aren't sneaking.",
+  "sneak.noticed": "{{Observer}} notices you.",
+  "sneak.npc-noticed": "You notice {{Actor}} creeping about.",
+  "sneak.revealed": "You give up any pretence of stealth.",
   // wait, sleep, examine
   "wait.ok": "Time passes.",
   "sleep.ok": "You lie down on {{item}} and sleep.",

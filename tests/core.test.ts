@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { perform } from "../src/core/actions.js";
+import { BASE_MINUTES, perform, SNEAK_TIME, UNNOTICED_STEAL_BONUS } from "../src/core/actions.js";
 import { playerCombat, runCombat } from "../src/core/combat.js";
 import { describeRoom } from "../src/core/describe.js";
 import { applyEffects } from "../src/core/effects.js";
 import { applyOps, clone } from "../src/core/ops.js";
 import { tick } from "../src/core/tick.js";
 import { initialState } from "../src/core/world.js";
+import { parseCommand } from "../src/session/parser.js";
 import { mini, world } from "./helpers.js";
 
 const P = { by: "player" as const };
@@ -257,5 +258,132 @@ describe("event sourcing (§3.7)", () => {
     const folded = clone(initialState(p, "fold"));
     for (const e of w.log) applyOps(folded, e.ops);
     expect(folded).toEqual(w.state);
+  });
+});
+
+describe("sneaking (§5.4)", () => {
+  /** A nimble, lucky player and a short-sighted Nell, or the reverse. */
+  const sneakers = (playerAG: number, nellPE: number) => {
+    const p = mini();
+    p.characters[0]!.special = { ...p.characters[0]!.special, AG: playerAG, LK: playerAG };
+    p.characters[0]!.tag_skills = playerAG > 5 ? ["sneak"] : [];
+    p.characters[1]!.special = { ...p.characters[1]!.special, PE: nellPE };
+    p.characters[1]!.behaviours = ["watch"];
+    p.behaviours.push({
+      id: "watch",
+      rules: [
+        {
+          when: { event: { kind: "took", actor: "player" } },
+          do: [{ set_flag: "nell_saw" }],
+          once: false,
+          priority: 0,
+        },
+      ],
+    });
+    return p;
+  };
+
+  it("hides an unnoticed sneaker's actions from NPC logs and behaviours, and takes longer", () => {
+    const w = world(sneakers(10, 1), "quiet");
+    tick(w, 0);
+    expect(perform(w, "player", { act: "sneak" }, P).ok).toBe(true);
+    expect(w.isSneaking("player")).toBe(true);
+    expect(w.char("player").sneaking!.aware).toEqual([]);
+    const r = perform(w, "player", { act: "take", item: "key" }, P);
+    expect(r.minutes).toBe(1.5);
+    expect(w.char("player").sneaking!.aware).toEqual([]);
+    tick(w, 1);
+    expect(w.perceives("npc", "player")).toBe(false);
+    expect(w.scope("npc")).not.toContain("player");
+    expect((w.state.dayLogs.npc ?? []).map((e) => e.text).join("\n")).not.toContain("took");
+    expect(w.state.flags.nell_saw).toBeUndefined();
+  });
+
+  it("lets a sharp-eyed observer notice, and then see everything", () => {
+    const w = world(sneakers(1, 10), "loud");
+    tick(w, 0);
+    perform(w, "player", { act: "sneak" }, P);
+    perform(w, "player", { act: "take", item: "key" }, P);
+    expect(w.char("player").sneaking!.aware).toContain("npc");
+    expect(w.log.some((e) => e.kind === "noticed" && e.actor === "npc")).toBe(true);
+    tick(w, 1);
+    const log = (w.state.dayLogs.npc ?? []).map((e) => e.text).join("\n");
+    expect(log).toContain("creeping about");
+    expect(log).toContain("took");
+    expect(w.state.flags.nell_saw).toBe(true);
+  });
+
+  it("ends with stop, and talking or attacking gives the sneaker away", () => {
+    const w = world(sneakers(10, 1), "quiet");
+    expect(perform(w, "player", { act: "sneak", stop: true }, P).ok).toBe(false);
+    perform(w, "player", { act: "sneak" }, P);
+    expect(perform(w, "player", { act: "sneak" }, P).ok).toBe(false);
+    perform(w, "player", { act: "sneak", stop: true }, P);
+    expect(w.isSneaking("player")).toBe(false);
+    perform(w, "player", { act: "sneak" }, P);
+    perform(w, "player", { act: "talk", target: "npc" }, P);
+    expect(w.isSneaking("player")).toBe(false);
+    expect(w.log.some((e) => e.kind === "sneak-ended" && e.payload.revealed === true)).toBe(true);
+  });
+
+  it("moves with a direction and re-rolls for the next room", () => {
+    const w = world(sneakers(10, 1), "quiet");
+    const r = perform(w, "player", { act: "sneak", direction: "north" }, P);
+    expect(r.ok).toBe(true);
+    expect(w.roomOf("player")).toBe("kitchen");
+    expect(w.isSneaking("player")).toBe(true);
+    expect(r.minutes).toBe(BASE_MINUTES.go * SNEAK_TIME);
+  });
+
+  it("hides an unnoticed NPC sneaker from the player", () => {
+    const p = mini();
+    p.characters[0]!.special = { ...p.characters[0]!.special, PE: 1 };
+    p.characters[1]!.special = { ...p.characters[1]!.special, AG: 10, LK: 10 };
+    p.characters[1]!.tag_skills = ["sneak"];
+    const w = world(p, "quiet");
+    perform(w, "npc", { act: "sneak" }, { by: "behaviour" });
+    expect(w.perceives("player", "npc")).toBe(false);
+    expect(describeRoom(w, "hall").people).toEqual([]);
+    expect(w.scope("player")).not.toContain("npc");
+  });
+
+  it("gives an unnoticed thief a Steal bonus, and a caught thief is noticed", () => {
+    const p = sneakers(10, 1);
+    p.objects.push({
+      id: "purse",
+      name: "purse",
+      location: "npc",
+      description: "A purse.",
+      affordances: ["takeable"],
+      properties: { mass: 0.2 },
+      aliases: [],
+      behaviours: [],
+      tags: [],
+      uses: [],
+      messages: {},
+    });
+    const w = world(p, "quiet");
+    perform(w, "player", { act: "sneak" }, P);
+    perform(w, "player", { act: "steal", item: "purse", from: "npc" }, P);
+    const check = w.log.find((e) => e.kind === "checked" && e.payload.skill === "steal")!;
+    const plain = w.skill("player", "steal") - 0 + 50 - 10 + 5;
+    expect(check.payload.target).toBe(Math.min(95, plain + UNNOTICED_STEAL_BONUS));
+  });
+});
+
+describe("parser: sneak (§3.2)", () => {
+  it("toggles the stance and sneaks in a direction", () => {
+    const w = world();
+    expect(parseCommand(w, "sneak")).toEqual({ ok: true, intent: { type: "action", action: { act: "sneak" } } });
+    expect(parseCommand(w, "sneak n")).toEqual({
+      ok: true,
+      intent: { type: "action", action: { act: "sneak", direction: "north" } },
+    });
+    perform(w, "player", { act: "sneak" }, P);
+    expect(parseCommand(w, "sneak")).toEqual({
+      ok: true,
+      intent: { type: "action", action: { act: "sneak", stop: true } },
+    });
+    expect(parseCommand(w, "stop sneaking").ok).toBe(true);
   });
 });

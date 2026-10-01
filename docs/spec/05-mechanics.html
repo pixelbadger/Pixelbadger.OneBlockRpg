@@ -84,6 +84,11 @@ The core set trims Fallout's list to what suits a city block. A payload can enab
       or holding liquor (EN).</li>
   <li><strong>Opposed check:</strong> actor's skill roll against a defender value: Sneak vs 10×PE of observers, Steal vs 10×PE of the target
       (−1 per kg of the item), Speech vs the target's relationship trust plus 5×IN.</li>
+  <li><strong>Sneaking</strong> is a stance, entered and left with the <code>sneak</code> action. While in it, actions take 1.5× time, and before each
+      action every awake character in the room who has not yet noticed the sneaker rolls once (Sneak vs 10×PE, opposed). So does everyone in the
+      next room when the sneaker moves. Anyone who notices stays aware while they share a room, and a <code>noticed</code> event fires. Anyone who
+      hasn't noticed does not perceive the sneaker or their actions, exactly as with apparitions (Q31): no day-log entry, no behaviour reaction,
+      and no attack on sight. Talking or attacking ends the stance. Steal gets +20 against a victim who hasn't noticed the thief.</li>
   <li><strong>Luck nudge:</strong> the roller's Luck shifts every seeded d100 target (skill, opposed and hit chance) by <code>LK − 5</code> points,
       so LK 5 is neutral, LK 10 is +5 and LK 1 is −4. On d10 attribute checks it is +1 at LK 9–10 and −1 at LK 1–2. Only the roller's Luck
       counts, and the nudge is reported with the result.</li>

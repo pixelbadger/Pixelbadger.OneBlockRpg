@@ -34,7 +34,10 @@ export type SkillId = (typeof SKILLS)[number];
 export const TIERS = ["trivial", "easy", "normal", "hard", "very_hard", "heroic"] as const;
 export type Tier = (typeof TIERS)[number];
 
-/** The shared action vocabulary (§4.3). `buy`/`sell` are the two halves of trade; `examine`/`look` are free perception. */
+/**
+ * The shared action vocabulary (§4.3). `buy`/`sell` are the two halves of trade; `examine`/`look` are free perception;
+ * `sneak` enters the sneaking stance (`stop: true` leaves it; with a direction it also moves).
+ */
 export const ACTION_VERBS = [
   "go",
   "take",
@@ -60,6 +63,7 @@ export const ACTION_VERBS = [
   "wait",
   "examine",
   "look",
+  "sneak",
 ] as const;
 export type ActionVerb = (typeof ACTION_VERBS)[number];
 
@@ -247,6 +251,8 @@ export const actionParams = {
   weapon: Who.optional(),
   direction: z.string().optional(),
   minutes: z.number().int().positive().optional(),
+  /** `sneak` only: leave the stance instead of entering it. */
+  stop: z.boolean().optional(),
 };
 
 export const ActionRequest = z.strictObject({ act: z.enum(ACTION_VERBS), ...actionParams });

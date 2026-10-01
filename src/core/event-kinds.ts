@@ -30,6 +30,9 @@ export const EVENT_KINDS = [
   "slept",
   "woke",
   "collapsed",
+  "sneak-started", // actor entered the sneaking stance
+  "sneak-ended", // actor left it (payload.revealed when an attack or talk gave them away)
+  "noticed", // actor noticed a sneaking character (targets: [sneaker])
   // combat (§5.6)
   "attacked",
   "combat-started",

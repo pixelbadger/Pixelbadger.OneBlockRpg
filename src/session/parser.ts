@@ -118,6 +118,23 @@ export function parseCommand(w: World, input: string): ParseResult {
     return act({ type: "action", action: { act: "go", direction: x.direction ?? x.label! } });
   }
 
+  // Sneaking (§5.4): a stance. "sneak" toggles it; "sneak <direction>" enters it and moves.
+  if (["stop sneaking", "unsneak", "stand up", "stop creeping"].includes(lower)) {
+    return act({ type: "action", action: { act: "sneak", stop: true } });
+  }
+  if (["sneak", "creep", "tiptoe", "crouch", "skulk"].includes(verb)) {
+    if (!rest) {
+      return act({
+        type: "action",
+        action: w.isSneaking(w.playerId) ? { act: "sneak", stop: true } : { act: "sneak" },
+      });
+    }
+    const token = DIRECTIONS[clean(rest)] ?? clean(rest.replace(/^(to|into|through)\s+/, ""));
+    const x = exitMatch(token);
+    if (!x) return err("You can't go that way.");
+    return act({ type: "action", action: { act: "sneak", direction: x.direction ?? x.label! } });
+  }
+
   switch (verb) {
     case "x":
     case "examine":
