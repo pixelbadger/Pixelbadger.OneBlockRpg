@@ -13,8 +13,9 @@
   <a href="02-pillars.html">2 · Design pillars</a>
   <a href="03-architecture.html">3 · Architecture</a>
   <a href="04-world-model.html">4 · World model</a>
-  <a href="05-llm-layer.html">5 · LLM layer</a>
-  <a href="06-open-questions.html">6 · Open questions</a>
+  <a href="05-llm-layer.html">5 · Conversation &amp; LLM</a>
+  <a href="06-game-payload.html">6 · Game payload</a>
+  <a href="07-open-questions.html">7 · Open questions</a>
 </nav>
 <main>
 <h1>1 · Concept &amp; research</h1>
@@ -67,16 +68,16 @@ Physics and systemic interaction matter too, but they are secondary to the peopl
 <tbody>
 <tr><td>Harvey Smith (Deus Ex, Dishonored)</td><td><em>"It's a clever constraint, like the Twilight Zone episode where everything takes place in one room."</em>
 The key question is whether it would feel like <em>"an emergent narrative in the sense of a game like FTL or … XCOM, or more like an 'insanely scripted' RPG … there's a thrill and some feeling of elegance to game interactions when they arise from systems."</em></td>
-<td>This is the central design choice. We choose <strong>systems first</strong>, with the LLM director shaping rather than scripting (P8). The Smith quote is the best one-line statement of why.</td></tr>
+<td>This is the central design choice. We answer with a hybrid: an <strong>authored story skeleton</strong> (plot, tensions, triggers) with <strong>systemic flesh</strong> (behaviours, properties, LLM-voiced conversation) (P7).</td></tr>
 <tr><td>Christophe Carrier (Dishonored lead level designer)</td><td><em>"Tight and dense with consequences … the tighter the space, the more detail is possible … a world where little things matter and that you leave traces of your influence everywhere."</em>
 He also wants to <em>"use the bathrooms or turn the AC on, even if there's no gameplay implications whatsoever."</em></td>
-<td>Mundane interactions are first-class even with no mechanical payoff (P3). Player actions leave persistent, discoverable traces (P6).</td></tr>
+<td>Mundane interactions are first-class even with no mechanical payoff. Authored text makes them cheap (P3, P5). Player actions leave persistent, discoverable traces (P9).</td></tr>
 <tr><td>Steve Gaynor (Gone Home)</td><td><em>"Too many games are much too broad and shallow."</em> But he adds that the full idea <em>"implies a lot more: simulating the people who live and work there, allowing the player to buy equipment and improve their character's skills and attributes."</em></td>
-<td>Being a <strong>CRPG</strong> means character progression and an economy, not just exploration. The draft spec is thin here (Q16).</td></tr>
+<td>Being a <strong>CRPG</strong> means character progression and an economy, not just exploration. Resolved: SPECIAL attributes and derived skills (§4.6).</td></tr>
 <tr><td>Raphael Colantonio (Arkane)</td><td><em>"Ultima Underworld set in a modern mall, blocked off and sealed up after a cataclysm … with rival clans and factional alliances."</em></td>
-<td>A sealed setting justifies the hard boundary (P1). Factions give the director tensions to work with.</td></tr>
+<td>A sealed setting justifies the hard boundary (P1). Factions and tensions belong in the story brief (§6.2).</td></tr>
 <tr><td>Jim Rossignol</td><td><em>"Would there be a single bullet in a revolver in a drawer somewhere, which would signal the end of the game when it was fired?"</em> It is <em>"not simply a technical challenge … it's a design challenge."</em></td>
-<td>Scarce, significant objects work as dramatic constraints. The hard part is making depth <em>fun</em>, not just making it exist.</td></tr>
+<td>Scarce, significant objects work as dramatic constraints, which the payload can author. The hard part is making depth <em>fun</em>, not just making it exist.</td></tr>
 </tbody>
 </table>
 
@@ -95,27 +96,27 @@ He also wants to <em>"use the bathrooms or turn the AC on, even if there's no ga
 <table>
 <thead><tr><th>Cost</th><th>How this project attacks it</th></tr></thead>
 <tbody>
-<tr><td>Simulation</td><td><strong>Text removes the rendering and physics tax.</strong> An object needs a state and some rules, not a mesh and a collider.
-A kettle can be <code>{filled, powered, temperature}</code> in a few lines. This makes "every object and appliance" tractable.</td></tr>
-<tr><td>Authoring</td><td><strong>LLMs voice the residents.</strong> Authors (human or LLM-assisted, at world-generation time) define who a character
-<em>is</em>: identity, history, secrets, goals and relationships. The model produces what they <em>say</em> in response to anything, grounded in what they know.</td></tr>
-<tr><td>Coherence</td><td><strong>An LLM "director" reads the simulation and nudges it.</strong> It proposes plot beats that exploit existing tensions, such as a debt, an affair,
-a leaking pipe or a power outage. It never invents facts outside the rules.</td></tr>
+<tr><td>Simulation</td><td><strong>Text removes the rendering and physics tax, and descriptive rooms remove geometry.</strong> An object needs some properties and rules,
+not a mesh and a collider. A kettle can be <code>{filled, powered, temperature}</code> in a few lines.</td></tr>
+<tr><td>Authoring</td><td><strong>Coding agents write the world; LLMs voice the residents.</strong> An agent turns a user's story brief into a full payload,
+including every description. At play time, the model produces what characters <em>say</em> in conversation, steered by their goals.</td></tr>
+<tr><td>Coherence</td><td><strong>The user supplies the story.</strong> Plot, tensions and trigger points are authored. Systems and conversation fill the space
+between them, and conversation reaches world state only through declared hooks.</td></tr>
 </tbody>
 </table>
 <p>The central risk runs the other way. LLMs are <em>too</em> willing to invent. A model that freely makes up objects, facts and
-outcomes gives you improv theatre, not a simulation, and the "mile deep" promise collapses because nothing is consistent. So the
-design constraint that runs through this spec is <strong>the simulation is authoritative; the model is a voice and an advisor</strong>
-(see <a href="02-pillars.html">§2</a>). This is Harvey Smith's systems-over-script choice (§1.3) in modern form.</p>
+outcomes gives you improv theatre, not a simulation, and the "mile deep" promise collapses because nothing is consistent. The answer
+in this spec is to split the world in two (see <a href="02-pillars.html">§2</a>). A simple simulation <strong>grounds</strong> what exists, and the model is
+free to <strong>construct</strong> social reality, hyperreal included, which becomes grounded only through hooks the author declares.</p>
 
 <h2>1.6 What we take from each precedent</h2>
 <ul>
   <li><strong><em>Gone Home</em>:</strong> every drawer and cabinet carries meaning, and history is discovered through objects.</li>
   <li><strong>Immersive sims (Looking Glass, Ion Storm, Arkane):</strong> systemic objects, multiple solutions and player expression over designer intent.</li>
   <li><strong><em>Disco Elysium</em>:</strong> a small place made dense through conversation and history. Every noun is a door into story.</li>
-  <li><strong>Generative Agents:</strong> memory stream → retrieval → reflection → planning as a model for resident minds, and cheap
-  offscreen behaviour versus expensive on-stage behaviour.</li>
-  <li><strong>Classic parser IF (Infocom, Inform):</strong> a world model of rooms, objects and containment, and a turn loop. The parser is the part the LLM improves.</li>
+  <li><strong>Generative Agents:</strong> memories that carry between encounters, and the split between cheap scripted routine and expensive LLM reasoning.</li>
+  <li><strong>Classic parser IF (Infocom, Inform):</strong> a world model of rooms, objects and containment, authored text, and a turn loop.</li>
+  <li><strong>Fallout 1/2:</strong> SPECIAL, and multiple-choice dialogue with attribute-gated options.</li>
 </ul>
 
 <h2>Sources</h2>

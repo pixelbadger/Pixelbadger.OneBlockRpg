@@ -13,140 +13,127 @@
   <a href="02-pillars.html">2 · Design pillars</a>
   <a href="03-architecture.html">3 · Architecture</a>
   <a href="04-world-model.html" aria-current="page">4 · World model</a>
-  <a href="05-llm-layer.html">5 · LLM layer</a>
-  <a href="06-open-questions.html">6 · Open questions</a>
+  <a href="05-llm-layer.html">5 · Conversation &amp; LLM</a>
+  <a href="06-game-payload.html">6 · Game payload</a>
+  <a href="07-open-questions.html">7 · Open questions</a>
 </nav>
 <main>
 <h1>4 · World model</h1>
-<p class="subtitle">What the simulation knows. The sketches show shape, not final types.</p>
+<p class="subtitle">The grounded layer: rooms, objects, characters, actions, behaviours, SPECIAL, beliefs and time. Sketches show shape, not final types.</p>
 
-<h2>4.1 Entities</h2>
-<p>Everything addressable is an <code>Entity</code> with a stable id, a kind and a location in the containment tree.
-The kind decides which state components it carries. That could be tagged unions or a light entity-component split. <span class="tag">open</span></p>
-<pre><code>type EntityId = string & { readonly brand: 'EntityId' };
-
-interface EntityBase {
-  id: EntityId;
-  kind: 'block' | 'building' | 'space' | 'portal' | 'item' | 'fixture' | 'character';
-  name: string;              // canonical short name
-  aliases: string[];         // parser/interpreter vocabulary
-  description: string;       // authored or concretised; immutable once observed
-  location: EntityId | null; // containment parent
-  tags: string[];            // e.g. 'flammable', 'container', 'electrical'
+<h2>4.1 Rooms</h2>
+<p>Rooms are <strong>descriptive and dimensionless</strong>. A room is a name, authored text and a set of exits.</p>
+<pre><code>interface Room {
+  id: RoomId;
+  name: string;
+  description: TextVariants;     // authored; variants chosen by condition (§6.4)
+  exits: Exit[];                 // { direction | label, to: RoomId, via?: ObjectId (a door), when?: Condition }
+  tags: string[];                // 'public', 'dark', 'outdoors', …
 }</code></pre>
+<p>A door, hatch or fire escape is an <em>object</em> referenced by an exit, so it can be locked, broken, opened or described like anything else.</p>
 
-<h2>4.2 Space</h2>
-<ul>
-  <li><strong>Block</strong>, the root. It contains buildings and outdoor spaces (sidewalk, alley, courtyard, roofs).</li>
-  <li><strong>Building</strong>, which groups spaces and owns utility connections.</li>
-  <li><strong>Space</strong>, a room or area with light level, noise and a public or private status for trespass rules.</li>
-  <li><strong>Portal</strong>, which connects spaces: a door, window, stairs, fire escape or vent. It has open, locked and lock-key state and
-      <em>visibility/audibility</em> through it, so the model knows who can see or hear what.</li>
-</ul>
-
-<h2>4.3 Things</h2>
-<ul>
-  <li><strong>Item</strong>, portable. It has weight and bulk, is optionally a container, and carries state (<code>lit</code>, <code>filled</code>…).</li>
-  <li><strong>Fixture</strong>, not portable: an appliance, furniture or a utility endpoint. Appliances declare utility needs and behaviours.</li>
-  <li>Objects are driven by small, composable <strong>behaviours</strong> (container, lockable, powered, water-using,
-      flammable, readable, edible…). Rules are written against behaviours, not individual objects. This is the immersive-sim approach and it is what
-      makes unplanned solutions work.</li>
-</ul>
-
-<h2>4.4 Utilities</h2>
-<p>Following Spector's example of power and water supplies, utilities are graphs of <strong>sources → conduits → endpoints</strong>,
-such as mains → building panel → circuit breaker → sockets → kettle. State propagates each tick. Cutting a breaker kills the lights on
-a floor. A burst pipe floods the flat below. <span class="tag">open</span> Scope for v1 could be power and water, with gas, phone/internet
-and heating later.</p>
-
-<h2>4.5 Characters</h2>
-<pre><code>interface Character extends EntityBase {
-  kind: 'character';
-  profile: {            // authored "who they are": stable, cacheable prompt material
-    identity: string; background: string; personality: string[]; voice: string;
+<h2>4.2 Objects</h2>
+<p>Everything else is an object, including characters (4.4) and the player.</p>
+<pre><code>interface GameObject {
+  id: ObjectId;
+  name: string; aliases: string[];
+  location: RoomId | ObjectId;   // in a room, inside a container, or held by a character
+  description: TextVariants;
+  properties: {                  // simulable, typed, declared in the payload
+    mass?: number;               // kg
+    velocity?: number;           // see note below
+    [key: string]: number | boolean | string | undefined;  // open, locked, lit, temperature, charge…
   };
-  needs: Record&lt;'hunger' | 'rest' | 'social' | 'money' | string, number&gt;;
-  schedule: ScheduleEntry[];            // routine: where/what by time of day
-  goals: Goal[];                        // what they are trying to achieve, with plans
-  relationships: Record&lt;EntityId, Relationship&gt;; // trust, affinity, history notes
-  knowledge: KnowledgeRef[];            // facts this character believes (see 4.7)
-  secrets: FactId[];                    // subset of knowledge they conceal
-  special: Special;                     // see 4.6
-  skills: Record&lt;SkillId, number&gt;;     // derived from SPECIAL, raised by use/training
-  inventory: EntityId[];
-  status: { awake: boolean; activity: string; mood: string; health: number };
+  affordances: string[];         // which actions apply: 'takeable', 'container', 'openable', 'lockable', 'usable'…
+  behaviours: BehaviourRef[];    // scripted behaviour (4.5)
+  tags: string[];
 }</code></pre>
-<p>The player character is a <code>Character</code> too. Rules apply symmetrically, and NPCs can do almost anything the player can.
-That includes having SPECIAL attributes.</p>
+<p>Rules are written against properties and affordances, not individual objects. That lets unplanned solutions work: anything heavy enough can
+hold a door shut. <span class="tag">open</span> Q18: <strong>velocity in a dimensionless world.</strong> It could be an abstract magnitude set by actions such as
+<code>throw</code> and <code>push</code>, decaying each tick and combining with mass on impact to break, knock over or hurt. Is that the intent?</p>
 
-<h2>4.6 Character mechanics: SPECIAL</h2>
-<p>Character mechanics use the <strong>SPECIAL</strong> attribute model from the classic turn-based <em>Fallout</em> games:
-seven attributes rated 1–10. It suits this engine because each attribute maps cleanly onto a system we already need, and because it
-was designed for turn-based play, where action cost is explicit.</p>
+<h2>4.3 Actions</h2>
+<p>There is one vocabulary shared by the player, characters and scripted objects (P4).</p>
 <table>
-<thead><tr><th>Attribute</th><th>Drives</th><th>Engine hook</th></tr></thead>
+<thead><tr><th>Action</th><th>Preconditions (examples)</th><th>Effects (examples)</th></tr></thead>
 <tbody>
-<tr><td><strong>S</strong>trength</td><td>Carry capacity, forcing doors and lids, melee</td><td>Rules: inventory limits, <code>force</code> action checks</td></tr>
-<tr><td><strong>P</strong>erception</td><td>What you notice: hidden items, overheard speech, tells</td><td>Perception filter (4.7) and <strong>narrator scope</strong>. Low-PE characters literally get less in their context</td></tr>
-<tr><td><strong>E</strong>ndurance</td><td>Health, fatigue, resistance, how long needs take to bite</td><td>Needs decay rates, health</td></tr>
-<tr><td><strong>C</strong>harisma</td><td>First impressions, persuasion, how fast trust builds</td><td>Relationship deltas and an input to the Character role's disposition</td></tr>
-<tr><td><strong>I</strong>ntelligence</td><td>Reasoning, technical tasks (fixing the fuse box), skill growth</td><td>Skill checks. Interpreter may surface extra options at high IN</td></tr>
-<tr><td><strong>A</strong>gility</td><td>Speed, stealth, fine manipulation</td><td><strong>Action time cost</strong>. This is the analogue of Fallout's AP, expressed as game-minutes per action (4.8)</td></tr>
-<tr><td><strong>L</strong>uck</td><td>Small nudges on uncertain outcomes</td><td>Modifier on the seeded PRNG rolls. Could also bias Director beats slightly</td></tr>
+<tr><td><code>go</code></td><td>exit exists, its door is open, the exit's condition holds</td><td>actor's location changes</td></tr>
+<tr><td><code>take</code> / <code>drop</code> / <code>put</code></td><td>takeable, mass within Strength capacity, container open</td><td>location changes</td></tr>
+<tr><td><code>open</code> / <code>close</code> / <code>lock</code> / <code>unlock</code></td><td>affordance, key held</td><td>property changes</td></tr>
+<tr><td><code>use</code> X (on Y)</td><td>affordance, an authored use rule matches</td><td>authored effects</td></tr>
+<tr><td><code>throw</code> / <code>push</code></td><td>Strength vs mass</td><td>sets velocity and location, impact rules</td></tr>
+<tr><td><code>give</code> / <code>show</code></td><td>recipient present</td><td>location change, recipient beliefs</td></tr>
+<tr><td><code>talk</code></td><td>character present and willing</td><td>starts a conversation (§5)</td></tr>
+<tr><td><code>wait</code></td><td>none</td><td>time passes</td></tr>
 </tbody>
 </table>
-<ul>
-  <li><strong>Resolution is the engine's job.</strong> Checks are deterministic rolls (seeded PRNG) against attribute + skill, resolved in the
-      simulation core. The LLM narrates outcomes. It <span class="req">MUST NOT</span> decide them (P2).</li>
-  <li><strong>Skills</strong> derive from attributes, as in Fallout, and cover lockpicking, speech, repair, sneak, barter, first aid and so on.
-      Perks and traits are deferred.</li>
-  <li><strong>Residents have SPECIAL too.</strong> This gives the Character role concrete, cacheable personality anchors. A low-IN, high-CH
-      resident talks differently from a high-IN, low-CH one.</li>
-</ul>
-<div class="note"><p>"SPECIAL" is a Bethesda/ZeniMax trademark. The seven-attribute mechanic itself is fine to use, but the
-name and branding shouldn't appear in anything we publish or distribute. Treat the name as internal shorthand. <span class="tag">open</span> Choose a
-public name before any release.</p></div>
+<p>Each action has a time cost. Authors can add <strong>use rules</strong> (X on Y → effects) without new code.</p>
 
-<h2>4.7 Facts, knowledge &amp; memory</h2>
-<p>This is where the design lives or dies. It needs a single ledger of <strong>facts</strong> (true propositions about the world) and a
-per-character layer of <strong>beliefs</strong>:</p>
+<h2>4.4 Characters</h2>
+<p>A character is an object with a mind attached. Its everyday behaviour is scripted. Its <em>voice</em> in conversation is the LLM.</p>
+<pre><code>interface Character extends GameObject {
+  persona: { identity: string; background: string; personality: string[]; voice: string };
+  special: Special;                       // 4.6
+  skills: Record&lt;SkillId, number&gt;;
+  goals: Goal[];                          // high-level, authored: "keep the building", "find out who took the ring"
+  intent?: Intent;                        // current scripted activity, e.g. sweeping the lobby
+  relationships: Record&lt;ObjectId, { trust: number; affinity: number; notes: string }&gt;;
+  beliefs: Belief[];                      // 4.7
+  memories: Memory[];                     // conversation summaries, witnessed events
+  conversations: ConversationId[];        // conversation specs this character can hold (§5.2)
+}</code></pre>
+
+<h2>4.5 Behaviours</h2>
+<p>Behaviours are declarative scripts in the payload. There is no code. A behaviour is a list of <strong>rules</strong>:
+<em>when</em> (an event, a time, or a condition) → <em>do</em> (a sequence of actions and effects), with optional cooldown, once-only or priority settings.</p>
+<pre><code># a character's routine and a reaction, in payload YAML
+behaviours:
+  - id: okafor-routine
+    rules:
+      - when: { time: "07:30" }
+        do: [ { act: go, to: lobby }, { set_intent: "sweeping the lobby" } ]
+      - when: { time: "09:00" }
+        do: [ { act: go, to: flat-2b } ]
+      - when: { event: thrown, target: lobby-window }
+        do: [ { act: go, to: lobby }, { start_conversation: okafor-angry } ]</code></pre>
+<p>Schedules, reactions, machines and ambient life all come from behaviours. Former "utilities" become behaviours too: a fuse box object can switch
+<code>powered</code> off in every room tagged <code>floor-2</code>.</p>
+
+<h2>4.6 Character mechanics: SPECIAL</h2>
+<p>There are seven attributes rated 1–10, from the classic turn-based <em>Fallout</em> games. Every character has them, including the player.</p>
+<table>
+<thead><tr><th>Attribute</th><th>Engine hook</th></tr></thead>
+<tbody>
+<tr><td><strong>S</strong>trength</td><td>Carry capacity (mass), forcing, throwing (velocity imparted)</td></tr>
+<tr><td><strong>P</strong>erception</td><td>Unlocks perception-gated text variants and hidden objects. Can reveal a character's tells in conversation</td></tr>
+<tr><td><strong>E</strong>ndurance</td><td>Health and fatigue</td></tr>
+<tr><td><strong>C</strong>harisma</td><td>Gates authored conversation options, relationship deltas, and goes into the character's view of the player</td></tr>
+<tr><td><strong>I</strong>ntelligence</td><td>Gates technical use rules and authored options. Skill growth</td></tr>
+<tr><td><strong>A</strong>gility</td><td>Action time cost (Fallout's AP, expressed as game minutes)</td></tr>
+<tr><td><strong>L</strong>uck</td><td>Modifier on seeded rolls</td></tr>
+</tbody>
+</table>
+<p>Checks are deterministic seeded rolls resolved by the engine. The LLM never decides them. Skills derive from attributes. Perks and traits are deferred.</p>
+<div class="note"><p>"SPECIAL" is a Bethesda/ZeniMax trademark. Use the name as internal shorthand only, and choose a public name before any release.</p></div>
+
+<h2>4.7 Flags, beliefs and memory</h2>
 <ul>
-  <li><strong>Fact</strong>: a subject/predicate/object triple plus free text. Examples: "Mrs Okafor owes the landlord three months' rent" or "the
-      key to 3B is under the mat". Facts have provenance, meaning the event that established them.</li>
-  <li><strong>Belief</strong>: a character's reference to a fact, or to a <em>false</em> proposition they hold, with source (witnessed, told-by,
-      inferred), confidence and time learned. Lies and rumours are false beliefs.</li>
-  <li><strong>Memory stream</strong>: per character, a timestamped log of observations. Importance scoring and periodic
-      <em>reflection</em> condense it into higher-level beliefs, following the Generative Agents pattern.</li>
-  <li><strong>Perception</strong>: events are delivered to the characters who could perceive them, based on the same space or portal
-      visibility/audibility, awake or asleep, and attention. This is how gossip, witnesses and alibis emerge.</li>
+  <li><strong>Flags</strong>: world-level named values (<code>rent_paid</code>, <code>act</code>, <code>ring_found</code>). They are the main currency of triggers.</li>
+  <li><strong>Beliefs</strong>: per-character propositions with a source and confidence. They can be false. This is where constructed social reality is stored.
+      They change through conversation hooks (<code>add_belief</code>) and authored effects.</li>
+  <li><strong>Memories</strong>: per-character conversation summaries and witnessed events, fed back into later conversations.</li>
 </ul>
 
 <h2>4.8 Time</h2>
-<ul>
-  <li>A world clock in minutes. Each action has a time cost, scaled by the actor's Agility (4.6). <span class="tag">open</span> The default granularity could be 1 turn ≈ 1–5 minutes, with <code>wait</code> and
-      <code>sleep</code> to skip.</li>
-  <li>Off-stage residents are simulated at a coarser granularity, following their schedules. On-stage residents are simulated per turn.</li>
-  <li>Day/night, opening hours and weekly rhythms such as rent day and bin day provide natural pressure.</li>
-</ul>
+<p>A world clock in minutes. Actions cost time, scaled by Agility. Behaviours fire on time and events. Conversations take time, and the time spent is applied when they end.</p>
 
 <h2>4.9 Events</h2>
 <pre><code>interface WorldEvent {
-  seq: number; at: GameTime; kind: string;       // 'moved' | 'took' | 'said' | 'power-cut' | …
-  actor?: EntityId; targets: EntityId[];
-  payload: unknown;                              // kind-specific, schema-validated
-  cause?: { by: 'player' | 'rule' | 'schedule' | 'character-mind' | 'director'; ref?: string };
+  seq: number; at: GameTime; kind: string;    // 'moved' | 'took' | 'thrown' | 'flag-set' | 'said' | …
+  actor?: ObjectId; targets: ObjectId[];
+  payload: unknown;
+  cause: { by: 'player' | 'behaviour' | 'trigger' | 'hook' | 'rule'; ref?: string };
 }</code></pre>
-
-<h2>4.10 Where the block comes from</h2>
-<div class="open">
-<p><strong><span class="tag">open</span></strong> There are three options:</p>
-<ul>
-<li><strong>(a)</strong> A hand-authored block data file.</li>
-<li><strong>(b)</strong> An LLM-generated block at new-game time. It gets validated, frozen and then treated as authored.</li>
-<li><strong>(c)</strong> A hybrid, where an authored skeleton of layout and key residents gets LLM-filled detail.</li>
-</ul>
-<p>My recommendation is (a) for a first vertical slice, because it gives us a fixed test fixture. Build (b) or (c) later on the same schema.</p>
-</div>
 
 <footer>§4 of the One Block CRPG specification</footer>
 </main>

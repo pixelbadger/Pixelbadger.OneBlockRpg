@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Block Game Payload</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<nav class="top">
+  <a href="index.html">Overview</a>
+  <a href="01-concept.html">1 · Concept</a>
+  <a href="02-pillars.html">2 · Design pillars</a>
+  <a href="03-architecture.html">3 · Architecture</a>
+  <a href="04-world-model.html">4 · World model</a>
+  <a href="05-llm-layer.html">5 · Conversation &amp; LLM</a>
+  <a href="06-game-payload.html" aria-current="page">6 · Game payload</a>
+  <a href="07-open-questions.html">7 · Open questions</a>
+</nav>
+<main>
+<h1>6 · Game payload</h1>
+<p class="subtitle">How a user's story becomes a loadable game: a data package, validated against a published schema, that a coding agent can produce.</p>
+
+<h2>6.1 Workflow</h2>
+<ol>
+  <li><strong>The user writes a story brief</strong> (6.2): plot, characters, relationships and tensions, trigger points.</li>
+  <li><strong>A coding agent builds the payload</strong> from it. That covers the block layout, every room and object, all flavour text, behaviours,
+      conversation specs, hooks and triggers. It follows the payload authoring guide (6.9).</li>
+  <li><strong><code>oneblock validate</code></strong> checks the schema, references and playability (6.7) and returns errors the agent can fix.</li>
+  <li><strong><code>oneblock play</code></strong> loads it. Scripted playthroughs (§3.6) act as the payload's tests.</li>
+</ol>
+
+<h2>6.2 The story brief</h2>
+<p>The brief is the human's input. It is prose or light structure, and the agent turns it into the payload. Expected sections:</p>
+<table>
+<thead><tr><th>Section</th><th>Content</th><th>Becomes</th></tr></thead>
+<tbody>
+<tr><td>Premise &amp; tone</td><td>Setting, era, mood, how strange it gets</td><td><code>story.synopsis</code>, style guide, all flavour text</td></tr>
+<tr><td>General plot</td><td>What is going on, and the arc if the player does nothing</td><td>Synopsis, character goals, timed triggers</td></tr>
+<tr><td>Characters</td><td>Who they are, what they want, what they hide</td><td>Characters, personas, SPECIAL, goals, beliefs, routines</td></tr>
+<tr><td>Relationships &amp; tensions</td><td>Who owes, loves, fears or suspects whom</td><td>Relationship values, beliefs, conversation goals, hooks</td></tr>
+<tr><td>Trigger points</td><td>Key plot beats and what sets them off</td><td>Triggers (6.6), pinned conversation options</td></tr>
+<tr><td>Endings</td><td>How it can end</td><td>Ending triggers</td></tr>
+</tbody>
+</table>
+
+<h2>6.3 Layout</h2>
+<pre><code>my-block/
+  game.yaml            # id, title, schemaVersion, start room, player character, clock start, style guide
+  story.yaml           # synopsis, tensions, triggers, endings
+  rooms/*.yaml
+  objects/*.yaml       # incl. use rules
+  characters/*.yaml    # persona, SPECIAL, goals, relationships, beliefs, behaviours
+  conversations/*.yaml # conversation specs (§5.2)
+  hooks.yaml           # hook catalogue (§5.4)
+  behaviours/*.yaml    # shared behaviours (§4.5)
+  callouts.yaml        # scripted LLM callouts (§5.5)</code></pre>
+<p>Files are YAML (comments help agents and humans) or JSON, validated against one JSON Schema generated from the engine's zod types.
+The split across files is a convention. The loader merges everything, and ids are global.</p>
+
+<h2>6.4 Text variants</h2>
+<p>All flavour text is authored. Any description can be a single string or an ordered list of variants. The first variant whose condition holds is used.</p>
+<pre><code>description:
+  - when: { flag: power_out }
+    text: "The stairwell is black. Somewhere above, a radio keeps playing."
+  - when: { special: { PE: { gte: 7 } } }
+    text: "Fluorescent hum. Fresh scratches around the lock of 3B."
+  - text: "Fluorescent hum, scuffed lino, the smell of someone's dinner."</code></pre>
+<p>Text can interpolate state (<code>{{clock.time}}</code>, <code>{{objects.kettle.temperature}}</code>) but has no logic beyond that.</p>
+
+<h2>6.5 Conditions and effects</h2>
+<p>One small declarative language is used everywhere: exits, text variants, behaviours, triggers, options, hooks and callouts.</p>
+<table>
+<thead><tr><th>Conditions</th><th>Effects</th></tr></thead>
+<tbody>
+<tr><td>
+<code>all</code> / <code>any</code> / <code>not</code><br>
+<code>flag</code>, <code>flag_eq</code><br>
+<code>time</code>, <code>time_between</code>, <code>day</code><br>
+<code>in_room</code> (who, where)<br>
+<code>holds</code> (who, what)<br>
+<code>property</code> (object, key, op, value)<br>
+<code>special</code> / <code>skill</code> thresholds<br>
+<code>relationship</code> thresholds<br>
+<code>believes</code> (who, belief)<br>
+<code>event</code> (kind, actor, target)<br>
+<code>turns</code> (in conversation)
+</td><td>
+<code>set_flag</code>, <code>clear_flag</code><br>
+<code>set_property</code>, <code>move</code>, <code>spawn</code>, <code>remove</code><br>
+<code>act</code> (perform an action as an actor)<br>
+<code>say</code> (authored line), <code>narrate</code><br>
+<code>set_intent</code>, <code>start_behaviour</code>, <code>stop_behaviour</code><br>
+<code>adjust_relationship</code>, <code>add_belief</code>, <code>remove_belief</code><br>
+<code>start_conversation</code>, <code>end_conversation</code><br>
+<code>check</code> (roll, then pass/fail effect lists)<br>
+<code>callout</code><br>
+<code>end_game</code> (ending id)
+</td></tr>
+</tbody>
+</table>
+<p>The language is deliberately not Turing-complete: no loops, no variables, no arbitrary code. If an effect is genuinely missing, it gets
+added to the engine and the schema, not scripted around.</p>
+
+<h2>6.6 Triggers: plot points</h2>
+<pre><code># story.yaml
+synopsis: >
+  The landlord of 41 Carver Street is quietly selling the building. Mrs Okafor, the caretaker, knows.
+  Someone in 3B has been receiving letters with no stamps…
+tensions:
+  - "Okafor protects the tenants but needs this job"
+  - "Dev (3B) and the landlord share a secret older than the building"
+triggers:
+  - id: eviction-notices
+    when: { all: [ { day: { gte: 3 } }, { not: { flag: sale_stopped } } ] }
+    do:
+      - { narrate: "Envelopes have appeared under every door." }
+      - { spawn: { object: eviction-notice, in: player-flat } }
+      - { set_flag: act_2 }
+    once: true
+endings:
+  - id: the-block-holds
+    when: { flag: sale_stopped }
+    text: "…"</code></pre>
+
+<h2>6.7 Validation</h2>
+<ul>
+  <li><strong>Schema</strong>: types, required fields, enums.</li>
+  <li><strong>References</strong>: every id referenced exists, and ids are unique.</li>
+  <li><strong>Playability lint</strong>: every room is reachable from the start, every flag a trigger reads is set somewhere, every hook a conversation
+      lists exists, at least one ending is reachable, and every text variant list has an unconditional fallback.</li>
+  <li><strong>Budget lint</strong>: warns on oversized personas or synopses, since they are in every conversation prompt.</li>
+  <li>Errors give the file, path and a suggested fix, so an agent can iterate on its own.</li>
+</ul>
+
+<h2>6.8 Versioning</h2>
+<p><code>game.yaml</code> declares a <code>schemaVersion</code>. The engine loads matching major versions. Saves record payload id and version,
+and a changed payload invalidates saves unless it is marked compatible.</p>
+
+<h2>6.9 Authoring guide (to write)</h2>
+<p>A guide aimed at a coding agent: how to go from brief to payload, naming conventions, voice and length for flavour text, how many hooks per
+conversation, and a worked example block. It should also ship as a Claude Code skill in this repo, so "make me a game from this story" works.
+<span class="tag">open</span> Q22: the first example story.</p>
+
+<footer>§6 of the One Block CRPG specification</footer>
+</main>
+</body>
+</html>

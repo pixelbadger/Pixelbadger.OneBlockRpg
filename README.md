@@ -1,28 +1,28 @@
 # Pixelbadger.OneBlockRpg
 
 A **one block CRPG** built as a TypeScript text adventure engine. It uses LLMs to provide dynamic characters and
-plotlines.
+plotlines on top of user-authored stories.
 
 > *"An inch wide and a mile deep."* That is Warren Spector's description of his dream game: an RPG set in a single city
-> block where every building, apartment, object, utility and resident is simulated in depth.
+> block where every building, apartment, object and resident is simulated in depth.
 
 ## The idea
 
-Most open worlds are huge and shallow. The one city block RPG is the opposite. It is a tiny, bounded place where you can do
-almost anything you can think of, because everything in it is *something*. Residents have their own routines, relationships, secrets
-and goals, and they pursue them whether you're watching or not.
+Most open worlds are huge and shallow. The one city block RPG is the opposite. It is a tiny, bounded place where
+everything is *something*, and the people in it have their own goals, secrets and routines.
 
-The idea has never fully shipped because it is expensive to simulate, author and keep coherent. This project attacks those costs
-like this:
+The engine splits the world in two:
 
-| Cost | Approach |
-|---|---|
-| Simulation | **Text.** No rendering or physics tax. An object is state plus rules. |
-| Authoring | **LLMs voice the residents**, grounded in what each character actually knows. |
-| Coherence | **An LLM director** nudges emergent tensions into plot, using only validated actions. |
+- **Ground.** A deliberately simple simulation. Rooms are descriptive, with no dimensions. Objects sit in rooms and have simulable
+  properties (mass, velocity, open, locked…). The player, objects and characters all act through one shared set of actions,
+  and objects and characters run scripted behaviours.
+- **Construct.** Characters are objects with goals, intents, relationships and SPECIAL attributes. In **multiple-choice
+  conversations** an LLM voices them, steered by their high-level and conversation-specific goals. What they say can be as
+  hyperreal or magically real as the story wants. It only becomes world state through **hooks** the author declares.
 
-The core rule: **the simulation is the source of truth. The LLM proposes, and the simulation disposes.** Model output never
-mutates world state directly. It is parsed into typed intents and actions that the engine validates and applies.
+Stories are **authored by the user**: plot, characters, relationships and tensions, and trigger points. A coding agent turns
+that brief into a **game payload**, which is YAML/JSON validated against a published schema. The payload holds all the flavour text,
+behaviours, conversation specs, hooks and triggers. The engine loads and plays it.
 
 ## LLM backends
 
@@ -41,8 +41,9 @@ The implementation baseline is in [`docs/spec/`](docs/spec/index.html):
 2. [Design pillars](docs/spec/02-pillars.html)
 3. [Engine architecture](docs/spec/03-architecture.html)
 4. [World model](docs/spec/04-world-model.html)
-5. [LLM layer](docs/spec/05-llm-layer.html)
-6. [Open questions](docs/spec/06-open-questions.html)
+5. [Conversation & LLM](docs/spec/05-llm-layer.html)
+6. [Game payload](docs/spec/06-game-payload.html)
+7. [Open questions](docs/spec/07-open-questions.html)
 
 ## Status
 

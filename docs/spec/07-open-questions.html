@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Block Open Questions</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<nav class="top">
+  <a href="index.html">Overview</a>
+  <a href="01-concept.html">1 · Concept</a>
+  <a href="02-pillars.html">2 · Design pillars</a>
+  <a href="03-architecture.html">3 · Architecture</a>
+  <a href="04-world-model.html">4 · World model</a>
+  <a href="05-llm-layer.html">5 · Conversation &amp; LLM</a>
+  <a href="06-game-payload.html">6 · Game payload</a>
+  <a href="07-open-questions.html" aria-current="page">7 · Open questions</a>
+</nav>
+<main>
+<h1>7 · Open questions</h1>
+<p class="subtitle">Decisions for the implementation drill-down. Where I have a recommendation, it's given as a starting point, not a decision.</p>
+
+<table>
+<thead><tr><th>#</th><th>Question</th><th>Suggested starting point</th></tr></thead>
+<tbody>
+<tr><td>Q6</td><td>Edge of the block: impassable, or an ending? (P1)</td><td>Payload decides, using an exit with an <code>end_game</code> effect.</td></tr>
+<tr><td>Q8</td><td>Time cost of actions and the default clock pace? (§4.8)</td><td>1–5 game minutes per action, scaled by Agility.</td></tr>
+<tr><td>Q10</td><td>Subscription access: Agent SDK or <code>claude -p</code> subprocess? Are the terms OK for this use? (§5.6)</td><td>Agent SDK. Terms need confirming.</td></tr>
+<tr><td>Q11</td><td>Frontend: plain readline CLI, a TUI (e.g. Ink), or web?</td><td>Plain readline first. Multiple choice suits a TUI later.</td></tr>
+<tr><td>Q12</td><td>Persistence: JSON files or SQLite? (§3.4)</td><td>JSON files until they hurt.</td></tr>
+<tr><td>Q13</td><td>Tooling: package manager, lint/format and test runner (fills the CLAUDE.md placeholders)? (§3.7)</td><td>npm + vitest + biome.</td></tr>
+<tr><td>Q14</td><td>Engine-level content boundaries for LLM output, beyond what a payload's tone allows?</td><td>Need your call.</td></tr>
+<tr><td>Q15</td><td>Commit message and PR conventions for CLAUDE.md?</td><td>Conventional Commits?</td></tr>
+<tr><td>Q18</td><td>What does velocity mean in dimensionless rooms? (§4.2)</td><td>An abstract magnitude set by throw/push, decaying per tick, and combined with mass on impact.</td></tr>
+<tr><td>Q19</td><td>Exploration input: classic verb–noun parser, an action menu, or both? (§3.2)</td><td>Both. A parser with a menu of available actions as a fallback, consistent with multiple-choice conversations.</td></tr>
+<tr><td>Q20</td><td>Conversations: offer a free-text "say something else" option alongside the choices? (§5.3)</td><td>No for v1, to keep conversations structured.</td></tr>
+<tr><td>Q21</td><td>Can other characters join or overhear a conversation? Do characters converse with each other, and does that use the LLM? (§3.3)</td><td>v1: two-party conversations only. NPC–NPC exchanges are authored behaviours.</td></tr>
+<tr><td>Q22</td><td>The first example story, which serves as the test fixture and the authoring guide's worked example. (§6.9)</td><td>Need your brief.</td></tr>
+<tr><td>Q23</td><td>Conversation memory: LLM summary at the end of a conversation, or a truncated raw transcript? (§5.1)</td><td>LLM summary, with the transcript kept in the event log.</td></tr>
+</tbody>
+</table>
+
+<h2>Resolved</h2>
+<table>
+<thead><tr><th>#</th><th>Question</th><th>Decision</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>Kieron Gillen's contribution</td><td>Dropped.</td></tr>
+<tr><td>Q2</td><td>Setting and tone</td><td>Per game: set by the story brief and payload.</td></tr>
+<tr><td>Q3</td><td>Where the block comes from</td><td>Authored as a game payload. A coding agent builds it from the user's story brief (§6).</td></tr>
+<tr><td>Q4</td><td>Lazy concretisation at runtime</td><td>No. All detail is authored ahead of time. A declared callout (§5.5) is the escape hatch.</td></tr>
+<tr><td>Q5</td><td>Player goal and plot</td><td>The user supplies plot, characters, tensions and trigger points (§6.2).</td></tr>
+<tr><td>Q7</td><td>Simulation scope</td><td>Descriptive rooms, objects with simulable properties, and scripted behaviours. No utility networks (§4).</td></tr>
+<tr><td>Q9</td><td>LLM interpreter</td><td>None. The LLM only runs in conversation and in callouts. Exploration input is now Q19.</td></tr>
+<tr><td>Q16</td><td>CRPG mechanics</td><td>SPECIAL + derived skills (§4.6).</td></tr>
+<tr><td>Q17</td><td>Scarce, significant objects</td><td>The payload author's choice. No engine support needed.</td></tr>
+<tr><td>—</td><td>LLM scope</td><td>Conversations plus declared scripted callouts. Flavour text is authored (agent-generated) (P5).</td></tr>
+<tr><td>—</td><td>Can conversation become real?</td><td>Only through hooks declared in the payload (P2, §5.4).</td></tr>
+<tr><td>—</td><td>Who writes player options?</td><td>Authored + LLM, merged (§5.3).</td></tr>
+<tr><td>—</td><td>Payload format</td><td>Data + schema. YAML/JSON, with a declarative condition/effect language and no code (§6).</td></tr>
+</tbody>
+</table>
+
+<footer>§7 of the One Block CRPG specification</footer>
+</main>
+</body>
+</html>

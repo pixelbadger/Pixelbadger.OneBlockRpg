@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>One Block LLM Layer</title>
+<title>One Block Conversation</title>
 <link rel="stylesheet" href="spec.css">
 </head>
 <body>
@@ -13,99 +13,119 @@
   <a href="02-pillars.html">2 · Design pillars</a>
   <a href="03-architecture.html">3 · Architecture</a>
   <a href="04-world-model.html">4 · World model</a>
-  <a href="05-llm-layer.html" aria-current="page">5 · LLM layer</a>
-  <a href="06-open-questions.html">6 · Open questions</a>
+  <a href="05-llm-layer.html" aria-current="page">5 · Conversation &amp; LLM</a>
+  <a href="06-game-payload.html">6 · Game payload</a>
+  <a href="07-open-questions.html">7 · Open questions</a>
 </nav>
 <main>
-<h1>5 · LLM layer</h1>
-<p class="subtitle">Provider interface, roles, grounding and cost.</p>
+<h1>5 · Conversation &amp; LLM layer</h1>
+<p class="subtitle">Where the LLM works: conversations and declared callouts. It also covers the provider interface underneath both.</p>
 
-<h2>5.1 Provider interface</h2>
-<p>Core code talks to one small interface. Providers declare what they can do, and the engine degrades gracefully when a capability is missing.</p>
-<pre><code>interface LlmProvider {
-  readonly id: string;                       // 'claude-subscription', 'anthropic-api', 'scripted', …
-  readonly capabilities: {
-    structuredOutput: boolean;               // native JSON-schema constrained output
-    promptCaching: boolean;
-    streaming: boolean;
-    maxContextTokens: number;
-  };
-  complete&lt;T&gt;(req: CompletionRequest&lt;T&gt;): Promise&lt;CompletionResult&lt;T&gt;&gt;;
-}
+<h2>5.1 Scope</h2>
+<p>The LLM is used in two places only:</p>
+<ol>
+  <li><strong>Conversations</strong>: voicing a character, proposing player options and choosing hooks (5.2–5.4).</li>
+  <li><strong>Scripted callouts</strong>: payload-declared LLM calls fired by triggers or behaviours for special moments (5.5).</li>
+</ol>
+<p>All other text is authored in the payload (P5). An optional summarisation call condenses transcripts into memories when a conversation ends.</p>
 
-interface CompletionRequest&lt;T&gt; {
-  role: LlmRole;                             // for routing, budgeting and cassette keys
-  system: PromptPart[];                      // ordered stable → volatile (cache-friendly)
-  messages: { role: 'user' | 'assistant'; content: string }[];
-  schema?: ZodType&lt;T&gt;;                       // when set, result.value is validated T
-  tier?: 'fast' | 'smart';                   // provider maps to a concrete model
-  maxOutputTokens?: number;
-}
+<h2>5.2 Conversation specs</h2>
+<p>The payload declares conversations per character. Each spec gives the LLM a frame, and gives the engine its guard rails.</p>
+<pre><code>conversations:
+  - id: okafor-rent
+    character: okafor
+    when: { flag: rent_overdue }                # availability condition
+    goals:                                      # conversation-specific, on top of the character's high-level goals
+      - "Get the player to promise to pay by Friday"
+      - "Do not reveal that the landlord is selling the building"
+    opening: "Mrs Okafor leans on her broom. 'You. Rent.'"   # optional authored first line
+    options:                                    # authored player options, merged with LLM ones
+      - text: "[CH 7] I can get you the money, but I need to know why the rush."
+        when: { special: { CH: { gte: 7 } } }
+        effects: [ { check: { skill: speech, difficulty: 50,
+                              pass: [ { add_belief: { who: player, belief: landlord-selling } } ] } } ]
+      - text: "I'll pay Friday."
+        effects: [ { set_flag: promised_rent }, { end_conversation: {} } ]
+    hooks: [ give-spare-key, reveal-landlord-sale, adjust-trust ]   # what the LLM may invoke
+    ends_when: { any: [ { flag: promised_rent }, { turns: { gte: 12 } } ] }</code></pre>
 
-interface CompletionResult&lt;T&gt; {
-  value: T | string;  text: string;
-  usage: { inputTokens: number; outputTokens: number; cachedInputTokens?: number };
-  stop: 'end' | 'max_tokens' | 'refusal' | 'error';
+<h2>5.3 A conversation turn</h2>
+<p>Each character turn is one structured LLM call. The context is ordered from stable to volatile so prompt caching works:</p>
+<ol>
+  <li>Engine rules and style guide (fixed)</li>
+  <li>Story synopsis and setting tone (per payload)</li>
+  <li>Character persona, SPECIAL, high-level goals and relationships (per character)</li>
+  <li>Conversation goals, the hook catalogue with descriptions, beliefs and memories (per conversation)</li>
+  <li>Transcript so far, plus results of the last hooks (per turn)</li>
+</ol>
+<pre><code>// structured output, validated with zod
+interface CharacterTurn {
+  line: string;                          // what the character says; tone unbounded, so hyperreal is welcome
+  emotion?: string;
+  hooks: { id: string; args: Record&lt;string, unknown&gt; }[];   // must be from the spec's catalogue
+  playerOptions: string[];               // 2–4 suggested responses for the player
+  wantsToEnd?: boolean;
 }</code></pre>
+<p>The engine then validates and applies hooks (5.4), and merges <code>playerOptions</code> with the authored options whose conditions hold.
+Authored options win ties, and gated options show their gate (<code>[CH 7]</code>). The player can always leave. <span class="tag">open</span> Q20:
+should there also be a free-text "say something else" option?</p>
+
+<h2>5.4 Hooks: where the constructed touches the ground</h2>
+<p>Hooks are the <em>only</em> way a conversation changes world state (P2). The payload declares them with typed arguments, guards and effects:</p>
+<pre><code>hooks:
+  - id: reveal-landlord-sale
+    description: "Okafor admits the landlord is selling the building."   # shown to the LLM
+    guard: { relationship: { who: okafor, with: player, trust: { gte: 60 } } }
+    effects: [ { add_belief: { who: player, belief: landlord-selling } }, { set_flag: sale_known } ]
+    once: true</code></pre>
 <ul>
-  <li>When a provider lacks native structured output, the engine falls back to a "respond with JSON matching this schema" prompt
-      followed by parse, validate and retry once. Validation always happens engine-side with <code>zod</code>, whatever the provider claims.</li>
-  <li>A <code>refusal</code> or invalid output <span class="req">MUST</span> degrade to a safe default, such as a neutral narration or an
-      "X doesn't respond" line. It must never crash the turn or corrupt state.</li>
+  <li>The LLM chooses <em>whether</em> and <em>when</em>. The engine checks the guard and applies the effects deterministically. A failed guard is reported back
+      on the next turn, so the character can react ("…no, forget I said anything").</li>
+  <li>A hook can fire scripted behaviours, triggers or a callout. That is how conversations "trigger scripted behaviours as well as LLM work".</li>
+  <li>Anything the character says without a hook is <em>speech</em>. It is recorded in memories, but it is not fact.</li>
 </ul>
 
-<h2>5.2 Planned providers</h2>
+<h2>5.5 Scripted callouts</h2>
+<p>A callout is a payload-declared LLM call for moments where authored text would be too rigid, such as a dream, a radio broadcast, graffiti that changes,
+or a character's diary. It is fired by a trigger or behaviour effect: <code>{ callout: dream-sequence }</code>.</p>
+<pre><code>callouts:
+  - id: dream-sequence
+    prompt: "Render the player's dream tonight, drawing on: {{memories.player.recent}}. Magical realism; 80–120 words."
+    output: text                     # or a schema with hook ids, like conversations
+    hooks: []                        # optional, same rules as 5.4
+    cache: per-save                  # generate once per save, then fixed</code></pre>
+
+<h2>5.6 Provider interface</h2>
+<pre><code>interface LlmProvider {
+  readonly id: string;               // 'claude-subscription', 'anthropic-api', 'scripted', 'replay', …
+  readonly capabilities: { structuredOutput: boolean; promptCaching: boolean; streaming: boolean; maxContextTokens: number };
+  complete&lt;T&gt;(req: CompletionRequest&lt;T&gt;): Promise&lt;CompletionResult&lt;T&gt;&gt;;
+}
+interface CompletionRequest&lt;T&gt; {
+  purpose: 'conversation' | 'callout' | 'summary';
+  system: PromptPart[];              // ordered stable → volatile
+  messages: { role: 'user' | 'assistant'; content: string }[];
+  schema?: ZodType&lt;T&gt;;               // validated engine-side regardless of provider
+  maxOutputTokens?: number;
+}</code></pre>
+<ul>
+  <li>Invalid output gets one retry, then a safe fallback: an authored "they don't answer" line plus authored options only. A turn never crashes.</li>
+  <li><code>refusal</code> stop reasons are handled the same way.</li>
+</ul>
 <table>
 <thead><tr><th>Provider</th><th>Mechanism</th><th>Notes</th></tr></thead>
 <tbody>
-<tr><td><strong>claude-subscription</strong> (default)</td>
-<td>The Claude Agent SDK (<code>@anthropic-ai/claude-agent-sdk</code>) or a headless <code>claude -p --output-format json</code>
-subprocess. Either way it uses the user's existing Claude Code login.</td>
-<td>No API key needed. Tools are disabled because we only want text or JSON back. Latency and per-call overhead are higher than the raw API.
-Prompt caching and schema control are more limited. <span class="tag">open</span> Mechanism choice, and confirming Anthropic's current terms for using a subscription
-from a personal app.</td></tr>
-<tr><td><strong>anthropic-api</strong></td>
-<td><code>@anthropic-ai/sdk</code> Messages API with an API key or <code>ant auth</code> profile.</td>
-<td>Full control: structured outputs (<code>output_config.format</code>), prompt caching on the stable prefix, effort control,
-and streaming for narration. Default model <code>claude-opus-5-5</code>. A cheaper tier (for example <code>claude-haiku-4-5</code>) could serve the interpreter.</td></tr>
-<tr><td><strong>scripted</strong></td><td>Deterministic fake that returns canned or rule-generated responses.</td><td>Tests and offline development.</td></tr>
-<tr><td><strong>replay</strong></td><td>Serves recorded exchanges from a cassette.</td><td>Replays and regression tests (§3.4).</td></tr>
-<tr><td>others</td><td>OpenAI-compatible or local (Ollama etc.)</td><td>Later. The interface is kept vendor-neutral to allow it.</td></tr>
+<tr><td><strong>claude-subscription</strong> (default)</td><td>Claude Agent SDK, or <code>claude -p --output-format json</code>, using the user's Claude Code login</td>
+<td>Tools disabled, so it returns text or JSON only. <span class="tag">open</span> Q10: mechanism, and confirming current terms for subscription use from a personal app.</td></tr>
+<tr><td><strong>anthropic-api</strong></td><td><code>@anthropic-ai/sdk</code> Messages API</td><td>Structured outputs, prompt caching and streaming. Default model <code>claude-opus-5-5</code>.</td></tr>
+<tr><td><strong>scripted</strong></td><td>Deterministic fake</td><td>Tests and offline development</td></tr>
+<tr><td><strong>replay</strong></td><td>Recorded cassettes</td><td>Regression tests</td></tr>
 </tbody>
 </table>
 
-<h2>5.3 Roles</h2>
-<p>Each role is a separate prompt contract with its own output schema. Roles never share a free-form conversation. Each call is
-rebuilt from world state, which keeps calls stateless and replayable.</p>
-<table>
-<thead><tr><th>Role</th><th>Input</th><th>Output (schema)</th><th>Tier</th></tr></thead>
-<tbody>
-<tr><td>Interpreter</td><td>Player text, entities in scope, recent turns</td><td><code>Intent</code> | <code>Clarify</code></td><td>fast</td></tr>
-<tr><td>Narrator</td><td>This turn's perceivable events, scene entities, style guide</td><td>Prose, plus the ids of entities mentioned (checked against scope)</td><td>smart</td></tr>
-<tr><td>Character</td><td>Profile, SPECIAL, beliefs, relationship to interlocutor, mood, goals, the utterance or event</td><td><code>{ say, emotion, proposedActions[], revealedFacts[] }</code></td><td>smart</td></tr>
-<tr><td>Reflector</td><td>A character's recent memory stream</td><td>New higher-level beliefs, and goal or plan updates</td><td>fast, batched</td></tr>
-<tr><td>Director</td><td>Summary of tensions: goals in conflict, secrets at risk, hazards</td><td>Zero or one proposed beat as a validated action</td><td>smart, infrequent</td></tr>
-<tr><td>Concretiser</td><td>Unmodelled examine target, its context and budget</td><td>New entities in a constrained schema (P3)</td><td>fast</td></tr>
-</tbody>
-</table>
-
-<h2>5.4 Grounding rules</h2>
-<ul>
-  <li><strong>Epistemic filtering.</strong> A Character call receives <em>only</em> that character's beliefs. It never sees the fact ledger.
-      A <code>revealedFacts</code> entry the character doesn't hold is rejected.</li>
-  <li><strong>Scope filtering.</strong> The Narrator gets only what the player can perceive. Mentioned entity ids outside scope trigger a regenerate or a strip.</li>
-  <li><strong>Action proposals are requests.</strong> For example, "Hands over the key" becomes a <code>give</code> action that the rules validate. If the character
-      doesn't have the key, the action fails and the utterance is re-rendered or annotated.</li>
-</ul>
-
-<h2>5.5 Prompt layout &amp; cost</h2>
-<ul>
-  <li>Order prompt parts from stable to volatile: engine rules and style guide, then the block bible, then the character profile, then current state, then this turn. This maximises
-      prefix caching where the provider supports it.</li>
-  <li>A per-turn LLM call budget. A typical turn is 1 interpreter call (often skipped by the fast-path parser) + 1 narrator call, plus 1 per
-      addressed character. Off-stage residents cost nothing, since they are rule-driven. Reflection and direction are amortised.</li>
-  <li>Usage is logged per role so we can tune model tiers and budgets using measurements.</li>
-</ul>
+<h2>5.7 Cost</h2>
+<p>LLM calls happen only per conversation turn, per callout and per end-of-conversation summary. Exploration is free.
+Usage is logged per purpose and per payload so that model choice can be based on measurements.</p>
 
 <footer>§5 of the One Block CRPG specification</footer>
 </main>

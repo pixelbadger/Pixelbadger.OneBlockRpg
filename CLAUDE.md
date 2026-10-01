@@ -11,9 +11,11 @@ backend. The LLM layer sits behind a **pluggable provider interface** so that ot
 (the Anthropic API with a key, other vendors, local models or a scripted test double) can be swapped in.
 
 - Implementation baseline: [`README.md`](README.md) and the specification in [`docs/spec/`](docs/spec/index.html).
-- Core rule: **the simulation is the source of truth; the LLM proposes and the simulation disposes.**
-  LLM output never mutates world state directly. It is parsed into typed intents or actions that the
-  engine validates and then applies.
+- Core rule: **a simple simulation grounds the world; LLM-driven characters construct its social reality.**
+  The LLM runs only in conversations and payload-declared callouts. It never mutates world state
+  directly. It reaches state only through hooks declared in the game payload, which the engine validates and applies.
+- Stories are **user-authored** and delivered as a **game payload** (YAML/JSON plus schema, no code) that a coding
+  agent builds from the user's story brief. See [`docs/spec/06-game-payload.html`](docs/spec/06-game-payload.html).
 
 # Version control: Jujutsu (jj)
 

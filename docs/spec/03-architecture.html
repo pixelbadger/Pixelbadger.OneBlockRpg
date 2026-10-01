@@ -13,83 +13,99 @@
   <a href="02-pillars.html">2 · Design pillars</a>
   <a href="03-architecture.html" aria-current="page">3 · Architecture</a>
   <a href="04-world-model.html">4 · World model</a>
-  <a href="05-llm-layer.html">5 · LLM layer</a>
-  <a href="06-open-questions.html">6 · Open questions</a>
+  <a href="05-llm-layer.html">5 · Conversation &amp; LLM</a>
+  <a href="06-game-payload.html">6 · Game payload</a>
+  <a href="07-open-questions.html">7 · Open questions</a>
 </nav>
 <main>
 <h1>3 · Engine architecture</h1>
-<p class="subtitle">Layers, the turn loop, persistence and testing strategy.</p>
+<p class="subtitle">Layers, the two loops (exploration and conversation), persistence and testing.</p>
 
 <h2>3.1 Layers</h2>
-<pre><code>┌────────────────────────────────────────────────────────┐
-│ Frontend        CLI REPL first · web UI later          │
-├────────────────────────────────────────────────────────┤
-│ Session         turn loop · save/load · replay         │
-├──────────────────────────────┬─────────────────────────┤
-│ Narrative layer              │ Simulation core         │
-│  Interpreter (text→intent)   │  World state (§4)       │
-│  Narrator (outcome→prose)    │  Rules &amp; actions        │
-│  Character minds (dialogue,  │  Clock &amp; schedules      │
-│    decisions, reflection)    │  Utilities propagation  │
-│  Director (plot pressure)    │  Knowledge &amp; memory     │
-│                              │  Event log              │
-├──────────────────────────────┴─────────────────────────┤
-│ LLM provider interface (§5)                            │
-│  claude-subscription · anthropic-api · scripted · …    │
-└────────────────────────────────────────────────────────┘</code></pre>
-<p>Dependency rule: the <strong>simulation core has no dependency on the LLM layer</strong>. It is plain, pure,
-deterministic TypeScript and can be tested with no model at all. The narrative layer depends on both the simulation core and the
-provider interface. Frontends depend only on the session.</p>
+<pre><code>┌──────────────────────────────────────────────────────────┐
+│ Frontend          CLI first · web later                  │
+├──────────────────────────────────────────────────────────┤
+│ Session           turn loop · conversation loop ·        │
+│                   save/load · replay                     │
+├────────────────────────────────┬─────────────────────────┤
+│ Engine core (no LLM)           │ Conversation system     │
+│  World state (§4)              │  Context builder        │
+│  Action system                 │  Option merger          │
+│  Behaviour runner              │  Hook executor ─────────┼──▶ core
+│  Trigger engine                │  Scripted callouts      │
+│  Clock · event log · PRNG      │                         │
+├────────────────────────────────┴─────────────────────────┤
+│ Payload loader &amp; validator (§6)                          │
+├──────────────────────────────────────────────────────────┤
+│ LLM provider interface (§5)                              │
+│  claude-subscription · anthropic-api · scripted · replay │
+└──────────────────────────────────────────────────────────┘</code></pre>
+<p>Dependency rule: the <strong>engine core has no dependency on the LLM layer</strong>. The entire non-conversation
+game is plain, deterministic TypeScript. The conversation system depends on both. It only changes world state through the
+hook executor, which calls ordinary core actions and effects.</p>
 
-<h2>3.2 The turn loop</h2>
+<h2>3.2 Exploration loop (one turn)</h2>
 <ol>
-  <li><strong>Input.</strong> The player types free text.</li>
-  <li><strong>Interpret.</strong> A classic fast-path parser handles unambiguous commands (<code>n</code>, <code>look</code>,
-      <code>take lamp</code>). Anything else goes to the <em>Interpreter</em> role, which returns a typed <code>Intent</code> from a closed set
-      (move, examine, take, use, say-to, attack, wait…) with entity references resolved against what is in scope. It can also return a
-      clarification question.</li>
-  <li><strong>Validate.</strong> The rules check preconditions: reachability, locks, possession, power and so on. Failure produces a
-      structured reason and no state change.</li>
-  <li><strong>Resolve.</strong> Apply effects as events. Dialogue intents call the <em>Character</em> role for the addressee. That role
-      returns an utterance plus any proposed actions or knowledge transfers, and those are validated in turn.</li>
-  <li><strong>Advance time.</strong> The clock ticks according to the action's cost. Scheduled resident behaviour runs off-stage using rules only.
-      Utility networks propagate.</li>
-  <li><strong>Direct.</strong> Every N ticks or on salient events, the <em>Director</em> may propose a beat. Proposed beats are validated like any other action.</li>
-  <li><strong>Narrate.</strong> The <em>Narrator</em> turns this turn's events and the perceivable scene into prose. It is constrained to entities in scope.</li>
-  <li><strong>Persist.</strong> Append events and recorded LLM exchanges, and snapshot periodically.</li>
+  <li><strong>Input.</strong> The player enters a command. <span class="tag">open</span> Q19: a classic verb–noun parser over the shared action vocabulary,
+      a menu of available actions, or both.</li>
+  <li><strong>Resolve.</strong> The command becomes an <code>Action</code>. Preconditions are checked (location, possession, open or locked,
+      properties, SPECIAL/skill checks with seeded rolls). Effects are applied as events.</li>
+  <li><strong>Advance time.</strong> The clock moves by the action's cost, scaled by Agility.</li>
+  <li><strong>Behaviours.</strong> Every object and character with scripted behaviours gets its tick. Behaviours act through the same
+      action vocabulary, so a character can walk to the shop, and a clock can chime.</li>
+  <li><strong>Triggers.</strong> Story triggers are evaluated against the new state. Matching triggers fire their effects, which can include starting a conversation
+      or a scripted callout.</li>
+  <li><strong>Render.</strong> The authored text for what happened and what is perceivable is selected and composed. State-conditioned variants are
+      chosen by condition, and SPECIAL Perception can reveal extra detail.</li>
+  <li><strong>Persist.</strong> Events are appended, with periodic snapshots.</li>
 </ol>
 
-<h2>3.3 State &amp; persistence</h2>
+<h2>3.3 Conversation loop</h2>
+<p>A conversation starts from the player (<code>talk to X</code>), from a trigger, or from a character behaviour that seeks out the player.</p>
+<ol>
+  <li><strong>Build context.</strong> Assemble the character's persona, SPECIAL, high-level goals, this conversation's goals, relationship
+      to the player, relevant beliefs and memories, the story synopsis, the available hooks, and the transcript so far.</li>
+  <li><strong>Character turn (LLM).</strong> Returns the character's line, any hook invocations, and suggested player options (§5.3).</li>
+  <li><strong>Apply hooks.</strong> Guards are validated and core effects applied. Rejections are fed back to the next call.</li>
+  <li><strong>Merge options.</strong> Authored options whose conditions hold, including SPECIAL gates such as <code>[CH 7]</code>, are merged with LLM options.
+      The result is deduplicated and capped.</li>
+  <li><strong>Player chooses.</strong> Authored options may carry their own effects or skill checks, which the engine resolves deterministically.</li>
+  <li><strong>Loop or end.</strong> The conversation continues until an end condition, a goal resolution, an exit option or a hook ends it. On end, the transcript
+      is summarised into both parties' memories. Time advances by the conversation's length.</li>
+</ol>
+<p>Time is paused for everything else during a conversation. <span class="tag">open</span> Q21: can other characters join or overhear?</p>
+
+<h2>3.4 State &amp; persistence</h2>
 <ul>
-  <li><strong>Event-sourced.</strong> The authoritative record is an append-only event log. The current world is a fold over it, with periodic snapshots.</li>
-  <li><strong>Save file</strong> = world seed + snapshot + event tail + LLM exchange log. <span class="tag">open</span> JSON files or SQLite.</li>
-  <li><strong>Serialisable everything.</strong> World state is plain data with no class instances holding hidden state, so snapshots are
-      <code>structuredClone</code>-able and diffable.</li>
+  <li><strong>Event-sourced.</strong> The authoritative record is an append-only event log. Current state is a fold over it, with snapshots.</li>
+  <li><strong>Save file</strong> = payload id and version + seed + snapshot + event tail + LLM exchange log. <span class="tag">open</span> Q12: JSON files or SQLite.</li>
+  <li>State is plain serialisable data. The payload is immutable at runtime, and state holds only what changed from the payload's initial state.</li>
 </ul>
 
-<h2>3.4 Determinism</h2>
+<h2>3.5 Determinism</h2>
 <ul>
   <li>All randomness comes from a seeded PRNG carried in state. <code>Math.random</code> and wall-clock time are banned in the core.</li>
-  <li>LLM calls are recorded as <code>(role, request hash, response)</code>. Replay mode serves responses from the log. This is the
-      "cassette" pattern, and it makes the non-deterministic part reproducible.</li>
+  <li>LLM calls are recorded as <code>(role, request hash, response)</code> cassettes. Replay serves them back.</li>
+  <li>Outside conversations and callouts there are no LLM calls, so most of a playthrough is deterministic without any recording.</li>
 </ul>
 
-<h2>3.5 Testing strategy</h2>
+<h2>3.6 Testing strategy</h2>
 <table>
 <thead><tr><th>Level</th><th>What</th><th>Model?</th></tr></thead>
 <tbody>
-<tr><td>Unit</td><td>Rules, actions, utility propagation, schedules, knowledge transfer</td><td>No</td></tr>
-<tr><td>Scenario</td><td>Scripted command sequences against a fixture block, asserting on state</td><td>Scripted provider</td></tr>
+<tr><td>Unit</td><td>Actions, properties, behaviours, triggers, condition/effect language, hook guards</td><td>No</td></tr>
+<tr><td>Payload validation</td><td>Schema + referential integrity + reachability (every room reachable, every trigger satisfiable)</td><td>No</td></tr>
+<tr><td>Playthrough</td><td>Scripted command and choice sequences against a fixture payload, asserting on state and output</td><td>Scripted provider</td></tr>
 <tr><td>Replay</td><td>Recorded real sessions replayed to catch regressions</td><td>Cassettes</td></tr>
-<tr><td>Eval</td><td>Narrative quality, groundedness (no invented entities, no leaked knowledge)</td><td>Live, opt-in</td></tr>
+<tr><td>Eval</td><td>Conversation quality, goal adherence, hook appropriateness</td><td>Live, opt-in</td></tr>
 </tbody>
 </table>
 
-<h2>3.6 Proposed tooling</h2>
-<p><span class="tag">open</span> This is a suggestion to confirm before scaffolding:
-Node 22+, TypeScript strict and ESM, <code>pnpm</code> or <code>npm</code>, <code>vitest</code>, <code>zod</code> for schemas
-(shared by validation and LLM structured output), and <code>eslint</code> + <code>prettier</code> or <code>biome</code>.
-Repository layout could be a single package with <code>src/{core,narrative,llm,session,cli}</code>. It can be split into packages later if a web frontend arrives.</p>
+<h2>3.7 Proposed tooling</h2>
+<p><span class="tag">open</span> Q13: Node 22+, TypeScript strict and ESM, <code>npm</code>, <code>vitest</code>, <code>zod</code>
+(one source for runtime validation, generated JSON Schema for the payload, and LLM structured output), and <code>biome</code>.
+A single package with <code>src/{core,conversation,llm,payload,session,cli}</code>, plus a CLI with
+<code>validate</code>, <code>play</code> and <code>replay</code> commands.</p>
 
 <footer>§3 of the One Block CRPG specification</footer>
 </main>
