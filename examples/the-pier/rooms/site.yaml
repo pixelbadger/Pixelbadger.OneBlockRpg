@@ -10,11 +10,50 @@
     - { direction: west, to: promenade }
     - { direction: in, to: hotel-lobby }
     - { label: cabin, direction: cabin, to: site-office }
+  map:
+    rows:
+      - "#######I########"
+      - "#....y.........#"
+      - "#.ss.....tt..g.#"
+      - "W......x.......#"
+      - "#..m......p..r.#"
+      - "#C#HHHHHHHHHHHH#"
+    legend:
+      ".": { terrain: concrete }
+      "I": { exit: in }
+      "y": { character: gary }
+      "s": { object: skip }
+      "t": { object: scaffold-tubes }
+      "g": { object: generator }
+      "W": { exit: west }
+      "x": { object: crowbar }
+      "m": { character: marek }
+      "p": { object: petrol-can }
+      "r": { character: tommo }
+      "C": { exit: cabin }
+      "H": { object: heras-fencing }
 - id: site-office
   name: Site Cabin
   description: "Gary's cabin: a kettle, a calendar from a plant-hire firm, drawings pinned to the wall, a key board by the door, and a camp bed he says he doesn't sleep on."
   exits:
     - { direction: out, to: compound }
+  map:
+    rows:
+      - "###C#####"
+      - "#dd..k..#"
+      - "#.......#"
+      - "#bb..g..O"
+      - "#......K#"
+      - "#########"
+    legend:
+      ".": { terrain: lino }
+      "C": { object: calendar }
+      "d": { object: drawings }
+      "k": { object: cabin-kettle }
+      "b": { object: camp-bed }
+      "g": { character: gary }
+      "O": { exit: out }
+      "K": { object: key-board }
 - id: hotel-lobby
   name: Hotel Lobby
   description:
@@ -26,6 +65,27 @@
   exits:
     - { direction: out, to: compound }
     - { direction: up, to: hotel-corridor }
+  map:
+    rows:
+      - "####U#######"
+      - "#TTT....R..#"
+      - "#..........#"
+      - "#.PPPP..ss.#"
+      - "#..G.g..y..#"
+      - "#........t.#"
+      - "######O#####"
+    legend:
+      ".": { terrain: boards }
+      "U": { exit: up }
+      "T": { object: lobby-staircase, on: stairs }
+      "R": { object: radio }
+      "P": { object: reception-panelling }
+      "s": { object: dust-sheets }
+      "G": { object: guest-register }
+      "g": { object: photograph }
+      "y": { character: gary }
+      "t": { character: tommo }
+      "O": { exit: out }
 - id: hotel-corridor
   name: First-floor Corridor
   description:
@@ -37,6 +97,19 @@
   exits:
     - { direction: down, to: hotel-lobby }
     - { label: Room 7, direction: east, to: room-seven, via: door-room-seven }
+  map:
+    rows:
+      - "##################"
+      - "#v...m.......e...D"
+      - "#SSSS............#"
+      - "##################"
+    legend:
+      ".": { terrain: boards }
+      "v": { exit: down, on: stairs }
+      "m": { character: marek }
+      "e": { character: edmund }
+      "D": { exit: east }
+      "S": { object: stacked-doors }
 - id: room-seven
   name: Room 7
   description:
@@ -47,3 +120,18 @@
     - text: "Room 7: a sea view, bare boards, wallpaper hanging in tongues. It's colder in here than the corridor."
   exits:
     - { label: corridor, direction: west, to: hotel-corridor, via: door-room-seven }
+  map:
+    rows:
+      - "###WW###"
+      - "#.....p#"
+      - "D..c...#"
+      - "#..f.b.#"
+      - "########"
+    legend:
+      ".": { terrain: boards }
+      "W": { object: room-seven-window }
+      "p": { object: wallpaper }
+      "D": { exit: west }
+      "c": { character: clara }
+      "f": { object: floorboard }
+      "b": { object: bassinet }

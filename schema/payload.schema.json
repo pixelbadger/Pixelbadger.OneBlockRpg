@@ -539,12 +539,213 @@
             "items": {
               "type": "string"
             }
+          },
+          "map": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "minItems": 1,
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "legend": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "terrain": {
+                          "type": "string",
+                          "enum": [
+                            "floor",
+                            "carpet",
+                            "boards",
+                            "tiles",
+                            "lino",
+                            "concrete",
+                            "deck",
+                            "grass",
+                            "sand",
+                            "shingle",
+                            "road",
+                            "pavement",
+                            "stairs",
+                            "wall",
+                            "window",
+                            "railing",
+                            "fence",
+                            "water",
+                            "void"
+                          ]
+                        },
+                        "look": {
+                          "type": "object",
+                          "properties": {
+                            "emoji": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "glyph": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2
+                            },
+                            "color": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "frames": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "terrain"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "object": {
+                          "type": "string",
+                          "minLength": 1,
+                          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                        },
+                        "on": {
+                          "type": "string",
+                          "enum": [
+                            "floor",
+                            "carpet",
+                            "boards",
+                            "tiles",
+                            "lino",
+                            "concrete",
+                            "deck",
+                            "grass",
+                            "sand",
+                            "shingle",
+                            "road",
+                            "pavement",
+                            "stairs",
+                            "wall",
+                            "window",
+                            "railing",
+                            "fence",
+                            "water",
+                            "void"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "object"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "character": {
+                          "type": "string",
+                          "minLength": 1,
+                          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                        },
+                        "on": {
+                          "type": "string",
+                          "enum": [
+                            "floor",
+                            "carpet",
+                            "boards",
+                            "tiles",
+                            "lino",
+                            "concrete",
+                            "deck",
+                            "grass",
+                            "sand",
+                            "shingle",
+                            "road",
+                            "pavement",
+                            "stairs",
+                            "wall",
+                            "window",
+                            "railing",
+                            "fence",
+                            "water",
+                            "void"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "character"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "exit": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "on": {
+                          "type": "string",
+                          "enum": [
+                            "floor",
+                            "carpet",
+                            "boards",
+                            "tiles",
+                            "lino",
+                            "concrete",
+                            "deck",
+                            "grass",
+                            "sand",
+                            "shingle",
+                            "road",
+                            "pavement",
+                            "stairs",
+                            "wall",
+                            "window",
+                            "railing",
+                            "fence",
+                            "water",
+                            "void"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "exit"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            },
+            "required": [
+              "rows"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
           "id",
           "name",
-          "description"
+          "description",
+          "map"
         ],
         "additionalProperties": false
       }
@@ -816,6 +1017,11 @@
                 "default": false,
                 "type": "boolean"
               },
+              "range": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 64
+              },
               "ammo": {
                 "type": "object",
                 "properties": {
@@ -981,6 +1187,32 @@
             "required": [
               "type"
             ],
+            "additionalProperties": false
+          },
+          "look": {
+            "type": "object",
+            "properties": {
+              "emoji": {
+                "type": "string",
+                "minLength": 1
+              },
+              "glyph": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2
+              },
+              "color": {
+                "type": "string",
+                "minLength": 1
+              },
+              "frames": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
             "additionalProperties": false
           },
           "messages": {
@@ -1292,6 +1524,11 @@
                 "default": false,
                 "type": "boolean"
               },
+              "range": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 64
+              },
               "ammo": {
                 "type": "object",
                 "properties": {
@@ -1457,6 +1694,32 @@
             "required": [
               "type"
             ],
+            "additionalProperties": false
+          },
+          "look": {
+            "type": "object",
+            "properties": {
+              "emoji": {
+                "type": "string",
+                "minLength": 1
+              },
+              "glyph": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2
+              },
+              "color": {
+                "type": "string",
+                "minLength": 1
+              },
+              "frames": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
             "additionalProperties": false
           },
           "messages": {
@@ -1983,6 +2246,7 @@
                       "type": "string",
                       "enum": [
                         "go",
+                        "step",
                         "take",
                         "drop",
                         "put",
@@ -2078,6 +2342,7 @@
               "type": "string",
               "enum": [
                 "go",
+                "step",
                 "take",
                 "drop",
                 "put",
@@ -2380,6 +2645,7 @@
                   "type": "string",
                   "enum": [
                     "go",
+                    "step",
                     "take",
                     "drop",
                     "put",
@@ -3774,6 +4040,7 @@
               "type": "string",
               "enum": [
                 "go",
+                "step",
                 "take",
                 "drop",
                 "put",

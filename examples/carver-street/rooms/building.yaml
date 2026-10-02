@@ -12,11 +12,44 @@
     - { direction: up, to: stairwell }
     - { direction: down, to: basement }
     - { direction: west, to: okafor-flat }
+  map:
+    rows:
+      - "####u##v###"
+      - "#PPP......#"
+      - "W.........#"
+      - "#..o..d...#"
+      - "#.......k.#"
+      - "####w#S####"
+    legend:
+      ".": { terrain: tiles }
+      "P": { terrain: wall, look: { emoji: "📫" } }
+      "u": { exit: up }
+      "v": { exit: down }
+      "W": { exit: west }
+      "S": { exit: south }
+      "o": { character: okafor }
+      "d": { character: dev }
+      "k": { character: pike }
+      "w": { object: lobby-window }
 - id: okafor-flat
   name: Caretaker's Flat
   description: "Mrs Okafor's flat behind the lobby: a single room, a tidy bed, a calendar of the Saints, a smell of pepper soup."
   exits:
     - { direction: east, to: lobby }
+  map:
+    rows:
+      - "###C###"
+      - "#bb..s#"
+      - "#.....E"
+      - "#..o..#"
+      - "#######"
+    legend:
+      ".": { terrain: carpet }
+      "C": { terrain: wall, look: { emoji: "📅" } }
+      "s": { terrain: wall, look: { emoji: "🍲" } }
+      "b": { object: bed-okafor }
+      "E": { exit: east }
+      "o": { character: okafor }
 - id: basement
   name: Basement
   tags: [dark]
@@ -26,6 +59,20 @@
     - text: "The basement: a boiler like a sleeping animal, the fuse box, a bike nobody owns."
   exits:
     - { direction: up, to: lobby }
+  map:
+    rows:
+      - "#########"
+      - "#BB...f.#"
+      - "#BB.....#"
+      - "#^...o.k#"
+      - "#########"
+    legend:
+      ".": { terrain: concrete }
+      "B": { terrain: wall, look: { glyph: "▓▓", color: "#7a4a2a" } }
+      "k": { terrain: fence, look: { emoji: "🚲" } }
+      "f": { object: fuse-box }
+      "^": { exit: up }
+      "o": { character: okafor }
 - id: stairwell
   name: Stairwell
   description:
@@ -38,12 +85,35 @@
     - { direction: down, to: lobby }
     - { label: "second floor", direction: "2", to: hall-2 }
     - { label: "third floor", direction: "3", to: hall-3 }
+  map:
+    rows:
+      - "#######"
+      - "#2...3#"
+      - "#.....#"
+      - "#..v..#"
+      - "#######"
+    legend:
+      ".": { terrain: lino }
+      "2": { exit: "2", on: stairs }
+      "3": { exit: "3", on: stairs }
+      "v": { exit: down }
 - id: hall-2
   name: Second-floor Landing
   description: "A landing with two doors: 2A, empty for months, and yours, 2B."
   exits:
     - { direction: down, to: stairwell }
     - { label: 2B, direction: west, to: flat-2b, via: door-2b }
+  map:
+    rows:
+      - "#######"
+      - "#..v..#"
+      - "D.....A"
+      - "#######"
+    legend:
+      ".": { terrain: carpet }
+      "v": { exit: down }
+      "D": { exit: west }
+      "A": { terrain: wall, look: { emoji: "🚪" } }
 - id: flat-2b
   name: Flat 2B
   description:
@@ -52,6 +122,22 @@
     - text: "Your flat: a bed, a desk, a kettle, a window on the street. Rent is due. Rent is always due."
   exits:
     - { label: landing, direction: east, to: hall-2, via: door-2b }
+  map:
+    rows:
+      - "####=####"
+      - "#bb..dd.#"
+      - "#.....k.#"
+      - "#...@..nD"
+      - "#########"
+    legend:
+      ".": { terrain: boards }
+      "=": { terrain: window }
+      "b": { object: bed-2b }
+      "d": { object: desk-2b }
+      "k": { object: kettle }
+      "@": { character: player }
+      "n": { object: eviction-notice }
+      "D": { exit: east }
 - id: hall-3
   name: Third-floor Landing
   description: "The top landing. 3A has a new deadlock. 3B has a rug outside it and a pot plant, dying politely."
@@ -59,13 +145,60 @@
     - { direction: down, to: stairwell }
     - { label: 3A, direction: west, to: flat-3a, via: door-3a }
     - { label: 3B, direction: east, to: flat-3b, via: door-3b }
+  map:
+    rows:
+      - "#########"
+      - "#...v...#"
+      - "A..k....B"
+      - "#.....rp#"
+      - "#########"
+    legend:
+      ".": { terrain: carpet }
+      "v": { exit: down }
+      "A": { exit: west }
+      "B": { exit: east }
+      "k": { character: pike }
+      "r": { terrain: carpet, look: { color: "#8b2e2e" } }
+      "p": { terrain: wall, look: { emoji: "🪴" } }
 - id: flat-3a
   name: Flat 3A
   description: "Mr Pike's flat is barely lived in: a camp bed, a laptop, a filing box, a good coat on a hanger."
   exits:
     - { direction: east, to: hall-3, via: door-3a }
+  map:
+    rows:
+      - "####=###"
+      - "#cc...C#"
+      - "#......E"
+      - "#.L.f.k#"
+      - "########"
+    legend:
+      ".": { terrain: boards }
+      "=": { terrain: window }
+      "c": { object: camp-bed }
+      "C": { terrain: wall, look: { emoji: "🧥" } }
+      "L": { terrain: fence, look: { emoji: "💻" } }
+      "f": { object: filing-box }
+      "k": { character: pike }
+      "E": { exit: east }
 - id: flat-3b
   name: Flat 3B
   description: "Dev's flat: books in towers, a keyboard with no stand, a corkboard of postcards from places nobody visits."
   exits:
     - { direction: west, to: hall-3, via: door-3b }
+  map:
+    rows:
+      - "####=####"
+      - "#bb..BBK#"
+      - "W.......#"
+      - "#..d..f.#"
+      - "#########"
+    legend:
+      ".": { terrain: boards }
+      "=": { terrain: window }
+      "b": { object: bed-3b }
+      "B": { terrain: wall, look: { emoji: "📚" } }
+      "K": { terrain: fence, look: { emoji: "🎹" } }
+      "W": { exit: west }
+      "d": { character: dev }
+      "f": { object: loose-floorboard }

@@ -35,6 +35,7 @@ import { type CondEnv, evalCondition } from "./conditions.js";
 import type { EventKind } from "./event-kinds.js";
 import { capitalise, interpolate, MESSAGES } from "./messages.js";
 import { applyOps, clone, type Op, set } from "./ops.js";
+import { placement } from "./space.js";
 import type { Belief, CharState, LogEntry, LogKind, WorldState } from "./state.js";
 
 export type CauseBy =
@@ -172,7 +173,24 @@ export function addNewEntities(state: WorldState, p: Payload): string[] {
     added.push(o.id);
   }
   for (const c of p.characters) if (!state.chars[c.id]) state.chars[c.id] = initialChar(c, state.day);
+  placeAll(state, p);
   return added;
+}
+
+/**
+ * Gives everything standing directly in a room a tile (§4.10): its authored tile, or the nearest free one. Runs on new
+ * worlds and on saves from before maps (Q34).
+ */
+export function placeAll(state: WorldState, p: Payload): void {
+  const w = new World(p, state);
+  // Fixed objects first (they don't move), then characters, then everything else.
+  const order = [...p.objects.filter((o) => !o.affordances.includes("takeable")), ...p.characters, ...p.objects];
+  for (const o of order) {
+    const s = state.objects[o.id];
+    if (!s || s.pos || !s.location || !w.isRoom(s.location)) continue;
+    s.pos = placement(w, o.id, s.location, null);
+  }
+  for (const s of Object.values(state.objects)) if (s.location && !w.isRoom(s.location)) s.pos = null;
 }
 
 export function initialState(p: Payload, seed: string): WorldState {
@@ -185,7 +203,7 @@ export function initialState(p: Payload, seed: string): WorldState {
   for (const c of p.characters) chars[c.id] = initialChar(c, 1);
   const playerId = p.game.player.character;
   objects[playerId]!.location = p.game.start;
-  return {
+  const state: WorldState = {
     payloadId: p.game.id,
     payloadVersion: p.game.version,
     seed,
@@ -212,6 +230,8 @@ export function initialState(p: Payload, seed: string): WorldState {
     ended: null,
     playerCreated: p.game.player.mode === "fixed",
   };
+  placeAll(state, p);
+  return state;
 }
 
 export class World {

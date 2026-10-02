@@ -111,6 +111,12 @@ export function parseCommand(w: World, input: string): ParseResult {
     const x = exitMatch(dirWord)!;
     return act({ type: "action", action: { act: "go", direction: x.direction ?? x.label! } });
   }
+  // One tile at a time (§4.10): "step north", "step ne".
+  if (verb === "step") {
+    const dir = DIRECTIONS[clean(rest)] ?? clean(rest);
+    if (!dir) return err("Step which way?");
+    return act({ type: "action", action: { act: "step", direction: dir } });
+  }
   if (["go", "walk", "run", "climb", "enter"].includes(verb)) {
     const token = DIRECTIONS[clean(rest)] ?? clean(rest.replace(/^(to|into|through)\s+/, ""));
     const x = exitMatch(token);
@@ -378,6 +384,11 @@ export function parseCombat(
           : { error: fled.length ? "Pursue whom?" : "Nobody has fled." };
       return t.id ? ok({ kind: "pursue", target: t.id }) : { ok: false, error: t.error! };
     }
+    case "step":
+    case "move": {
+      const dir = DIRECTIONS[rest] ?? rest;
+      return dir ? ok({ kind: "move", direction: dir }) : { ok: false, error: "Move which way?" };
+    }
     case "reload":
       return ok({ kind: "reload" });
     case "end":
@@ -389,7 +400,7 @@ export function parseCombat(
   return {
     ok: false,
     error:
-      "In combat: attack <target>, aim <target>, use <item>, equip <item>, reload, flee <direction>, pursue <target>, end.",
+      "In combat: attack <target>, aim <target>, move <direction>, use <item>, equip <item>, reload, flee <direction>, pursue <target>, end.",
   };
 }
 

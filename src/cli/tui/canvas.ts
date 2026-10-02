@@ -11,6 +11,9 @@ export interface Span {
   sgr?: Sgr;
 }
 
+/** Marks the second cell of a double-width character; never printed. */
+const WIDE_TAIL = "";
+
 interface Cell {
   ch: string;
   sgr: Sgr;
@@ -83,7 +86,36 @@ export class Canvas {
   set(x: number, y: number, ch: string, sgr: Sgr = ""): void {
     const b = this.bounds;
     if (x < b.x || y < b.y || x >= b.x + b.w || y >= b.y + b.h) return;
-    this.cells[y]![x] = { ch, sgr };
+    const row = this.cells[y]!;
+    // Keep double-width characters whole: overwriting either half blanks the other.
+    if (row[x]!.ch === WIDE_TAIL && x > 0) row[x - 1] = { ch: " ", sgr: row[x - 1]!.sgr };
+    if (row[x + 1]?.ch === WIDE_TAIL) row[x + 1] = { ch: " ", sgr: row[x + 1]!.sgr };
+    row[x] = { ch, sgr };
+  }
+
+  /** A double-width character (an emoji) over cells x and x+1; a space if it would be cut by the clip. */
+  wide(x: number, y: number, ch: string, sgr: Sgr = ""): void {
+    const b = this.bounds;
+    if (x < b.x || x + 1 >= b.x + b.w || y < b.y || y >= b.y + b.h) {
+      this.set(x, y, " ", sgr);
+      this.set(x + 1, y, " ", sgr);
+      return;
+    }
+    this.set(x, y, ch, sgr);
+    this.set(x + 1, y, " ", sgr);
+    this.cells[y]![x + 1] = { ch: WIDE_TAIL, sgr };
+  }
+
+  /** Changes a cell's style, keeping its character. */
+  restyle(x: number, y: number, sgr: Sgr): void {
+    const b = this.bounds;
+    if (x < b.x || y < b.y || x >= b.x + b.w || y >= b.y + b.h) return;
+    this.cells[y]![x]!.sgr = sgr;
+  }
+
+  /** The style of a cell (for drawing on top of what is there). */
+  sgrAt(x: number, y: number): Sgr {
+    return this.cells[y]?.[x]?.sgr ?? "";
   }
 
   /** Writes text from (x, y), one cell per code point; returns the x after the last cell. */
@@ -140,6 +172,7 @@ export class Canvas {
       let out = "";
       let cur = "";
       for (const c of row) {
+        if (c.ch === WIDE_TAIL) continue;
         if (color && c.sgr !== cur) {
           out += c.sgr ? `\x1b[0;${c.sgr}m` : "\x1b[0m";
           cur = c.sgr;

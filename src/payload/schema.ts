@@ -40,6 +40,7 @@ export type Tier = (typeof TIERS)[number];
  */
 export const ACTION_VERBS = [
   "go",
+  "step",
   "take",
   "drop",
   "put",
@@ -412,6 +413,60 @@ export const EFFECT_KINDS = [
 ] as const;
 export type EffectKind = (typeof EFFECT_KINDS)[number];
 
+// ─── Space (§4.10, §7.10) ──────────────────────────────────────────────────────
+
+/** Terrain kinds. The engine knows whether each can be walked on and seen through; frontends decide how they look. */
+export const TERRAINS = [
+  "floor",
+  "carpet",
+  "boards",
+  "tiles",
+  "lino",
+  "concrete",
+  "deck",
+  "grass",
+  "sand",
+  "shingle",
+  "road",
+  "pavement",
+  "stairs",
+  "wall",
+  "window",
+  "railing",
+  "fence",
+  "water",
+  "void",
+] as const;
+export type Terrain = (typeof TERRAINS)[number];
+
+/** A hint to frontends on how something looks (§7.10). The engine ignores it. */
+export const Look = z.strictObject({
+  emoji: z.string().min(1).optional(),
+  /** One or two characters for terminals without emoji. */
+  glyph: z.string().min(1).max(2).optional(),
+  /** A CSS-style colour, e.g. "#c0a060" or "yellow". */
+  color: z.string().min(1).optional(),
+  /** Alternate emoji (or glyphs) cycled for animation. */
+  frames: z.array(z.string().min(1)).optional(),
+});
+export type Look = z.infer<typeof Look>;
+
+export const MapLegendEntry = z.union([
+  z.strictObject({ terrain: z.enum(TERRAINS), look: Look.optional() }),
+  z.strictObject({ object: Id, on: z.enum(TERRAINS).optional() }),
+  z.strictObject({ character: Id, on: z.enum(TERRAINS).optional() }),
+  /** The tile of an exit, by its direction or label. */
+  z.strictObject({ exit: z.string().min(1), on: z.enum(TERRAINS).optional() }),
+]);
+export type MapLegendEntry = z.infer<typeof MapLegendEntry>;
+
+export const RoomMap = z.strictObject({
+  /** One string per row, one character per tile. `#` wall, `.` floor, space void; anything else is in the legend. */
+  rows: z.array(z.string()).min(1).max(64),
+  legend: z.record(z.string(), MapLegendEntry).default({}),
+});
+export type RoomMap = z.infer<typeof RoomMap>;
+
 // ─── Rooms (§4.1) ─────────────────────────────────────────────────────────────
 
 export const Exit = z.strictObject({
@@ -436,6 +491,8 @@ export const Room = z.strictObject({
   description: TextVariants,
   exits: z.array(Exit).default([]),
   tags: z.array(z.string()).default([]),
+  /** The room's floor plan (§4.10, §7.10). */
+  map: RoomMap,
 });
 export type Room = z.infer<typeof Room>;
 
@@ -462,6 +519,8 @@ export const Weapon = z.strictObject({
   accuracy: z.number().int().default(0),
   min_st: z.number().int().min(1).max(10).default(1),
   ranged: z.boolean().default(false),
+  /** Reach of a ranged weapon in tiles (§5.6). */
+  range: z.number().int().min(1).max(64).optional(),
   ammo: z.strictObject({ type: z.string().min(1), capacity: z.number().int().positive() }).optional(),
 });
 export type Weapon = z.infer<typeof Weapon>;
@@ -520,6 +579,8 @@ const objectFields = {
   consumable: Consumable.optional(),
   /** Ammunition: `count` property holds the rounds. */
   ammo: z.strictObject({ type: z.string().min(1) }).optional(),
+  /** How frontends should draw this (§7.10). */
+  look: Look.optional(),
   /** Per-object overrides for engine messages, keyed like game.messages (e.g. take, open, examine). */
   messages: z.record(z.string(), TextVariants).default({}),
 };
@@ -781,4 +842,4 @@ export const Payload = z.strictObject({
 export type Payload = z.infer<typeof Payload>;
 export type PayloadInput = z.input<typeof Payload>;
 
-export const SCHEMA_VERSION = "1.0";
+export const SCHEMA_VERSION = "2.0";

@@ -46,8 +46,9 @@ The narrative system only changes the world through the action/hook executor, wh
 <p>The <strong>frontend is fully decoupled</strong> (Q11). The session exposes a UI port: it emits view models (narration, room view, available actions,
 conversation options, combat state) and accepts player intents (a typed command, a menu pick, an option choice). It never formats text for a
 particular display. Nothing outside <code>src/cli</code> imports from it. v1 ships two adapters: a plain readline CLI and a full-screen TUI
-(<code>play --tui</code>: story pane, room map, character panel and inventory). The TUI reads the same view models, plus read-only map, sheet and
-inventory views it polls after each turn. A web frontend would be another adapter on the same port, with no engine changes.</p>
+(<code>play --tui</code>: each room drawn as animated tiles in the manner of <em>Ultima V</em>, played with keys only). The TUI reads the same
+view models, plus read-only scene, sheet and inventory views it polls after each turn and an <code>fx</code> view of what moved and struck,
+which it animates. Every key becomes an ordinary intent, so tiled play saves and replays like typed play. A web frontend would be another adapter on the same port, with no engine changes.</p>
 
 <h2>3.2 Exploration loop (one turn)</h2>
 <ol>

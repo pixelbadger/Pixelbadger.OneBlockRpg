@@ -2,8 +2,10 @@
 # It doubles as the engine's playthrough fixture.
 id: carver-street
 title: "41 Carver Street"
-schema_version: "1.0"
-version: "0.1.0"
+schema_version: "2.0"
+version: "0.2.0"
+# 0.2.0 draws every room as a tile map (schema 2.0); 0.1.0 saves load and everyone is put on their authored tile.
+compatible_with: ["0.1.0"]
 start: flat-2b
 player:
   character: player

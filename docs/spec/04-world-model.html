@@ -23,13 +23,14 @@
 <p class="subtitle">The grounded layer: rooms, objects, characters, actions, behaviours, beliefs and time. RPG mechanics are in §5. Sketches show shape, not final types.</p>
 
 <h2>4.1 Rooms</h2>
-<p>Rooms are <strong>descriptive and dimensionless</strong>. A room is a name, authored text and a set of exits.</p>
+<p>A room is a name, authored text, a set of exits and a <strong>tile map</strong> (4.10). The text still carries the room's meaning. The map carries its floor plan.</p>
 <pre><code>interface Room {
   id: RoomId;
   name: string;
   description: TextVariants;     // authored; variants chosen by condition (§7.4)
   exits: Exit[];                 // { direction | label, to: RoomId, via?: ObjectId (a door), when?: Condition }
   tags: string[];                // 'public', 'dark', 'outdoors', …
+  map: RoomMap;                  // the drawn floor plan (4.10, §7.10)
 }</code></pre>
 <p>A door, hatch or fire escape is an <em>object</em> referenced by an exit, so it can be locked, broken, opened or described like anything else.</p>
 
@@ -58,7 +59,8 @@ hold a door shut. <strong>Velocity in a dimensionless world</strong> (Q18) is an
 <table>
 <thead><tr><th>Action</th><th>Preconditions (examples)</th><th>Effects (examples)</th></tr></thead>
 <tbody>
-<tr><td><code>go</code></td><td>exit exists, its door is open, the exit's condition holds</td><td>actor's location changes</td></tr>
+<tr><td><code>go</code></td><td>exit exists, its door is open, the exit's condition holds; the actor walks to its tile (4.10)</td><td>actor's location changes; they arrive at the far side's exit tile</td></tr>
+<tr><td><code>step</code></td><td>the tile in that direction is walkable and free, or is an exit tile</td><td>actor's tile changes; onto an exit tile it is <code>go</code></td></tr>
 <tr><td><code>take</code> / <code>drop</code> / <code>put</code></td><td>takeable, within carry capacity (§5.2), container open; taking from a character needs consent (§5.7)</td><td>location changes</td></tr>
 <tr><td><code>open</code> / <code>close</code> / <code>lock</code> / <code>unlock</code></td><td>affordance, key held</td><td>property changes</td></tr>
 <tr><td><code>use</code> X (on Y)</td><td>affordance, an authored use rule matches</td><td>authored effects</td></tr>
@@ -73,7 +75,7 @@ hold a door shut. <strong>Velocity in a dimensionless world</strong> (Q18) is an
 <tr><td><code>wait</code></td><td>none</td><td>time passes</td></tr>
 </tbody>
 </table>
-<p>Each action has a base time cost, scaled by AP (§5.5). Characters may take any of these actions mid-conversation, within the conversation's allow-list (§6.6). Authors can add <strong>use rules</strong> (X on Y → effects) without new code.</p>
+<p>Acting on anything in the room needs reach: an adjacent tile, walked to first if need be (4.10). Each action has a base time cost, scaled by AP (§5.5). Characters may take any of these actions mid-conversation, within the conversation's allow-list (§6.6). Authors can add <strong>use rules</strong> (X on Y → effects) without new code.</p>
 
 <h2>4.4 Characters</h2>
 <p>A character is an object with a mind attached. Its everyday behaviour is scripted. Its <em>voice</em> in conversation is the LLM.</p>
@@ -134,6 +136,36 @@ take time, which is applied when they end. Base action costs are <strong>1–5 g
   payload: unknown;
   cause: { by: 'player' | 'behaviour' | 'trigger' | 'hook' | 'rule'; ref?: string };
 }</code></pre>
+
+<h2>4.10 Space</h2>
+<p>Every room is a grid of tiles (P3). Positions are ground: owned by the engine, deterministic, saved and replayed like any other state.</p>
+<ul>
+  <li><strong>Terrain</strong>: each tile has a terrain kind from a fixed engine list. Each kind is walkable or not, and see-through or not:
+      floors of every finish (floor, carpet, boards, tiles, lino, concrete, deck, grass, sand, shingle, road, pavement, stairs) are both;
+      <code>wall</code> is neither; <code>window</code>, <code>railing</code>, <code>fence</code> and <code>water</code> block movement but not sight;
+      <code>void</code> is the unseen outside of an irregular room. How a kind looks is the frontend's business, which the payload may steer (§7.10).</li>
+  <li><strong>Positions</strong>: an object or character directly in a room stands on one tile. Things inside containers or held by characters
+      have no tile of their own: they are where their container or holder is. Fixed (non-takeable) objects may cover several tiles, like a bar
+      or a bed. They block movement and are reachable from any tile next to any part of them.</li>
+  <li><strong>Occupancy</strong>: characters and fixed objects block their tiles. Takeable objects don't: they lie on the floor and can share a tile
+      with each other and with someone standing there.</li>
+  <li><strong>Exits</strong> are tiles too: a doorway, a stair head, the end of a street. Stepping onto an exit tile is <code>go</code> through that exit.
+      A door (<code>via</code>) is drawn on its exit tile. Arriving in a room puts you on the tile of the exit that leads back, or the nearest free
+      tile to it. An exit at the edge of the block has a tile like any other and refuses passage with its authored text.</li>
+  <li><strong>Reach</strong>: acting on something in the room (take, open, use on, give, talk, steal, push…) needs it to be on an adjacent tile
+      (the 8 neighbours) or your own. When it isn't, the actor walks there first by the shortest path, then acts. If no path exists the action
+      fails with "you can't get to it". Examining needs only line of sight. Throwing and ranged attacks need line of sight and range (§5.6).</li>
+  <li><strong>Line of sight</strong>: a straight line between tile centres that crosses no tile which blocks sight (walls, closed doors).
+      Characters and objects never block sight. Sneaking uses it: only observers who can see the sneaker roll to notice them (§5.4).</li>
+  <li><strong>Movement</strong>: a <code>step</code> action moves one tile in one of eight directions. Pathing is A* over walkable, unoccupied tiles
+      with a fixed neighbour order, so it is deterministic. Everyone walks: the player, characters sent elsewhere by behaviours (they cross the
+      room to the exit and arrive at the far side's door), and characters returning to their <em>home tile</em>.</li>
+  <li><strong>Home tiles</strong>: a character placed on a room's map has a home there. Out of combat and conversation, an awake character who
+      is in a room where they have a home walks back to it, a step at a time as the clock runs. That is enough to make a block feel inhabited
+      without per-tile schedules.</li>
+  <li><strong>Time</strong>: a step takes 10 game seconds; six steps are a minute, and the clock runs (behaviours, triggers) on each whole minute.
+      An action's own time (§5.5) comes on top of the steps walked to reach its target.</li>
+</ul>
 
 <footer>§4 of the One Block CRPG specification</footer>
 </main>

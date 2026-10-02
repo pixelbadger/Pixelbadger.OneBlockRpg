@@ -5,6 +5,7 @@ import { levelForXp, type Modifier, skillPointsPerLevel } from "../mechanics/spe
 import type { Attribute, Scalar, SkillId } from "../payload/schema.js";
 import type { EventKind } from "./event-kinds.js";
 import { pull, push, set } from "./ops.js";
+import { type Pos, placement } from "./space.js";
 import type { CharStatus } from "./state.js";
 import type { Cause, World } from "./world.js";
 
@@ -16,9 +17,12 @@ export function moveThing(
   cause: Cause,
   actor?: string,
   extraTargets: string[] = [],
+  where: { pos?: Pos; via?: string } = {},
 ): void {
   const from = w.locationOf(id);
-  const ops = [set(["objects", id, "location"], to)];
+  // Into a room: onto a tile (§4.10). Anywhere else: no tile of its own.
+  const pos = to && w.isRoom(to) ? (where.pos ?? placement(w, id, to, from, where.via)) : null;
+  const ops = [set(["objects", id, "location"], to), set(["objects", id, "pos"], pos)];
   // Moving an item out of a character's hands unequips it.
   if (from && w.isChar(from)) {
     const eq = w.char(from).equipment;

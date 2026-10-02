@@ -79,7 +79,7 @@ describe("payload validation (§7.7)", () => {
 
   it("finds unreachable rooms and the closed edge of the block (Q6)", () => {
     const r = check((p) => {
-      p.rooms.push({ id: "attic", name: "Attic", description: "Dust." });
+      p.rooms.push({ id: "attic", name: "Attic", description: "Dust.", map: { rows: ["..."], legend: {} } });
     });
     expect(messages(r).join("\n")).toMatch(/unreachable from the start room/);
   });

@@ -3,12 +3,13 @@
  * heal and wake; behaviours tick; triggers fire; set pieces start and end; endings are checked; witnesses log.
  */
 import { collapses, healingRate } from "../mechanics/special.js";
-import { fallAsleep, perform } from "./actions.js";
+import { fallAsleep, perform, walk } from "./actions.js";
 import { describeEvent, WITNESSED } from "./describe.js";
 import { applyEffects, endGame } from "./effects.js";
 import { activeBehaviours, heal } from "./mutate.js";
 import { type Op, push, set } from "./ops.js";
 import { endSetPiece, startSetPiece } from "./set-piece.js";
+import { findPath, gridOf, homeTile, occupancy, standable } from "./space.js";
 import type { Cause, World, WorldEvent } from "./world.js";
 
 const ENGINE: Cause = { by: "engine" };
@@ -60,6 +61,7 @@ export function tick(w: World, minutes: number, opts: TickOptions = {}): TickRes
     });
     done += step;
     bodies(w, step);
+    homing(w, step);
     evaluate(w, from);
     if (interrupted(w, opts)) return { minutes: done, interrupted: true };
   }
@@ -73,6 +75,36 @@ function interrupted(w: World, opts: TickOptions): boolean {
   }
   if (w.state.combat?.combatants.some((c) => c.id === w.playerId)) return true;
   return !!opts.playerAsleep && cursor(w).wake;
+}
+
+// ─── Home tiles (§4.10) ──────────────────────────────────────────────────────
+
+/** Steps a character walks in a minute (a step is 10 seconds). */
+export const STEPS_PER_MINUTE = 6;
+
+/**
+ * Awake characters who aren't busy drift back to their home tile in the room they're in, six steps a minute. This
+ * keeps a block looking inhabited without per-tile schedules.
+ */
+function homing(w: World, minutes: number): void {
+  const steps = minutes * STEPS_PER_MINUTE;
+  for (const c of w.payload.characters) {
+    const id = c.id;
+    if (id === w.playerId) continue;
+    const s = w.state.chars[id];
+    if (s?.status !== "ok" || s.asleepUntil !== null) continue;
+    if (w.state.conversation?.character === id) continue;
+    if (w.state.combat?.combatants.some((x) => x.id === id && x.status === "in")) continue;
+    const room = w.locationOf(id);
+    if (!room || !w.isRoom(room)) continue;
+    const home = homeTile(w, id, room);
+    const pos = w.state.objects[id]?.pos;
+    if (!home || !pos || (pos[0] === home[0] && pos[1] === home[1])) continue;
+    const g = gridOf(w, room)!;
+    const occ = occupancy(w, room, id);
+    const path = findPath(g, pos, (p) => p[0] === home[0] && p[1] === home[1] && standable(g, p, occ), occ);
+    if (path?.length) walk(w, id, path.slice(0, steps), ENGINE);
+  }
 }
 
 // ─── Bodies: fatigue, sleep, healing, modifiers, momentum (§5.8, Q18) ─────────

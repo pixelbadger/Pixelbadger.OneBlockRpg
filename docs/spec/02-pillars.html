@@ -44,13 +44,17 @@ history and meaning, never outward. Leaving is impossible: the edge of the block
       checks its guards and applies it. If a character insists there is a 13th floor, it only exists if the author gave them a hook that can make it so.</li>
 </ul>
 
-<h2>P3 · A simple simulation</h2>
+<h2>P3 · A simple simulation, on a drawn block</h2>
 <ul>
-  <li><strong>Rooms are descriptive.</strong> They have no dimensions or coordinates, just a description, contents and exits.</li>
-  <li><strong>Objects are in rooms</strong> (or in other objects, or held by characters). They carry simulable properties such as mass,
-      velocity, temperature and open/locked. Rules read and write those properties.</li>
-  <li>Fidelity comes from authored detail and well-chosen properties, not from physics. If a mechanic needs geometry, it is the wrong
-      mechanic for this engine.</li>
+  <li><strong>Rooms are drawn.</strong> Each room is an authored tile map, in the manner of <em>Ultima V</em>: walls, floors, water and
+      windows, with every object, character and exit standing on a tile (§4.10). The map is the room's floor plan, not a physics space.
+      A tile is a place to stand, nothing finer.</li>
+  <li><strong>Objects are in rooms</strong> (or in other objects, or held by characters). An object in a room stands on a tile. Objects carry
+      simulable properties such as mass, velocity, temperature and open/locked. Rules read and write those properties.</li>
+  <li><strong>Geometry is coarse and discrete.</strong> Space answers four questions only: can I step there (walkable tiles), can I reach it
+      (adjacent tiles), can I see it (line of sight across tiles), and how far is it (tiles). There is no sub-tile position, collision, momentum
+      across tiles or physics. Fidelity still comes from authored detail and well-chosen properties. A mechanic that needs more geometry than
+      those four questions is the wrong mechanic for this engine.</li>
 </ul>
 
 <h2>P4 · Everything acts the same way</h2>

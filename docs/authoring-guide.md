@@ -89,6 +89,51 @@ Each brief section (§7.2) maps onto the payload like this. The Pier's choices a
 - Every room needs a way back. NPCs route only through exits whose `when` holds for them, so check that routines can
   still get people home at night.
 
+### Drawing the rooms → each room's `map` (§4.10, §7.10)
+
+Every room is a tile map, like a town in *Ultima V*. The engine walks people across it, fights on it and checks line
+of sight with it, so draw it as the floor plan the description implies.
+
+```yaml
+- id: flat-2b
+  name: Flat 2B
+  # …description, exits…
+  map:
+    rows:
+      - "####=####"
+      - "#bb..dd.#"
+      - "#.....k.#"
+      - "#...@..nD"
+      - "#########"
+    legend:
+      ".": { terrain: boards }            # redefine . for the room's floor
+      "=": { terrain: window }
+      b: { object: bed-2b }               # repeat a letter to make big furniture
+      d: { object: desk-2b }
+      k: { object: kettle }
+      "@": { character: player }          # the player's start (start room only)
+      n: { object: eviction-notice }      # where an off-stage thing appears when spawned
+      D: { exit: east }                   # the exit's tile, by direction or label
+```
+
+- **Small and readable.** Most rooms are 6–12 tiles across and 4–7 deep; a street or a pier can be 20 long. Keep a
+  border of `#` (or `~` water, `=` windows) and put exits on the edge they lead off: north at the top, `down` on a
+  stair tile (`on: stairs` is automatic for up and down).
+- **Everything that starts in the room stands on it**: every object and character with `location:` this room. Doors
+  (`via:` objects) don't: they are drawn on their exit's tile. Things inside containers or held by people don't either.
+- **Home tiles.** Put a character on the map of every room their routine takes them to; that's where they stand when
+  they're there, and they walk back to it as the clock runs. Without one they hang about by the door they came in.
+- **Every exit gets a tile**, blocked and hidden ones too. A blocked exit is the edge of the block: a road running on,
+  the sea.
+- **Leave room to move.** Fixed objects (anything not `takeable`) block walking, so keep a path to every exit and
+  beside every object. Behind a shop counter, leave a gap so the shopkeeper can be reached.
+- **Decoration** that isn't an object is terrain with a look: `P: { terrain: wall, look: { emoji: "📫" } }` for post
+  boxes, `t: { terrain: fence, look: { emoji: "🚏" } }` for a bus stop. Walls block sight; fences, railings, windows
+  and water don't. Use emoji with a standard emoji presentation (no variation selectors) so they are two columns
+  wide everywhere.
+- **Looks are optional.** The TUI dresses objects by keyword (a kettle gets 🫖) and characters with a person emoji;
+  add `look: { emoji, glyph, color }` to an object or character only when the default is wrong.
+
 ### Characters → `characters/`
 
 - **SPECIAL**: a typical person is 5 in everything. Spend contrasts deliberately: the old keeper with IN 8 and ST 2,
@@ -230,6 +275,9 @@ always worth having. Placeholders: `{{Attacker}}`, `{{target}}`, `{{Target}}`, `
 | `hidden_unless` | applies to the player only. NPCs always see hidden things |
 | `self` | the behaviour owner, the hook's speaker, or the consuming character |
 | `once` hooks | once per save, across every character |
+| reach | acting on something walks the actor next to it first, which takes time (10 s a tile) |
+| `spawn` / `move` into a room | lands on the thing's tile on that room's map if it has one, else the nearest free tile |
+| map legend `.` / `#` / space | floor / wall / void unless the legend redefines them |
 
 ## 6. Budgets
 
@@ -321,6 +369,7 @@ Copy the shape of [`tests/pier.test.ts`](../tests/pier.test.ts):
 - [ ] Every ending is reached by a test, and the critical path also works offline
 - [ ] Every brief decision is honoured. Everything you decided is listed in your report
 - [ ] Every thing a room description names is an examinable object
+- [ ] Every room has a map; every character has a home tile in each room their routine visits
 - [ ] Every character sleeps, has a routine and at least one conversation (apparitions excepted)
 - [ ] Every timed set piece and window has a timeout, and every spawn has a matching remove
 - [ ] `pnpm test` and `pnpm lint` pass

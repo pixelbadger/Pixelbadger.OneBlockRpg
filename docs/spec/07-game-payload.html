@@ -50,7 +50,7 @@
 <pre><code>my-block/
   game.yaml            # id, title, schemaVersion, start room, player character, clock start, style guide
   story.yaml           # synopsis, tensions, triggers, endings
-  rooms/*.yaml
+  rooms/*.yaml         # incl. each room's tile map (7.10)
   objects/*.yaml       # incl. use rules; weapons, armour, consumables (§5.7); sleepable furniture
   characters/*.yaml    # persona, SPECIAL, tag skills, goals, relationships, beliefs, behaviours, combat profile
   conversations/*.yaml # conversation specs (§6.2)
@@ -140,6 +140,10 @@ endings:
   <li><strong>Playability lint</strong>: every room is reachable from the start, every flag a trigger reads is set somewhere, every hook a conversation
       lists exists, at least one ending is reachable, and every text variant list has an unconditional fallback. Set pieces must have reachable
       end conditions and only reference cast and stage that exist. Every weapon type needs combat text. Every conversation granting <code>attack</code> is flagged for review.</li>
+  <li><strong>Map lint</strong> (7.10): every room has a map; rows are the same width; every character in the map has a legend entry or is built in;
+      every object and character that starts in the room stands on its map (doors appear as their exit's tile); every exit, including blocked
+      and hidden ones, has a tile; things stand on walkable tiles; a takeable object has one tile; and every exit and every placed thing can be
+      reached on foot from every way in.</li>
   <li><strong>Mechanics lint</strong>: SPECIAL values are in 1–10, weapon minimum ST is achievable, and every character can reach something <code>sleepable</code>
       or has sleep in their schedule.</li>
   <li><strong>Budget lint</strong>: warns on oversized personas, synopses or director briefs, since they are in every relevant prompt.</li>
@@ -147,7 +151,7 @@ endings:
 </ul>
 
 <h2>7.8 Versioning</h2>
-<p><code>game.yaml</code> declares a <code>schemaVersion</code>. The engine loads matching major versions. Saves record payload id and version,
+<p><code>game.yaml</code> declares a <code>schemaVersion</code>. The engine loads matching major versions. Room maps made schema version 2.0 (Q34). Saves record payload id and version,
 and a changed payload invalidates saves unless it is marked compatible.</p>
 
 <h2>7.9 Authoring guide</h2>
@@ -159,6 +163,34 @@ language's gotchas, budgets, and a worked example. It ships as the Claude Code s
 <p>The worked example is <strong>The Pier</strong> (Q22), a ghost story set on a Victorian seaside pier. Its brief is
 <a href="../../examples/the-pier/brief.md"><code>examples/the-pier/brief.md</code></a> and its payload is next to it. It is also a
 playthrough fixture (<code>tests/pier.test.ts</code>).</p>
+
+<h2>7.10 Room maps</h2>
+<p>Every room carries a <code>map</code>: rows of characters, one per tile, and a legend (Q33). <code>#</code> is wall, <code>.</code> floor and a space is
+<code>void</code>; everything else is declared in the room's legend. A legend entry is one of:</p>
+<pre><code>map:
+  rows:
+    - "#####D###"
+    - "#b..t...#"
+    - "#b...k..W"
+    - "#...@...#"
+    - "####v####"
+  legend:
+    b: { object: bed }                 # a fixed object; repeat the letter to cover several tiles
+    t: { object: desk }
+    k: { object: kettle, on: carpet }  # a takeable object, on a carpet tile
+    "@": { character: player }         # a character's start (and home) tile
+    D: { exit: north }                 # the tile of an exit, by direction or label
+    v: { exit: down, on: stairs }
+    W: { terrain: window }
+    ",": { terrain: carpet, look: { emoji: "🟫", color: "#6b3a2a" } }</code></pre>
+<ul>
+  <li><code>terrain</code> picks a kind from the engine list (§4.10). <code>on</code> sets the terrain under a placed thing (default <code>floor</code>).</li>
+  <li><code>look</code> is an optional hint to frontends: an <code>emoji</code>, a fallback <code>glyph</code> (one or two characters), a <code>color</code>, and
+      <code>frames</code> for animation. Objects and characters take the same <code>look</code> field. The engine ignores it.</li>
+  <li>A character placed in a room they don't start in gets a home tile there (§4.10). An object that starts off-stage may be placed where it will
+      appear when spawned.</li>
+  <li>Maps are at most 64 × 64 tiles. Small is good: most rooms in the examples are 8–20 tiles across.</li>
+</ul>
 
 <footer>§7 of the One Block CRPG specification</footer>
 </main>

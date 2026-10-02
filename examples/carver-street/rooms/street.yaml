@@ -14,9 +14,44 @@
       blocked: "The ring road runs along the end of the street, six lanes that never stop. The block is all there is."
     - direction: west
       blocked: "Hoardings close off the west end where the old cinema was. You can hear the river beyond, but you can't get to it."
+  map:
+    rows:
+      - "####=##=#N#=##=####"
+      - "___________________"
+      - "W:::::::::::::::::E"
+      - "______________t____"
+      - "####=#S####=###=###"
+    legend:
+      "_": { terrain: pavement }
+      ":": { terrain: road }
+      "=": { terrain: window }
+      "N": { exit: north }
+      "S": { exit: south }
+      "W": { exit: west }
+      "E": { exit: east }
+      "t": { terrain: fence, look: { emoji: "🚏" } }
 - id: corner-shop
   name: Ravi's Corner Shop
   tags: [public]
   description: "Strip lights, a hum from the drinks fridge, a radio on low. Ravi's counter is a fort of scratchcards and chewing gum."
   exits:
     - { direction: north, to: street }
+  map:
+    rows:
+      - "####N####"
+      - "#......F#"
+      - "#.h..d..#"
+      - "#ccccc..#"
+      - "#..R.r..#"
+      - "#k......#"
+      - "#########"
+    legend:
+      ".": { terrain: lino }
+      "N": { exit: north }
+      "F": { terrain: fence, look: { emoji: "🧃" } }
+      "h": { object: hairpin }
+      "d": { character: dev }
+      "c": { terrain: fence, look: { glyph: "▄▄", color: "#a0522d" } }
+      "R": { character: ravi }
+      "r": { terrain: fence, look: { emoji: "📻" } }
+      "k": { object: cot-shop }

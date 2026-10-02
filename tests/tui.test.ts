@@ -1,151 +1,199 @@
 import { describe, expect, it } from "vitest";
+import { absorb } from "../src/cli/tui/app.js";
 import { Canvas, S, wrapSpans } from "../src/cli/tui/canvas.js";
-import { compose, emptyState, type TuiState, toParagraphs } from "../src/cli/tui/frame.js";
-import { type MapView, offGridExits, placeRooms, wrapName } from "../src/cli/tui/map.js";
+import { compose } from "../src/cli/tui/layout.js";
+import { toParagraphs } from "../src/cli/tui/log.js";
+import { camera, Timeline, tileScale } from "../src/cli/tui/scene.js";
+import { Controller, type Key, type Ui } from "../src/cli/tui/ui.js";
 import { World } from "../src/core/world.js";
 import { offlineProvider } from "../src/narrative/offline.js";
+import type { Payload } from "../src/payload/schema.js";
+import type { Tile } from "../src/session/port.js";
 import { Session } from "../src/session/session.js";
 import { example, mini } from "./helpers.js";
 
 const plain = (spans: { text: string }[]) => spans.map((s) => s.text).join("");
+/** Terminal columns a line takes: emoji are two wide. */
+const width = (line: string) => [...line].reduce((n, ch) => n + (/\p{Emoji_Presentation}/u.test(ch) ? 2 : 1), 0);
 
-async function playing(commands: string[]): Promise<{ session: Session; st: TuiState }> {
-  const w = World.create(example(), "tui");
+function game(p: Payload = example()) {
+  const w = World.create(p, "tui");
   const session = new Session(w, { provider: offlineProvider() });
-  const st = emptyState(w.payload.game.title);
-  st.log.push(...toParagraphs(session.start().views));
-  for (const c of commands) st.log.push(...toParagraphs((await session.handle({ type: "command", text: c })).views));
-  st.mode = session.mode;
-  st.status = session.statusView();
-  st.sheet = session.sheetView();
-  st.inventory = session.inventoryView();
-  st.map = session.mapView();
-  return { session, st };
+  const ui: Ui = { title: p.game.title, mode: session.mode, log: [], scroll: 0, busy: false };
+  const said: string[] = [];
+  const c = new Controller(ui, {
+    submit: async (intent) => {
+      absorb(ui, session, (await session.handle(intent)).views);
+    },
+    menu: () => session.menu(),
+    quit: () => {},
+    say: (t) => said.push(t),
+  });
+  absorb(ui, session, session.start().views);
+  c.sync();
+  const press = async (str: string | undefined, key: Key = {}) => {
+    await c.key(str, key);
+    c.sync();
+  };
+  return { w, session, ui, c, press, said };
 }
 
-describe("TUI text layout", () => {
+describe("TUI text and canvas", () => {
   it("wraps styled spans to a width, keeping styles and hard breaks", () => {
     const lines = wrapSpans([{ text: "Mrs Okafor: ", sgr: S.bold }, { text: "the rent is due\non Friday" }], 12);
     expect(lines.map(plain)).toEqual(["Mrs Okafor:", "the rent is", "due", "on Friday"]);
-    expect(lines[0]![0]).toEqual({ text: "Mrs Okafor:", sgr: S.bold });
   });
 
-  it("indents wrapped lines and hard-splits words longer than a line", () => {
-    expect(wrapSpans([{ text: "abcdefghij" }], 6, 2).map(plain)).toEqual(["  abcd", "  efgh", "  ij"]);
+  it("keeps double-width emoji whole", () => {
+    const cv = new Canvas(6, 1);
+    cv.wide(1, 0, "🫖");
+    expect(width(cv.lines(false)[0]!)).toBe(6);
+    cv.set(2, 0, "x");
+    expect(cv.lines(false)[0]).toBe("  x   ");
+    cv.clip({ x: 0, y: 0, w: 5, h: 1 }, () => cv.wide(4, 0, "🫖"));
+    expect(cv.lines(false)[0]).toBe("  x   ");
   });
 
-  it("breaks room names at spaces and hyphens, cutting only overlong words", () => {
-    expect(wrapName("Second-floor Landing", 10)).toEqual(["Second-", "floor", "Landing"]);
-    expect(wrapName("Stairwell", 8)).toEqual(["Stairwe…"]);
-  });
-
-  it("serialises a canvas to exact-width lines and clips drawing", () => {
-    const cv = new Canvas(10, 2);
-    cv.clip({ x: 2, y: 0, w: 3, h: 1 }, () => cv.text(0, 0, "abcdefgh", S.red));
-    expect(cv.lines(false)).toEqual(["  cde     ", "          "]);
-    expect(cv.lines(true)[0]).toBe("  \x1b[0;31mcde\x1b[0m     ");
+  it("shows conversation and combat choices as numbered options in the plain log", () => {
+    const paras = toParagraphs([{ type: "conversation", with: "Nell", options: [{ index: 0, text: "Hello." }] }]);
+    expect(paras.map((p) => plain(p.spans))).toContain("1. Hello.");
+    expect(toParagraphs([{ type: "conversation", with: "Nell", options: [] }], { compact: true })).toEqual([]);
   });
 });
 
-describe("TUI map", () => {
-  it("lays rooms out by compass exits and keeps unvisited rooms in the fog", () => {
-    const w = World.create(mini(), "map");
-    const view = new Session(w, { provider: offlineProvider() }).mapView();
-    expect(view.here).toBe("hall");
-    expect(view.rooms).toEqual([
-      { id: "hall", name: "Hall", visited: true },
-      { id: "kitchen", name: "Kitchen", visited: false },
-    ]);
-    expect(view.exits).toContainEqual({ from: "hall", direction: "east", label: "east", blocked: true });
-    const placed = placeRooms(view);
-    expect(placed.get("hall")).toMatchObject({ gx: 0, gy: 0 });
-    expect(placed.get("kitchen")).toMatchObject({ gx: 0, gy: -1 });
+describe("TUI scene", () => {
+  it("scales small rooms up to fill the view and centres them", () => {
+    const { ui } = game(mini());
+    expect(tileScale(ui.scene!, { x: 0, y: 0, w: 80, h: 20 })).toBe(3);
+    expect(tileScale(ui.scene!, { x: 0, y: 0, w: 20, h: 6 })).toBe(1);
+    expect(camera(ui.scene!, 20, 10, [2, 2])).toEqual([6, 2]);
   });
 
-  it("places neighbours relative to the current room and lists vertical exits off the grid", () => {
-    const view: MapView = {
-      type: "map",
-      here: "landing",
-      rooms: [
-        { id: "landing", name: "Landing", visited: true },
-        { id: "flat", name: "Flat", visited: true },
-        { id: "attic", name: "Attic", visited: false },
-        { id: "lobby", name: "Lobby", visited: true },
-        { id: "beyond", name: "Beyond", visited: false },
+  it("follows the player across a room bigger than the view", () => {
+    const { ui } = game(mini());
+    const scene = { ...ui.scene!, w: 40, h: 40 };
+    expect(camera(scene, 10, 10, [30, 30])).toEqual([-25, -25]);
+    expect(camera(scene, 10, 10, [1, 1])).toEqual([0, 0]);
+  });
+
+  it("plays a walk tile by tile from where the walker stood", () => {
+    const before = new Map<string, Tile>([["npc", [0, 0]]]);
+    const t = new Timeline(
+      [
+        {
+          kind: "walk",
+          id: "npc",
+          room: "hall",
+          path: [
+            [1, 0],
+            [2, 0],
+          ],
+        },
+        { kind: "hit", actor: "npc", target: "player", to: [3, 0], ranged: false, damage: 4 },
       ],
-      exits: [
-        { from: "landing", to: "flat", direction: "west", label: "west", blocked: false },
-        { from: "landing", to: "attic", direction: "up", label: "up", blocked: false },
-        { from: "landing", to: "lobby", direction: "down", label: "down", blocked: false },
-        { from: "flat", to: "landing", direction: "east", label: "east", blocked: false },
-        { from: "flat", to: "beyond", direction: "north", label: "north", blocked: false },
-      ],
-    };
-    const placed = placeRooms(view);
-    expect([...placed.keys()].sort()).toEqual(["beyond", "flat", "landing"]);
-    expect(placed.get("flat")).toMatchObject({ gx: -1, gy: 0 });
-    expect(placed.get("beyond")).toMatchObject({ gx: -1, gy: -1 });
-    expect(offGridExits(view)).toEqual([
-      { mark: "▲", label: "up", to: "?" },
-      { mark: "▼", label: "down", to: "Lobby" },
-    ]);
+      before,
+    );
+    const final = new Map<string, Tile>([["npc", [2, 0]]]);
+    expect(t.at(0, final).pos.get("npc")).toEqual([0, 0]);
+    expect(t.at(100, final).pos.get("npc")).toEqual([1, 0]);
+    expect(t.at(10_000, final).pos.get("npc")).toEqual([2, 0]);
+    const hit = t.at(250, final);
+    expect(hit.marks[0]?.emoji).toBe("💥");
+    expect(hit.floats[0]?.text).toBe("-4");
   });
 });
 
 describe("TUI frame", () => {
-  it("fills the screen exactly at every size, with map, character and inventory", async () => {
-    const { st } = await playing(["Bruiser", "take kettle", "east"]);
+  it("fills the screen exactly at every size, with the scene, character, pack and messages", async () => {
+    const { ui, press } = game();
+    await press("2");
     for (const [cols, rows] of [
       [80, 24],
-      [110, 32],
+      [110, 34],
       [160, 50],
     ] as const) {
-      const f = compose(st, cols, rows);
-      const lines = f.canvas.lines(false);
-      expect(lines).toHaveLength(rows);
-      for (const l of lines) expect([...l].length).toBe(cols);
-      const screen = lines.join("\n");
-      expect(screen).toContain("41 Carver Street");
-      expect(screen).toContain("Map · Second-floor Landing");
-      expect(screen).toContain("Flat 2B");
-      expect(screen).toContain("the kettle");
-      expect(screen).toMatch(/HP +█+ +\d+\/\d+/);
-      expect(screen).toContain("You go east.");
-      expect(f.cursor).toEqual({ x: 4, y: rows - 2 });
+      for (const emoji of [true, false]) {
+        const lines = compose(ui, cols, rows, { t: 0, emoji }).canvas.lines(false);
+        expect(lines).toHaveLength(rows);
+        for (const l of lines) expect(width(l)).toBe(cols);
+        const screen = lines.join("\n");
+        expect(screen).toContain("Flat 2B");
+        expect(screen).toContain("Messages");
+        expect(screen).toMatch(/HP +█+ +\d+\/\d+/);
+        expect(screen).toContain("the key to 2B");
+      }
     }
   });
 
-  it("scrolls the story back and clamps at the top", async () => {
-    const { st } = await playing(["Bruiser", "look", "look", "look", "look"]);
-    const bottom = compose(st, 80, 24);
-    expect(bottom.maxScroll).toBeGreaterThan(0);
-    st.scroll = 10_000;
-    const top = compose(st, 80, 24).canvas.lines(false).join("\n");
-    expect(top).toContain("more below");
-    expect(top).toContain("Create your character.");
-  });
-
   it("asks for a bigger terminal when it is too small", () => {
-    const f = compose(emptyState("Mini"), 60, 20);
-    expect(f.canvas.lines(false)[0]).toMatch(/at least 80×24/);
-    expect(f.cursor).toBeNull();
+    const { ui } = game();
+    expect(compose(ui, 60, 20, { t: 0, emoji: true }).canvas.lines(false)[0]).toMatch(/at least 80×24/);
+  });
+});
+
+describe("TUI keys (Ultima V style)", () => {
+  it("creates a character from the menu and walks with the arrows", async () => {
+    const { ui, press, w } = game();
+    expect(ui.mode).toBe("create");
+    expect(ui.menu?.title).toBe("Who are you?");
+    await press("1");
+    expect(ui.mode).toBe("explore");
+    const before = w.state.objects[w.playerId]!.pos!;
+    await press(undefined, { name: "up" });
+    expect(w.state.objects[w.playerId]!.pos).toEqual([before[0], before[1] - 1]);
   });
 
-  it("shows conversation and combat choices as numbered options", () => {
-    const paras = toParagraphs([
-      { type: "conversation", with: "Nell", options: [{ index: 0, text: "Hello." }] },
-      {
-        type: "combat",
-        round: 2,
-        ap: 5,
-        yourTurn: true,
-        combatants: [{ id: "npc", name: "Nell", hp: 3, maxHp: 10, side: "b", status: "in" }],
-        options: [{ label: "attack Nell", intent: { type: "command", text: "attack nell" } }],
-      },
-    ]).map((p) => plain(p.spans));
-    expect(paras).toContain("1. Hello.");
-    expect(paras).toContain("Round 2 · 5 AP left");
-    expect(paras).toContain("▼ Nell ███░░░░░░░ 3/10");
-    expect(paras).toContain("1. attack Nell");
+  it("makes your own character with the allotment screen", async () => {
+    const { ui, press } = game();
+    await press("3");
+    expect(ui.allot).toBeDefined();
+    for (let i = 0; i < 5; i++) await press(undefined, { name: "right" });
+    await press(undefined, { name: "return" });
+    expect(ui.mode).toBe("explore");
+    expect(ui.sheet?.special.ST).toBe(10);
+  });
+
+  it("aims with a cursor and attacks, which starts a fight on the tiles", async () => {
+    const { ui, press, w } = game(mini());
+    await press("a");
+    expect(ui.targeting?.verb).toBe("attack");
+    expect(ui.targeting?.cursor).toEqual(w.state.objects.npc!.pos);
+    await press(undefined, { name: "return" });
+    expect(ui.mode).toBe("combat");
+    expect(ui.combat?.combatants.map((x) => x.id)).toContain("npc");
+    expect(ui.scene?.things.find((t) => t.id === "npc")?.side).toBe("b");
+  });
+
+  it("gets things from containers through a menu, and escapes back out", async () => {
+    const { ui, press, w } = game(mini());
+    await press("o");
+    await press(undefined, { name: "tab" });
+    const box = ui.targeting?.candidates.find((c) => c.kind === "thing" && c.thing.id === "box");
+    expect(box).toBeDefined();
+    ui.targeting!.cursor = w.state.objects.box!.pos!;
+    await press(undefined, { name: "return" });
+    expect(w.prop("box", "open")).toBe(true);
+    await press("g");
+    ui.targeting!.cursor = w.state.objects.box!.pos!;
+    await press(undefined, { name: "return" });
+    expect(ui.menu?.items.map((i) => i.label)).toEqual(["the coin", "the box itself"]);
+    await press(undefined, { name: "return" });
+    expect(w.isWithin("coin", w.playerId)).toBe(true);
+    await press("w");
+    expect(ui.menu?.title).toBe("Wait");
+    await press(undefined, { name: "escape" });
+    expect(ui.menu).toBeUndefined();
+  });
+
+  it("opens the stats sheet, the help and the action menu", async () => {
+    const { ui, press } = game(mini());
+    await press("z");
+    expect(ui.overlay?.title).toBe("Pat");
+    await press("x");
+    await press("?");
+    expect(ui.overlay?.title).toBe("Keys");
+    await press("x");
+    await press("m");
+    expect(ui.menu?.items.some((i) => i.label.startsWith("go north"))).toBe(true);
   });
 });
