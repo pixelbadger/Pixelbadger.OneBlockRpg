@@ -147,7 +147,8 @@ take time, which is applied when they end. Base action costs are <strong>1–5 g
   <li><strong>Positions</strong>: an object or character directly in a room stands on one tile. Things inside containers or held by characters
       have no tile of their own: they are where their container or holder is. Fixed (non-takeable) objects may cover several tiles, like a bar
       or a bed. They block movement and are reachable from any tile next to any part of them.</li>
-  <li><strong>Occupancy</strong>: characters and fixed objects block their tiles. Takeable objects don't: they lie on the floor and can share a tile
+  <li><strong>Occupancy</strong>: characters and fixed objects block their tiles, except fixed objects with the <code>underfoot</code>
+      affordance (floorboards, rugs, trapdoors), which you walk over. Takeable objects don't: they lie on the floor and can share a tile
       with each other and with someone standing there.</li>
   <li><strong>Exits</strong> are tiles too: a doorway, a stair head, the end of a street. Stepping onto an exit tile is <code>go</code> through that exit.
       A door (<code>via</code>) is drawn on its exit tile. Arriving in a room puts you on the tile of the exit that leads back, or the nearest free
@@ -166,6 +167,51 @@ take time, which is applied when they end. Base action costs are <strong>1–5 g
   <li><strong>Time</strong>: a step takes 10 game seconds; six steps are a minute, and the clock runs (behaviours, triggers) on each whole minute.
       An action's own time (§5.5) comes on top of the steps walked to reach its target.</li>
 </ul>
+
+<h2>4.11 Sound</h2>
+<p>Hearing is perception, like sight, and it is how much of a block's life reaches the people in it: a board creaking in a locked room, a
+door being forced upstairs, a fight next door.</p>
+<ul>
+  <li><strong>Noise</strong>: a noise has a source, a <em>loudness</em> (about 1–12) and a <em>sound</em> ("a board creaking"). Actions make
+      noises (forcing, breaking, fighting, use rules that declare one); things underfoot make one when walked over
+      (<code>step_noise</code>); behaviours and triggers make them with the <code>noise</code> effect.</li>
+  <li><strong>Carrying</strong>: loudness falls by one every three tiles from the source, and by 2 passing through an open way (or open door)
+      into the next room, by 4 through a closed one. It carries on room to room until it is spent.</li>
+  <li><strong>Hearing</strong>: at 4 or more where a listener stands, they hear it plainly; from 1 to 3, they hear it on a Perception check at
+      (level − 4). Sleepers hear only what reaches 6, and it wakes them. NPCs never hear apparitions (Q31).</li>
+  <li><strong>What hearing does</strong>: a <code>heard</code> event (actor: the listener, target: the source), a day-log line ("Heard … from
+      Room 7"), and for the player a line of output. Hearing a hidden thing from the same room finds it: it stops being hidden. Behaviours react
+      to <code>heard</code> like any event, which is how a character comes to believe something from what they heard.</li>
+</ul>
+
+<h2>4.12 Forcing</h2>
+<p>Objects can be <em>fastened</em> (screwed, nailed, glued down: <code>fastened: true</code>) or <em>locked</em>. Either can be forced by
+any held object whose tags fit one of the object's <code>force</code> methods: a bar or a claw for prying, a screwdriver for screws. Each
+method has its own tools, time, noise, optional check (a skill or an attribute, with tier and modifier) and text. The player forces with
+<code>use &lt;tool&gt; on &lt;thing&gt;</code>, or <code>force</code>, <code>pry</code>, <code>prise</code>, <code>lever</code>,
+<code>jemmy</code>, <code>unscrew</code> or <code>lift</code>, which find a fitting tool in hand. Characters force through the same
+<code>use</code> action.</p>
+<ul>
+  <li>Success unfastens, unlocks and (if it opens) opens the object, and marks it <code>forced</code>. A forced lock can't be locked again.</li>
+  <li>The attempt takes its time and makes its noise whether or not the check passes.</li>
+  <li>A fastened object won't open (<code>open</code> says so) and can't be taken.</li>
+</ul>
+<p>There are no per-object solutions to author: anything with a <code>pry</code> tag works on everything that can be pried.</p>
+
+<h2>4.13 Ownership and reading</h2>
+<p>Things can belong to someone (<code>owner</code>), and others may be allowed to use them (<code>permitted</code>, a condition with
+<code>self</code> as the would-be taker; for site tools, "the foreman trusts them").</p>
+<ul>
+  <li><strong>Transgressions</strong>: taking, forcing or breaking something you aren't entitled to, while someone can see you, emits a
+      <code>transgression</code> event (targets: the object and its owner). Each witness loses trust in the actor (10; the owner 20 and some
+      affinity) and remembers it. Unseen, nothing happens yet.</li>
+  <li><strong>Owners notice</strong>: an awake owner in the room where something of theirs belongs, when it isn't there (and isn't with someone
+      entitled to it), notices it missing (<code>noticed-missing</code>); finding it forced or broken, <code>noticed-damage</code>. Each is
+      noticed once until put right.</li>
+  <li><strong>Reading</strong>: an object can declare beliefs it <code>teaches</code>. Whoever examines it, player or character, learns them.
+      Knowledge lives in the documents, so it can travel: a character who finds a letter knows what it says, and can tell others.</li>
+</ul>
+<p>What anyone does about any of this is left to behaviours and conversations: the block polices itself.</p>
 
 <footer>§4 of the One Block CRPG specification</footer>
 </main>

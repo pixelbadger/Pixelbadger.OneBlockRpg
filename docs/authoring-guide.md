@@ -51,7 +51,7 @@ The split is a convention: the loader merges everything and ids are global.
 | Thing | Convention | Examples |
 |---|---|---|
 | Ids (rooms, objects, characters, hooks, behaviours…) | lower-case kebab | `pier-tollhouse`, `room-seven-key`, `edith-lends-archive-key` |
-| Flags | lower-case snake | `clue_register`, `glass_house_burning`, `sent_home` |
+| Flags | lower-case snake | `unease`, `glass_house_burning`, `sent_home` |
 | Belief ids | kebab, and a proposition | `stillborn-secret`, `edmund-set-the-fire` |
 | Hook ids | `<who>-<verb>-<what>` for one character's hooks, a bare verb phrase for shared ones | `shaun-gives-rattle`, `adjust-trust` |
 | Behaviour ids | `<who>-routine`, `<who>-reactions` | `gary-routine` |
@@ -154,20 +154,42 @@ of sight with it, so draw it as the floor plan the description implies.
   `talk`. Stage them with `spawn`, `move` and `remove`. They are intangible (they can't be attacked or handed things)
   and have no bodies (they never tire). Objects can be apparitions too (The Pier's bassinet and tea table).
 
-### Plot → flags, triggers, endings (`story.yaml`)
+### Systemic flesh: things, not triggers (§4.11–4.13)
 
-Flags are the plot's currency. Before writing YAML, list them:
+The test of a block: delete most of its triggers, and do interesting things still happen for an hour because the
+people, objects, schedules, ownership, work, locks and spaces keep colliding? Build for that. Before writing a
+trigger, ask whether the world could do it instead:
+
+- **Put every story piece physically somewhere**, behind or under something that has to be dealt with: a
+  `fastened` board, `locked` door or cupboard, a hidden cavity revealed by a property
+  (`hidden_unless: { property: { object: reception-panelling, key: fastened, value: false } }`).
+- **Give it `force` methods by tool tag, not use rules by tool id.** `tools: [pry]` works with any bar; `[screwdriver]`
+  is slow and quiet; each method has its own time, check, noise and text. Then put several tools in the world, owned
+  by different people, and let routines carry them about (Tommo picks up the bar at 07:45 and drops it at 17:30).
+- **Make it belong to someone** (`owner`, `permitted`). Taking it in front of them is a transgression; they notice
+  when it's gone. Tie `permitted` to a relationship and the player's standing changes what they may touch.
+- **Let it make a noise.** `step_noise` on something `underfoot`, a `noise` on use rules and force methods, a
+  `noise` effect in an object's behaviour (Room 7's board creaks in the evenings). Whoever is near hears it, and a
+  behaviour turns hearing into belief (`event: { kind: heard, actor: self, target: floorboard }`).
+- **Let documents teach** (`teaches: [ashdowns-stayed]`). Whoever reads it learns it, so knowledge can travel: Gary
+  reads the register Tommo found and tells the pub.
+- **Give people a mundane life with stakes**: a job checked by behaviours (`adjust_property` on a ledger object,
+  `remember` notes for their conversations), reactions to `noticed-missing`, `noticed-damage` and `transgression`.
+
+### Plot → beliefs, flags, triggers, endings (`story.yaml`)
+
+Beliefs are what the player knows; flags are the plot's stage. Before writing YAML, list them:
 
 | Kind | The Pier |
 |---|---|
-| Discovery flags, one per piece of the truth | `clue_register`, `clue_letter`, `clue_newspaper`, `clue_rattle` |
+| Discovery beliefs, one per piece of the truth (`teaches` on the document, or told by someone who knows) | `ashdowns-stayed`, `stillborn-secret`, `edmund-set-the-fire`, `child-had-a-name` |
 | Stage flags, for an arc that escalates | `unease` → `obsession` → `breakdown` |
 | Staging flags, so a spawn/remove pair runs once per window | `clara_at_rail`, `lullaby_staged` |
 | Outcome flags read by endings | `glass_house_burned` |
 
-- **Discoveries**: make the clue an object with full text in its `description`, and fire on reading it:
-  `when: { event: { kind: examined, actor: player, target: guest-register } }`, `once: true`. Award XP (25–50) and
-  add the player's belief.
+- **Discoveries**: make the clue an object with full text in its `description` and `teaches`, and drive the arc from
+  `believes`, so it doesn't matter how the player learned it. A trigger on reading it may mark the moment
+  (narration, XP 25–50): `when: { event: { kind: examined, actor: player, target: guest-register } }`, `once: true`.
 - **Escalation without counters**: the language has no arithmetic, so "any two of three" is three `all` pairs inside
   an `any` (see `stage-obsession`). Pace stages by day if the brief wants them to take time
   (`{ day: { gte: 2 } }`). A modifier with a fixed `id` *replaces* the previous one, so stages can set absolute
@@ -175,7 +197,9 @@ Flags are the plot's currency. Before writing YAML, list them:
 - **SPECIAL as story**: Perception-gated text (`when: { special: { PE: { gte: 7 } } }`) and `hidden_unless` let a
   stat change reveal the world. The Pier raises PE as Liam goes mad, so the Victorian pier shows through.
   Fatigue costs PE too, so never make the critical path depend on a gate that tiredness can close. Give every gate
-  a flag alternative (`hidden_unless: { any: [ { special: … }, { flag: marek_told }, { flag: saw_cradle } ] }`).
+  a non-stat alternative, ideally a belief someone can give you
+  (`hidden_unless: { any: [ { special: … }, { believes: { who: player, belief: loose-board } } ] }`); hearing a
+  hidden thing from close by also finds it.
 - **Deadlines**: a `once` trigger on `{ day: { gte: N } }` plus a `time` crossing. Use `wakes: true` if it may fire
   while the player sleeps. `day` is the chapter count, and it advances when the player sleeps, not at midnight.
 - **Endings**: at least one must be reachable. Order text variants from most specific to least, and make the last one
@@ -304,53 +328,39 @@ validates with zero.
 |---|---|---|
 | Present day; the past only as apparitions, PE-gated text and set pieces | PE ≥ 7/8/9 variants on the parade, pier, beach and glass house; no second time layer | `rooms/seafront.yaml` |
 | Ghosts silent and seen only; appear through spawn/move/remove | `perceived_by: player`, no conversations, `refuse_text`; staging triggers per appearance | `characters/ghosts.yaml`, `story.yaml` |
-| Three pieces of the couple's story | guest register (hotel), Clara's letter (Room 7), the 1893 newspaper (pier archive); plus Edith's legend and Shaun's rattle as supporting pieces | `objects/clues.yaml` |
-| Madness as stage flags plus SPECIAL modifiers | `unease`/`obsession`/`breakdown`, one per piece found (from day 2 and day 3); PE up, CH and IN down via fixed-id modifiers | `story.yaml` |
-| The crew and friends notice him changing | stage-gated conversations (`gary-concerned`, `kez-worried`, `tommo-spooked`); the `notice-he-is-changing` hook; description variants | `conversations/`, `characters/` |
-| Discovery-paced, with a deadline | the stages need the pieces; `the-last-night` on day 5 at 23:00 forces it | `story.yaml` |
-| Final burning: the couple taking tea as it burns | `the-burning` set piece; `use petrol can/matches on deckchairs`; an outcome that lights it anyway at 04:00 | `set_pieces/the-burning.yaml`, `objects/things.yaml` |
+| Three pieces of the couple's story | guest register (behind fastened panelling, in a hidden cavity), Clara's letter (under a screwed-down, creaking board in Gary's locked Room 7), the 1893 newspaper (Edith's locked archive); plus Edith's legend and Shaun's rattle; each `teaches` its belief | `objects/clues.yaml` |
+| Madness as stage flags plus SPECIAL modifiers | `unease`/`obsession`/`breakdown` from beliefs, however learned (from day 2 and day 3); PE up, CH and IN down via fixed-id modifiers | `story.yaml` |
+| Mundane labouring life | Gary looks for Liam at 10:30 and 15:00 (strikes on the timesheet, sacked at three; Marek covers if he likes him), checks the panelling and the plasterboard, refuels the generator from the petrol can and notices when it's gone; tools circulate with routines | `behaviours/`, `objects/things.yaml` |
+| The crew and friends notice him changing | stage-gated conversations; the `worried-friend` behaviour (seeing him obsessed); `goes-looking` on the last night; the `notice-he-is-changing` hook | `conversations/`, `behaviours/reactions.yaml` |
+| Discovery-paced, with a deadline | the stages need the beliefs; `the-last-night` on day 5 at 23:00 forces it | `story.yaml` |
+| Final burning: the couple taking tea as it burns | `the-burning` set piece; `use petrol can/matches on deckchairs`; outcomes that narrate who came looking, whether he still has a job, and the missing petrol | `set_pieces/the-burning.yaml`, `objects/things.yaml` |
 | Earlier apparition set pieces left to the agent | `the-promenade` (follow them along the pier) and `the-lullaby` (Room 7 at night) | `set_pieces/` |
 | One inevitable ending | one ending with three variants, by how much he understood | `story.yaml` |
 
-A discovery, end to end. The object ([`objects/clues.yaml`](../examples/the-pier/objects/clues.yaml)) hides the
-register behind the panelling until the player uses the bar:
+A discovery, end to end, with no trigger in it. The board in Room 7
+([`objects/clues.yaml`](../examples/the-pier/objects/clues.yaml)) is loose, screwed down, owned by nobody, and creaks:
 
 ```yaml
-- id: reception-panelling
-  name: reception panelling
-  location: hotel-lobby
-  scenery: true
-  description: "Dark varnished panelling round the old reception desk… It'll need a bar."
-  uses:
-    - on: crowbar
-      when: { not: { flag: panelling_off } }
-      text: "You get the bar in behind the first panel and lean…"
-      effects:
-        - { set_flag: panelling_off }
-        - { spawn: { object: guest-register, in: hotel-lobby } }
-      minutes: 30
+- id: floorboard
+  location: room-seven
+  hidden_unless:
+    any: [ { special: { PE: { gte: 7 } } }, { believes: { who: player, belief: loose-board } } ]
+  affordances: [underfoot, container, openable]
+  behaviours: [board-creaks]          # a `noise` every 45 minutes through the evening
+  properties: { open: false, fastened: true }
+  step_noise: { loudness: 5, sound: "a floorboard creak, hollow, like a drum with something under it" }
+  force:
+    - { tools: [screwdriver], minutes: 15, check: { skill: repair, tier: easy }, noise: { loudness: 2, sound: "…" } }
+    - { tools: [pry, claw], minutes: 5, noise: { loudness: 7, sound: "a floorboard being torn up" } }
 ```
 
-Then the trigger ([`story.yaml`](../examples/the-pier/story.yaml)) turns reading it into story and madness:
-
-```yaml
-- id: read-register
-  when: { event: { kind: examined, actor: player, target: guest-register } }
-  do:
-    - { set_flag: clue_register }
-    - { add_belief: { who: player, belief: ashdowns-stayed } }
-    - { award_xp: 50 }
-  once: true
-- id: stage-unease
-  when: { any: [ { flag: clue_register }, { flag: clue_letter }, { flag: clue_newspaper } ] }
-  do:
-    - { set_flag: unease }
-    - { modify: { who: player, id: madness-pe, attribute: PE, amount: 1 } }
-  once: true
-```
-
-And Edith's conversation reacts to the new belief ([`conversations/town.yaml`](../examples/the-pier/conversations/town.yaml)):
-the opening changes, an authored option hands over the archive key, and the same key is available through a hook.
+Marek works late at the far end of the corridor, so he may hear it through the door; his behaviour
+([`behaviours/reactions.yaml`](../examples/the-pier/behaviours/reactions.yaml)) turns that into a belief and a
+memory, which is what his conversation option and his hook are guarded by. Liam can hear it there too, or tread on it
+(hearing it in the same room finds it). Marek's screwdriver is in his toolbox, `permitted` to anyone he trusts;
+Tommo usually has the bar. The key to Room 7 is on Gary's board, lent if he trusts Liam, a transgression if taken in
+front of him, and missed when he next looks; or the door can be forced, loudly, and Gary finds it on his rounds. The
+letter `teaches: [stillborn-secret]`, and the madness reads the belief.
 
 ## 9. The playthrough test
 
@@ -369,6 +379,8 @@ Copy the shape of [`tests/pier.test.ts`](../tests/pier.test.ts):
 - [ ] Every ending is reached by a test, and the critical path also works offline
 - [ ] Every brief decision is honoured. Everything you decided is listed in your report
 - [ ] Every thing a room description names is an examinable object
+- [ ] Every story piece is physically somewhere, and reachable in at least two ways nobody scripted (a tool, a
+      person, a noise, an owner's trust), each covered by a test
 - [ ] Every room has a map; every character has a home tile in each room their routine visits
 - [ ] Every character sleeps, has a routine and at least one conversation (apparitions excepted)
 - [ ] Every timed set piece and window has a timeout, and every spawn has a matching remove

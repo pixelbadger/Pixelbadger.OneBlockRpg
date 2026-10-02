@@ -22,8 +22,11 @@ genuinely missing, stop and tell the user what the engine would need.
 
 ## Build
 
-1. Write the plan from guide section 3: rooms (8–16), cast, flags, the discovery chain, set pieces, endings.
-   Sketch each room's floor plan as you go: every room needs a tile `map` (guide: "Drawing the rooms").
+1. Write the plan from guide section 3: rooms (8–16), cast, beliefs and flags, the discovery chain, set pieces,
+   endings. Sketch each room's floor plan as you go: every room needs a tile `map` (guide: "Drawing the rooms").
+   For every story piece, plan its systemic flesh (guide: "Systemic flesh"): where it physically is, what holds it
+   (fastened, locked, hidden), which tools by tag can force it, who owns it, what noise it makes, and what the
+   cast's ordinary routines do to it. Prefer these to triggers.
 2. Write the files in the order `game.yaml`, `story.yaml` (synopsis, beliefs, endings), `rooms/`, `characters/`,
    `behaviours/routines.yaml`, `objects/`, `hooks.yaml`, `conversations/`, `story.yaml` triggers, `set_pieces/`,
    `combat_text.yaml`.
@@ -39,8 +42,8 @@ pnpm oneblock play examples/<game-id> --provider offline --new --tui   # and loo
 ```
 
 Then write `tests/<game-id>.test.ts` following `tests/pier.test.ts`: validation with no issues, one test per ending
-(scripted provider for the hook routes, offline provider for the authored routes), and one test for each decision
-the brief marks as decided. Run `pnpm test` and `pnpm lint`.
+(scripted provider for the hook routes, offline provider for the authored routes), one test for each decision
+the brief marks as decided, and tests for the unscripted routes to each story piece. Run `pnpm test` and `pnpm lint`.
 
 ## Report
 
