@@ -3,7 +3,7 @@
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["src/**", "tests/**", "bin/**", "*.json", "*.ts"]
+    "includes": ["src/**", "tests/**", "tools/**", "bin/**", "*.json", "*.ts"]
   },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
   "linter": {
