@@ -12,7 +12,7 @@ import {
   runCombat,
   weaponOf,
 } from "../core/combat.js";
-import { describeRoom } from "../core/describe.js";
+import { describeRoom, visibleExits } from "../core/describe.js";
 import { endGame } from "../core/effects.js";
 import { giveMoney, heal, moveThing } from "../core/mutate.js";
 import { set } from "../core/ops.js";
@@ -41,7 +41,7 @@ import { compactDayLogs, endDay } from "../narrative/memory.js";
 import { ATTRIBUTES, type SkillId, type Special } from "../payload/schema.js";
 import { actionMenu } from "./menu.js";
 import { parseCombat, parseCommand, parseSkill } from "./parser.js";
-import type { Intent, MenuItem, Mode, TurnOutput, ViewModel } from "./port.js";
+import type { Intent, MenuItem, Mode, TurnOutput, ViewModel, ViewOf } from "./port.js";
 
 const PLAYER: Cause = { by: "player" };
 
@@ -122,13 +122,13 @@ export class Session {
     this.views.push(this.roomView());
   }
 
-  roomView(): ViewModel {
+  roomView(): ViewOf<"room"> {
     const room = this.w.roomOf(this.w.playerId)!;
     const sp = this.w.state.setPiece ? this.w.ix.setPieces.get(this.w.state.setPiece.id) : undefined;
     return { type: "room", room: describeRoom(this.w, room), ...(sp ? { objective: sp.objective } : {}) };
   }
 
-  statusView(): ViewModel {
+  statusView(): ViewOf<"status"> {
     const w = this.w;
     const s = w.char(w.playerId);
     return {
@@ -145,6 +145,76 @@ export class Session {
       unspentSkillPoints: s.unspentSkillPoints,
       sneaking: !!s.sneaking,
     };
+  }
+
+  inventoryView(): ViewOf<"inventory"> {
+    const w = this.w;
+    const p = w.playerId;
+    const eq = w.char(p).equipment;
+    return {
+      type: "inventory",
+      items: w.inventory(p).map((id) => w.name(id)),
+      equipped: [eq.weapon, eq.armour].filter((x): x is string => !!x).map((id) => w.name(id)),
+      money: w.char(p).money,
+    };
+  }
+
+  sheetView(): ViewOf<"sheet"> {
+    const w = this.w;
+    const p = w.playerId;
+    const s = w.special(p);
+    const st = w.char(p);
+    const armour = st.equipment.armour ? w.thing(st.equipment.armour)?.armour : undefined;
+    return {
+      type: "sheet",
+      name: w.charDef(p).name,
+      special: s,
+      base: st.special,
+      derived: {
+        HP: st.hp,
+        "Max HP": w.maxHp(p),
+        AP: actionPoints(s),
+        AC: armourClass(s, armour?.ac ?? 0),
+        "Carry (kg)": carryCapacity(s),
+        Carried: w.carried(p),
+        "Melee bonus": meleeDamageBonus(s),
+        Sequence: sequence(s),
+        "Healing / 6h": healingRate(s),
+        "Crit %": criticalChance(s),
+        Level: st.level,
+        XP: st.xp,
+        "Skill points": st.unspentSkillPoints,
+      },
+      skills: allSkills({ special: s, tags: st.tags, points: st.skillPoints, modifiers: st.modifiers }),
+      tags: st.tags,
+    };
+  }
+
+  /** The visited rooms and their visible exits; unvisited destinations are listed but not explored (fog of war). */
+  mapView(): ViewOf<"map"> {
+    const w = this.w;
+    const here = w.roomOf(w.playerId)!;
+    const visited = new Set([...w.state.visited, here]);
+    const rooms = new Map<string, { id: string; name: string; visited: boolean }>();
+    const exits: ViewOf<"map">["exits"] = [];
+    for (const id of visited) {
+      const r = w.ix.rooms.get(id);
+      if (!r) continue;
+      rooms.set(id, { id, name: r.name, visited: true });
+      for (const x of visibleExits(w, id)) {
+        exits.push({
+          from: id,
+          ...(x.to ? { to: x.to } : {}),
+          direction: (x.direction ?? x.label).toLowerCase(),
+          label: x.label,
+          blocked: x.blocked,
+        });
+        if (x.to && !rooms.has(x.to) && !visited.has(x.to) && w.ix.rooms.has(x.to)) {
+          rooms.set(x.to, { id: x.to, name: w.ix.rooms.get(x.to)!.name, visited: false });
+        }
+      }
+    }
+    return { type: "map", here, rooms: [...rooms.values()], exits };
   }
 
   private createView(): ViewModel {
@@ -351,45 +421,12 @@ export class Session {
       case "look":
         this.pushRoom();
         break;
-      case "inventory": {
-        const eq = w.char(p).equipment;
-        this.views.push({
-          type: "inventory",
-          items: w.inventory(p).map((id) => w.name(id)),
-          equipped: [eq.weapon, eq.armour].filter((x): x is string => !!x).map((id) => w.name(id)),
-          money: w.char(p).money,
-        });
+      case "inventory":
+        this.views.push(this.inventoryView());
         break;
-      }
-      case "status": {
-        const s = w.special(p);
-        const st = w.char(p);
-        const armour = st.equipment.armour ? w.thing(st.equipment.armour)?.armour : undefined;
-        this.views.push({
-          type: "sheet",
-          name: w.charDef(p).name,
-          special: s,
-          base: st.special,
-          derived: {
-            HP: st.hp,
-            "Max HP": w.maxHp(p),
-            AP: actionPoints(s),
-            AC: armourClass(s, armour?.ac ?? 0),
-            "Carry (kg)": carryCapacity(s),
-            Carried: w.carried(p),
-            "Melee bonus": meleeDamageBonus(s),
-            Sequence: sequence(s),
-            "Healing / 6h": healingRate(s),
-            "Crit %": criticalChance(s),
-            Level: st.level,
-            XP: st.xp,
-            "Skill points": st.unspentSkillPoints,
-          },
-          skills: allSkills({ special: s, tags: st.tags, points: st.skillPoints, modifiers: st.modifiers }),
-          tags: st.tags,
-        });
+      case "status":
+        this.views.push(this.sheetView());
         break;
-      }
       case "journal":
         this.views.push({ type: "journal", entries: [...(w.state.summaries[p] ?? [])] });
         break;

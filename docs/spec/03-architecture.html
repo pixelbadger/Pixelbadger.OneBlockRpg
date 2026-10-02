@@ -45,8 +45,9 @@
 The narrative system only changes the world through the action/hook executor, which calls ordinary core actions and effects.</p>
 <p>The <strong>frontend is fully decoupled</strong> (Q11). The session exposes a UI port: it emits view models (narration, room view, available actions,
 conversation options, combat state) and accepts player intents (a typed command, a menu pick, an option choice). It never formats text for a
-particular display. Nothing outside <code>src/cli</code> imports from it. v1 ships a plain readline CLI as the only adapter. A TUI or web frontend
-is another adapter on the same port, with no engine changes.</p>
+particular display. Nothing outside <code>src/cli</code> imports from it. v1 ships two adapters: a plain readline CLI and a full-screen TUI
+(<code>play --tui</code>: story pane, room map, character panel and inventory). The TUI reads the same view models, plus read-only map, sheet and
+inventory views it polls after each turn. A web frontend would be another adapter on the same port, with no engine changes.</p>
 
 <h2>3.2 Exploration loop (one turn)</h2>
 <ol>
@@ -118,7 +119,7 @@ and a summary goes into participants' day logs.</p>
 <h2>3.10 Tooling</h2>
 <p>Decided (Q13): Node 22+, TypeScript strict and ESM, <code>pnpm</code>, <code>vitest</code>, <code>zod</code>
 (runtime validation, a generated JSON Schema for payloads, and LLM structured output), and <code>biome</code>.
-A single package with <code>src/{core,mechanics,narrative,llm,payload,session,cli}</code>, plus a CLI with <code>validate</code>, <code>play</code> and <code>replay</code>. <code>src/cli</code> is the only frontend adapter (3.1).</p>
+A single package with <code>src/{core,mechanics,narrative,llm,payload,session,cli}</code>, plus a CLI with <code>validate</code>, <code>play</code> and <code>replay</code>. <code>src/cli</code> holds the only frontend adapters (3.1).</p>
 
 <footer>§3 of the One Block CRPG specification</footer>
 </main>
