@@ -23,6 +23,7 @@ genuinely missing, stop and tell the user what the engine would need.
 ## Build
 
 1. Write the plan from guide section 3: rooms (8–16), cast, flags, the discovery chain, set pieces, endings.
+   Sketch each room's floor plan as you go: every room needs a tile `map` (guide: "Drawing the rooms").
 2. Write the files in the order `game.yaml`, `story.yaml` (synopsis, beliefs, endings), `rooms/`, `characters/`,
    `behaviours/routines.yaml`, `objects/`, `hooks.yaml`, `conversations/`, `story.yaml` triggers, `set_pieces/`,
    `combat_text.yaml`.
@@ -34,6 +35,7 @@ genuinely missing, stop and tell the user what the engine would need.
 ```sh
 pnpm oneblock validate examples/<game-id>          # must be ok with zero warnings
 pnpm oneblock play examples/<game-id> --provider offline --new   # walk the critical path by hand
+pnpm oneblock play examples/<game-id> --provider offline --new --tui   # and look at every room drawn
 ```
 
 Then write `tests/<game-id>.test.ts` following `tests/pier.test.ts`: validation with no issues, one test per ending

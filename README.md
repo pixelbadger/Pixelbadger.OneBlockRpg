@@ -13,8 +13,9 @@ everything is *something*, and the people in it have their own goals, secrets an
 
 The engine splits the world in two:
 
-- **Ground.** A deliberately simple simulation. Rooms are descriptive, with no dimensions. Objects sit in rooms and have simulable
-  properties (mass, velocity, open, locked…). The player, objects and characters all act through one shared set of actions,
+- **Ground.** A deliberately simple simulation. Rooms are drawn tile maps, like the towns of *Ultima V*: everyone and
+  everything stands on a tile, and space answers only "can I step there, reach it, see it, and how far is it". Objects
+  have simulable properties (mass, velocity, open, locked…). The player, objects and characters all act through one shared set of actions,
   and objects and characters run scripted behaviours.
 - **Construct.** Characters are objects with goals, intents, relationships and SPECIAL attributes. In **multiple-choice
   conversations** an LLM voices them, steered by their high-level and conversation-specific goals. They can act mid-conversation:
@@ -55,7 +56,8 @@ The implementation baseline is in [`docs/spec/`](docs/spec/index.html):
 v0.1: the engine implements the spec end to end. The exploration, conversation, combat, set-piece and day loops run
 on a deterministic simulation. Conversations, the director, callouts and day summaries run through the provider
 interface. Saves are SQLite and replay identically. Sneaking is a stance, combat has pursuit, and Luck nudges seeded
-rolls (§5.4, §5.6). Open questions Q30 and Q31 are still open (see §8). Q31 is implemented as its suggested starting
+rolls (§5.4, §5.6). Every room is a tile map: actions walk to what they need, and fights are fought on the tiles with
+movement, reach, range and line of sight (§4.10, Q32). Open questions Q30 and Q31 are still open (see §8). Q31 is implemented as its suggested starting
 point (`perceived_by: player`): apparitions are seen only by the player, can't be touched, and have no bodies.
 
 ## Quick start
@@ -65,7 +67,7 @@ pnpm install
 pnpm build
 node bin/oneblock.js validate examples/the-pier
 node bin/oneblock.js play examples/the-pier                           # The Pier: the first full story
-node bin/oneblock.js play examples/the-pier --tui                     # full screen: story, room map, stats, inventory
+node bin/oneblock.js play examples/the-pier --tui                     # Ultima V style: drawn rooms, keys only
 node bin/oneblock.js play examples/carver-street                      # Claude via your Claude Code login
 node bin/oneblock.js play examples/carver-street --provider offline   # no model: authored options only
 node bin/oneblock.js replay examples/carver-street carver-street.db   # check a save replays identically
@@ -73,10 +75,24 @@ node bin/oneblock.js replay examples/carver-street carver-street.db   # check a 
 
 `play` saves after every turn to `<game id>.db` and resumes it next time (`--new` starts over). Type `help` in game.
 
-`--tui` plays full screen (80×24 or larger). The story scrolls on the left, with a sketch map of the rooms you've visited,
-your character (HP, fatigue, level, money, SPECIAL) and your inventory on the right. PgUp/PgDn scroll the story, ↑/↓
-recall earlier commands and Ctrl+C quits. On the map, `@` marks your room, `?` a room you haven't been into yet, `×` the
-edge of the block, and ▲ ▼ ◆ the ways up, down and elsewhere that the grid can't draw.
+`--tui` plays full screen (80×24 or larger, true colour and an emoji font for the best of it) in the manner of
+*Ultima V*. Your room is drawn as tiles, scaled up to fill the view: water ripples, apparitions flicker, night falls
+outdoors and dark rooms are lit only around you. Walks play tile by tile and fights show shots, hits and damage. Play is
+keys only:
+
+| Keys | |
+|---|---|
+| Arrows, numpad 1–9 | walk (into a doorway or stairs to leave); in a fight, 1 AP a tile |
+| A T L G | attack, talk, look, get |
+| U D R H | use, drop, ready, hurl |
+| O K P | open/close, lock/unlock, push |
+| V F B | give, filch, barter |
+| W S Space | wait (or sleep), sneak, pass a minute (end your turn in a fight) |
+| Z J M ? | stats (and spending skill points), journal, every action here, help |
+| PgUp/PgDn, Q | scroll the messages, quit |
+
+Verbs that need a target put up a cursor on the nearest one: arrows move it, Tab cycles, Enter acts, Esc cancels.
+Conversations, character creation and trades are menus. `--no-emoji` draws with plain characters instead.
 During development, `pnpm oneblock <command>` runs the CLI from source.
 
 [`examples/the-pier`](examples/the-pier) is the first full story: a present-day ghost story on a Victorian pier,
