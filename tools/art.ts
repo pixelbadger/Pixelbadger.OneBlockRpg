@@ -33,7 +33,7 @@ export interface ArtSprite {
 export interface ArtBrief {
   tile: number;
   model?: string;
-  quality?: "low" | "medium" | "high";
+  quality?: "low" | "medium" | "high" | "xhigh" | "max" | "auto";
   style: string;
   sprites: Record<string, ArtSprite>;
 }
@@ -319,7 +319,7 @@ export function manifestEntry(s: ArtSprite, file: string): SpriteEntry {
 
 async function generate(brief: ArtBrief, s: ArtSprite, key: string): Promise<Uint8Array> {
   const body = {
-    model: brief.model ?? "gpt-image-1",
+    model: brief.model ?? "gpt-image-2.5-flare",
     prompt: promptFor(brief, s),
     size: sizeFor(s),
     quality: brief.quality ?? "medium",

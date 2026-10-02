@@ -8,7 +8,7 @@
 # animation frames), effect (a small burst or icon).
 
 tile: 32
-model: gpt-image-1
+model: gpt-image-2.5-flare
 quality: medium
 
 style: >-
