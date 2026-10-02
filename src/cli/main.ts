@@ -32,7 +32,9 @@ Usage:
       --seed <seed>        PRNG seed for a new game
       --provider <id>      claude-subscription (default) | anthropic-api | offline
       --model <model>      Model override for the provider
-      --tui                Full-screen interface: story pane, room map, character and inventory
+      --tui                Full screen, in the manner of Ultima V: each room drawn as animated tiles,
+                           keys only (press ? in game for the keys)
+      --no-emoji           With --tui: draw with plain characters instead of emoji
       --no-color
   oneblock replay <payload> <save>                Replay a save's inputs against its recorded LLM responses
                                                    and check the result is identical (§3.8)
@@ -106,6 +108,7 @@ async function play(args: string[]): Promise<number> {
       model: { type: "string" },
       "no-color": { type: "boolean" },
       tui: { type: "boolean" },
+      "no-emoji": { type: "boolean" },
     },
   });
   const path = positionals[0];
@@ -142,14 +145,7 @@ async function play(args: string[]): Promise<number> {
         title: payload.game.title,
         banner: `${payload.game.title} (provider: ${inner.id}; save: ${savePath}${resuming ? ", resumed" : ""}; type help for commands)`,
         flush: () => store.flush(w),
-        command: (text) => {
-          if (text.toLowerCase() === "save") {
-            store.flush(w);
-            return "Saved. (The game saves after every turn.)";
-          }
-          if (text.toLowerCase() === "usage") return JSON.stringify(store.usageByPurpose(), null, 2);
-          return null;
-        },
+        emoji: !values["no-emoji"] && process.env.ONEBLOCK_EMOJI !== "0",
       });
     } finally {
       store.flush(w);
