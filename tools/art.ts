@@ -41,6 +41,9 @@ export interface ArtBrief {
 const FRAMING: Record<ArtKind, string> = {
   texture:
     "A seamless, tileable square texture that fills the whole image edge to edge, seen from directly above. " +
+    "The whole image is a single 32 by 32 pixel game tile enlarged, so draw it with very big square pixels and " +
+    "only a few large, bold, high-contrast features (for example three or four planks, slabs or stripes across, " +
+    "a handful of stones) that still read when shrunk to 32 pixels. " +
     "No objects, no border, no frame, no background around it.",
   object:
     "A single object seen from a three-quarter top-down view, as in a classic tile-based RPG, centred and filling " +
@@ -317,7 +320,12 @@ export function manifestEntry(s: ArtSprite, file: string): SpriteEntry {
 
 // ─── The OpenAI image API ───────────────────────────────────────────────────
 
-async function generate(brief: ArtBrief, s: ArtSprite, key: string): Promise<Uint8Array> {
+export interface Usage {
+  input_tokens?: number;
+  output_tokens?: number;
+}
+
+async function generate(brief: ArtBrief, s: ArtSprite, key: string): Promise<{ png: Uint8Array; usage: Usage }> {
   const body = {
     model: brief.model ?? "gpt-image-2.5-flare",
     prompt: promptFor(brief, s),
@@ -334,14 +342,17 @@ async function generate(brief: ArtBrief, s: ArtSprite, key: string): Promise<Uin
       body: JSON.stringify(body),
     });
     if (res.ok) {
-      const json = (await res.json()) as { data?: { b64_json?: string }[] };
+      const json = (await res.json()) as { data?: { b64_json?: string }[]; usage?: Usage };
       const b64 = json.data?.[0]?.b64_json;
       if (!b64) throw new Error("no image in the response");
-      return Buffer.from(b64, "base64");
+      return { png: Buffer.from(b64, "base64"), usage: json.usage ?? {} };
     }
     const text = await res.text();
-    if ((res.status === 429 || res.status >= 500) && attempt < 4) {
-      await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt));
+    if ((res.status === 429 || res.status >= 500) && attempt < 8) {
+      // Image rate limits are per minute: wait as long as the API asks ("try again in 12s"), else back off.
+      const asked = Number(res.headers.get("retry-after")) || Number(/try again in ([\d.]+)s/.exec(text)?.[1]);
+      const wait = asked ? asked * 1000 + 1000 + Math.random() * 2000 : Math.min(60_000, 2000 * 2 ** attempt);
+      await new Promise((r) => setTimeout(r, wait));
       continue;
     }
     throw new Error(`${res.status}: ${text.slice(0, 300)}`);
@@ -397,17 +408,23 @@ export async function main(argv: string[]): Promise<number> {
     }
     let done = 0;
     const failed: string[] = [];
+    const spent = { input_tokens: 0, output_tokens: 0 };
     await pool(missing, Number(values.concurrency), async ([k, s]) => {
       try {
-        const png = await generate(brief, s, key);
+        const { png, usage } = await generate(brief, s, key);
         mkdirSync(dirname(rawPath(k)), { recursive: true });
         writeFileSync(rawPath(k), png);
-        console.log(`[${++done}/${missing.length}] ${k}`);
+        spent.input_tokens += usage.input_tokens ?? 0;
+        spent.output_tokens += usage.output_tokens ?? 0;
+        console.log(
+          `[${++done}/${missing.length}] ${k} (${sizeFor(s)}, ${usage.input_tokens ?? "?"} in / ${usage.output_tokens ?? "?"} out tokens)`,
+        );
       } catch (err) {
         failed.push(k);
         console.error(`[${++done}/${missing.length}] ${k} FAILED: ${err instanceof Error ? err.message : err}`);
       }
     });
+    console.log(`tokens: ${spent.input_tokens} in, ${spent.output_tokens} out`);
     if (failed.length) console.error(`\n${failed.length} failed: ${failed.join(",")} (run again to retry)`);
   }
 
