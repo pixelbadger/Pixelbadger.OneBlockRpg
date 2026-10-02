@@ -3,19 +3,35 @@
 - id: gary-work
   character: gary
   goals:
-    - "Get Liam to strip the reception panelling in the lobby today; there's a bar in the compound."
-    - "Remind him he's on thin ice for lateness."
+    - "Get Liam working: the reception panelling off in the lobby (there's a bar about; Tommo usually has it), the plasterboard carried up to the first floor."
+    - "If his timesheet has strikes on it, tell him so. Three and he's out."
+    - "If something of yours has gone missing or been forced today, ask him straight whether he knows anything."
   opening:
-    - when: { flag: panelling_off }
-      text: "Gary looks up from the drawings. 'Lobby looks better. What d'you want, a medal?'"
-    - text: "Gary looks up from the drawings. 'Doyle. Reception panelling. Today. Bar's in the compound. Why are you still here?'"
+    - when: { property: { object: timesheet, key: strikes, op: gte, value: 2 } }
+      text: "Gary doesn't look up. 'Two, Doyle. Two on your sheet. You know what three is.'"
+    - when: { property: { object: reception-panelling, key: fastened, value: false } }
+      text: "Gary looks up from the drawings. 'Lobby looks better. What d'you want, a medal? Plasterboard next.'"
+    - text: "Gary looks up from the drawings. 'Doyle. Reception panelling. Today. Tommo's got the bar. Why are you still here?'"
   options:
     - text: "What was this place like? Before."
       once: true
     - text: "Have you got a key for Room 7?"
       once: true
-      effects: [ { narrate: "Gary jerks a thumb at the board by the door. 'Key board. Don't lose it, the client's precious about that room.'" } ]
-  hooks: [adjust-trust]
+      when: { relationship: { who: gary, with: player, trust: { gte: 10 } } }
+      effects:
+        - { set_property: { object: room-seven-key, key: lent, value: true } }
+        - { narrate: "Gary jerks a thumb at the board by the door. 'Key board. Strip it while you're up there. Don't lose it, the client's precious about that room.'" }
+    - text: "Have you got a key for Room 7?"
+      once: true
+      when: { relationship: { who: gary, with: player, trust: { lt: 10 } } }
+      effects: [ { narrate: "'For you? No. You can't keep hold of your own timesheet.'" } ]
+    - text: "[Ask to see the old register]"
+      when: { holds: { who: gary, what: guest-register } }
+      once: true
+      effects:
+        - { move: { object: guest-register, to: player } }
+        - { narrate: "Gary digs it out of his bag. 'Tommo found it. Client wants anything old. Don't get chips on it.'" }
+  hooks: [adjust-trust, gary-lends-the-key, tell-of-the-register]
   ends_when: { turns: { gte: 8 } }
 - id: gary-concerned
   character: gary
@@ -32,6 +48,16 @@
       effects: [ { adjust_relationship: { who: gary, with: player, trust: -5, affinity: 5 } } ]
   hooks: [adjust-trust, notice-he-is-changing, gary-sends-him-home]
   ends_when: { any: [ { flag: sent_home }, { turns: { gte: 8 } } ] }
+- id: gary-sacked
+  character: gary
+  priority: 3
+  when: { property: { object: timesheet, key: sacked, value: true } }
+  goals:
+    - "You've sacked Liam. You're not proud of it. Don't argue; tell him to get his stuff and get off site."
+    - "If he asks why, the timesheet: three times you looked and he wasn't there."
+  opening: "Gary holds up a hand before you can speak. 'No. You're done, son. Get your stuff and get off my site.'"
+  hooks: [adjust-trust]
+  ends_when: { turns: { gte: 4 } }
 - id: gary-distance
   character: gary
   priority: 2
@@ -54,11 +80,22 @@
   options:
     - text: "[Take the tea]"
       when: { holds: { who: marek, what: tea-flask } }
-      action: { act: take, item: tea-flask, from: marek }
-      effects: [ { adjust_relationship: { who: marek, with: player, trust: 5, affinity: 5 } } ]
+      effects:
+        - { move: { object: tea-flask, to: player } }
+        - { adjust_relationship: { who: marek, with: player, trust: 5, affinity: 5 } }
       once: true
+    # What he says depends on what he has heard (marek-listens), not on the plot.
     - text: "You ever work here late?"
       once: true
+      when: { all: [ { believes: { who: marek, belief: room-seven-creaks } }, { relationship: { who: marek, with: player, trust: { gte: 25 } } } ] }
+      effects:
+        - { add_belief: { who: player, belief: room-seven-creaks, source: "Marek" } }
+        - { add_belief: { who: player, belief: loose-board, source: "Marek" } }
+        - { narrate: "Marek is quiet a while. 'Every night. And every night, from Room 7, a board. Creak. Creak. Like a person stands on it, by the window. Is locked, that room. Is empty.' He crosses himself. 'That board, someone lifts it before. Many times. I see the screws.'" }
+    - text: "You ever work here late?"
+      once: true
+      when: { not: { believes: { who: marek, belief: room-seven-creaks } } }
+      effects: [ { narrate: "'Sometimes. Is quiet, after. Old building talks to itself.' He shrugs. 'I don't listen too close.'" } ]
     - text: "Do you believe in ghosts, Marek?"
       once: true
       effects: [ { adjust_relationship: { who: marek, with: player, trust: 10 } } ]
@@ -70,6 +107,7 @@
   goals:
     - "Wind Liam up. Get him to come to the Anchor tonight."
     - "If he mentions the pier or the glass house, tell him the school-trip ghost story as a joke."
+    - "You've usually got the crowbar. You'll hand it over if he asks nicely, or for a laugh."
   opening:
     - when: { flag: obsession }
       text: "Tommo starts a joke and doesn't finish it. 'You look rough, mate. Like, actually rough.'"
@@ -78,7 +116,12 @@
     - text: "Anchor tonight?"
     - text: "What's the story with the glass house?"
       once: true
-  hooks: [adjust-trust, notice-he-is-changing]
+    - text: "Give us the bar, Tommo. Gary wants the panelling off."
+      when: { holds: { who: tommo, what: crowbar } }
+      effects:
+        - { move: { object: crowbar, to: player } }
+        - { narrate: "Tommo spins the bar like a majorette and slaps it into your hand. 'Don't say I never give you nothing.'" }
+  hooks: [adjust-trust, notice-he-is-changing, tommo-hands-over-the-bar, tell-of-the-register]
   ends_when: { turns: { gte: 8 } }
 - id: tommo-spooked
   character: tommo

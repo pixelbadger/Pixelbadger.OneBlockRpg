@@ -2,6 +2,7 @@
  * The verb–noun parser (§3.2, Q19). It turns typed commands into the same Intents the menu produces.
  * Nouns resolve against what the player can perceive: names, aliases and ids.
  */
+import { forceTool } from "../core/actions.js";
 import type { CombatIntent } from "../core/combat.js";
 import type { World } from "../core/world.js";
 import { SKILLS } from "../payload/schema.js";
@@ -192,6 +193,38 @@ export function parseCommand(w: World, input: string): ParseResult {
       const it = noun(rest.replace(/\s+with\s+.*$/, ""));
       return it.id ? act({ type: "action", action: { act: v as "open", target: it.id } }) : err(it.error!);
     }
+    // Forcing (§4.12): "pry up the board with the bar", "force door", "unscrew panel". Without a tool named, use
+    // whatever held thing would do it.
+    case "force":
+    case "pry":
+    case "prise":
+    case "prize":
+    case "lever":
+    case "jemmy":
+    case "unscrew":
+    case "lift": {
+      // "lift X from someone" is stealing.
+      const fromSomeone = verb === "lift" ? split(rest, ["from"]) : null;
+      const victim = fromSomeone ? noun(fromSomeone[1]) : null;
+      if (fromSomeone && victim?.id && w.isChar(victim.id)) {
+        const it = noun(fromSomeone[0], w.inventory(victim.id));
+        if (!it.id) return err(it.error!);
+        return act({ type: "action", action: { act: "steal", item: it.id, from: victim.id } });
+      }
+      const trim = (x: string) => x.replace(/^(up|open|off|out)\s+/, "").replace(/\s+(up|open|off|out)$/, "");
+      const parts = split(rest, ["with", "using"]);
+      const target = noun(trim(parts ? parts[0] : rest));
+      if (!target.id) return err(target.error!);
+      if (parts) {
+        const tool = noun(parts[1], w.inventory(w.playerId));
+        if (!tool.id) return err(tool.error!);
+        return act({ type: "action", action: { act: "use", item: tool.id, on: target.id } });
+      }
+      const tool = forceTool(w, w.playerId, target.id);
+      if (tool) return act({ type: "action", action: { act: "use", item: tool, on: target.id } });
+      if (verb === "lift") return act({ type: "action", action: { act: "open", target: target.id } });
+      return err(w.thing(target.id)?.force.length ? `What do you want to ${verb} it with?` : `You can't ${verb} that.`);
+    }
     case "use":
     case "apply":
     case "drink":
@@ -247,8 +280,7 @@ export function parseCommand(w: World, input: string): ParseResult {
       return act({ type: "action", action: { act: v, item: it.id, to: to.id } });
     }
     case "steal":
-    case "pickpocket":
-    case "lift": {
+    case "pickpocket": {
       const parts = split(rest, ["from", "off"]);
       if (!parts) return err("Steal it from whom?");
       const from = noun(parts[1]);

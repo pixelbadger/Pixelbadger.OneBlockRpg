@@ -91,6 +91,12 @@ export function walkPayload(p: Payload, v: Visitor): void {
       walkText(u.text, at(w, "uses", i, "text"), v);
       walkEffects(u.effects, at(w, "uses", i, "effects"), v);
     });
+    o.force.forEach((m, i) => {
+      walkText(m.text, at(w, "force", i, "text"), v);
+      walkText(m.fail_text, at(w, "force", i, "fail_text"), v);
+      walkEffects(m.effects, at(w, "force", i, "effects"), v);
+    });
+    if (o.permitted) walkCondition(o.permitted, at(w, "permitted"), v);
     if (o.consumable) {
       walkEffects(o.consumable.effects, at(w, "consumable", "effects"), v);
       walkText(o.consumable.text, at(w, "consumable", "text"), v);

@@ -470,10 +470,10 @@ export class World {
     return !!this.state.chars[id]?.sneaking;
   }
 
-  /** Hidden objects need their hidden_unless condition to hold for the player. */
+  /** Hidden objects need their hidden_unless condition to hold for the player, or to have been found by ear (§4.11). */
   isHidden(id: string): boolean {
     const def = this.thing(id);
-    return !!def?.hidden_unless && !this.cond(def.hidden_unless, { self: id });
+    return !!def?.hidden_unless && this.prop(id, "revealed") !== true && !this.cond(def.hidden_unless, { self: id });
   }
 
   /**

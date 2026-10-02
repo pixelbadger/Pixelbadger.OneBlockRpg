@@ -12,12 +12,13 @@ import {
   sellPrice,
   skillCheck,
 } from "../mechanics/special.js";
-import type { ActionRequest, ActionVerb, Exit, UseRule } from "../payload/schema.js";
+import type { ActionRequest, ActionVerb, Exit, ForceMethod, UseRule } from "../payload/schema.js";
 import { startCombat } from "./combat.js";
 import { exitLabel } from "./describe.js";
-import { applyEffects } from "./effects.js";
+import { applyEffects, resolveCheck } from "./effects.js";
 import { listJoin } from "./messages.js";
 import {
+  addBelief,
   addModifier,
   adjustRelationship,
   awardXp,
@@ -28,6 +29,8 @@ import {
   setProp,
 } from "./mutate.js";
 import { set } from "./ops.js";
+import { transgress } from "./ownership.js";
+import { makeNoise } from "./sound.js";
 import {
   canSee,
   cheb,
@@ -35,9 +38,11 @@ import {
   distance,
   exitOnTile,
   findPath,
+  footprint,
   gridOf,
   inReach,
   isFixed,
+  isUnderfoot,
   occupancy,
   type Pos,
   pathNextTo,
@@ -48,6 +53,10 @@ import {
   walkable,
 } from "./space.js";
 import type { Cause, World } from "./world.js";
+
+/** Engine sounds (§4.11). */
+export const BREAKING = { loudness: 8, sound: "something breaking" };
+export const FIGHTING = { loudness: 8, sound: "a fight: shouting, and blows landing" };
 
 /** Base minutes at AP 8 (Q8: 1–5), scaled by 8 / AP. */
 export const BASE_MINUTES: Record<ActionVerb, number> = {
@@ -200,6 +209,21 @@ export function walk(w: World, who: string, path: readonly Pos[], cause: Cause):
     cause,
     ops: [set(["objects", who, "pos"], path[path.length - 1])],
   });
+  stepNoises(w, who, path, cause);
+}
+
+/** Things underfoot that make a sound when walked over (§4.11): each sounds once per walk. */
+function stepNoises(w: World, who: string, path: readonly Pos[], cause: Cause): void {
+  const room = w.roomOf(who);
+  if (!room || !w.npcsPerceive(who)) return;
+  for (const id of w.childrenOf(room)) {
+    const noise = w.thing(id)?.step_noise;
+    if (!noise || !isUnderfoot(w, id)) continue;
+    const tiles = footprint(w, id);
+    if (path.some((p) => tiles.some((t) => t[0] === p[0] && t[1] === p[1]))) {
+      makeNoise(w, id, noise, cause, { actor: who, selfHears: true });
+    }
+  }
 }
 
 /** What an action needs within reach (adjacent tile), by verb. Things already held never need walking to. */
@@ -319,7 +343,9 @@ function stepTo(c: Ctx, req: ActionRequest): ActionResult {
   const there = w.childrenOf(room).find((id) => {
     const p = w.state.objects[id]?.pos;
     if (w.isChar(id)) return !!p && p[0] === to[0] && p[1] === to[1] && w.char(id).status !== "dead";
-    return isFixed(w, id) && reachTiles(w, room, id).some((t) => t[0] === to[0] && t[1] === to[1]);
+    return (
+      isFixed(w, id) && !isUnderfoot(w, id) && reachTiles(w, room, id).some((t) => t[0] === to[0] && t[1] === to[1])
+    );
   });
   if (there && w.isChar(there)) return refuse(c, "step.someone", { Actor: w.label(there) });
   if (there) return refuse(c, "step.blocked", { item: w.name(there) }, there);
@@ -634,6 +660,7 @@ function take(c: Ctx, req: ActionRequest): ActionResult {
   }
   const def = w.thing(item)!;
   if (!def.affordances.includes("takeable")) return refuse(c, "take.fixed", { item: w.name(item) }, item);
+  if (w.prop(item, "fastened") === true) return refuse(c, "take.fastened", { item: w.name(item) }, item);
   const loc = w.locationOf(item)!;
   if (!w.isRoom(loc) && !w.isChar(loc) && !w.isOpen(loc)) {
     return refuse(c, "take.closed", { container: w.name(loc) });
@@ -645,6 +672,7 @@ function take(c: Ctx, req: ActionRequest): ActionResult {
   }
   moveThing(w, item, c.actor, "took", c.cause, c.actor, holder ? [holder] : []);
   report(c, "take", { item: w.name(item) }, item);
+  if (!holder) transgress(w, c.actor, item, "took", c.cause);
   return { ok: true, minutes: BASE_MINUTES.take, summary: `took ${w.label(item)}` };
 }
 
@@ -686,6 +714,7 @@ function openClose(c: Ctx, req: ActionRequest, verb: "open" | "close"): ActionRe
   if (verb === "open" && open) return refuse(c, "open.already", { item: w.name(id) }, id);
   if (verb === "close" && !open) return refuse(c, "close.already", { item: w.name(id) }, id);
   if (verb === "open" && w.prop(id, "locked") === true) return refuse(c, "open.locked", { item: w.name(id) }, id);
+  if (verb === "open" && w.prop(id, "fastened") === true) return refuse(c, "open.fastened", { item: w.name(id) }, id);
   setProp(w, id, "open", verb === "open", c.cause, c.actor);
   w.emit(verb === "open" ? "opened" : "closed", { actor: c.actor, targets: [id], cause: c.cause });
   report(c, verb, { item: w.name(id) }, id);
@@ -710,6 +739,7 @@ function lockUnlock(c: Ctx, req: ActionRequest, verb: "lock" | "unlock"): Action
   if (!def.affordances.includes("lockable")) return refuse(c, "lock.cannot", { item: w.name(id) }, id);
   const locked = w.prop(id, "locked") === true;
   if (verb === "lock" && locked) return refuse(c, "lock.already", { item: w.name(id) }, id);
+  if (verb === "lock" && w.prop(id, "forced") === true) return refuse(c, "lock.broken", { item: w.name(id) }, id);
   if (verb === "unlock" && !locked) return refuse(c, "unlock.already", { item: w.name(id) }, id);
   if (verb === "lock" && w.prop(id, "open") === true) return refuse(c, "lock.open", { item: w.name(id) }, id);
   const hasKey = !!def.key && w.isWithin(def.key, c.actor);
@@ -780,13 +810,71 @@ function use(c: Ctx, req: ActionRequest): ActionResult {
       w.say(w.msg("use.npc", { Actor: w.label(c.actor), item: w.name(item) }), "ambient");
     }
     w.emit("used", { actor: c.actor, targets: on ? [item, on] : [item], payload: { owner }, cause: c.cause });
+    if (rule.noise) makeNoise(w, on ?? item, rule.noise, c.cause, { actor: c.actor });
     applyEffects(w, rule.effects, { by: "rule", ref: `${owner}.uses` }, { self: c.actor });
     if (rule.consume) moveThing(w, item, null, "removed", c.cause, c.actor);
     return { ok: true, minutes: rule.minutes ?? BASE_MINUTES.use, summary: `used ${w.label(item)}` };
   }
+  // Tools work on anything with a way of forcing it that takes their tag (§4.12), in either order.
+  if (on && held(c, item) && forceMethod(w, on, item)) return force(c, on, item);
+  if (on && held(c, on) && forceMethod(w, item, on)) return force(c, item, on);
   if (def.consumable && !on) return consume(c, item);
   if (def.consumable && on && w.isChar(on)) return consume(c, item, on);
   return refuse(c, "use.nothing", { item: w.name(item), onText: on ? ` on ${w.name(on)}` : "" }, item);
+}
+
+// ─── force (§4.12) ───────────────────────────────────────────────────────────
+
+/** The first of `target`'s ways of being forced that `tool` (by its tags) can do. */
+export function forceMethod(w: World, target: string, tool: string): ForceMethod | undefined {
+  const tags = w.thing(tool)?.tags ?? [];
+  return w.thing(target)?.force.find((m) => m.tools.some((t) => tags.includes(t)));
+}
+
+/** Something the actor holds that could force `target`, if anything. */
+export function forceTool(w: World, actor: string, target: string): string | undefined {
+  return w.inventory(actor).find((x) => forceMethod(w, target, x));
+}
+
+/**
+ * Forces `target` with `tool`: unfastens it, breaks its lock and opens it if it opens. The method's check (if any)
+ * decides success; either way the attempt takes its time and makes its noise, and anyone watching sees it.
+ */
+function force(c: Ctx, target: string, tool: string): ActionResult {
+  const { w } = c;
+  const m = forceMethod(w, target, tool)!;
+  const vars = { item: w.name(target), tool: w.name(tool), Actor: w.label(c.actor) };
+  if (w.prop(target, "fastened") !== true && w.prop(target, "locked") !== true) {
+    return refuse(c, "force.nothing", vars, target);
+  }
+  const minutes = m.minutes;
+  if (m.noise) makeNoise(w, target, m.noise, c.cause, { actor: c.actor });
+  let pass = true;
+  if (m.check) pass = resolveCheck(w, { who: c.actor, ...m.check }, { self: c.actor }, c.cause).pass;
+  if (!pass) {
+    if (c.isPlayer) w.say(m.fail_text ? w.text(m.fail_text, { self: c.actor }) : w.msg("force.failed", vars, target));
+    else if (c.seen) w.say(w.msg("force.npc-failed", vars, target), "ambient");
+    return { ok: false, minutes, summary: `failed to force ${w.label(target)}` };
+  }
+  const def = w.thing(target)!;
+  if (w.prop(target, "fastened") === true) setProp(w, target, "fastened", false, c.cause, c.actor);
+  if (w.prop(target, "locked") === true) setProp(w, target, "locked", false, c.cause, c.actor);
+  setProp(w, target, "forced", true, c.cause, c.actor);
+  if (def.affordances.includes("openable") && w.prop(target, "open") !== true) {
+    setProp(w, target, "open", true, c.cause, c.actor);
+  }
+  w.emit("forced", { actor: c.actor, targets: [target, tool], cause: c.cause });
+  if (m.text) {
+    if (c.isPlayer || c.seen) w.say(w.text(m.text, { self: c.actor }));
+  } else if (c.isPlayer) w.say(w.msg("force.ok", vars, target));
+  else if (c.seen) w.say(w.msg("force.npc", vars, target), "ambient");
+  if (c.isPlayer && w.isContainer(target)) {
+    const inside = w.childrenOf(target).filter((x) => !w.isHidden(x) && w.perceives(w.playerId, x));
+    if (inside.length) w.say(w.msg("open.contents", { contents: listJoin(inside.map((x) => w.name(x))) }));
+  }
+  transgress(w, c.actor, target, "forced", c.cause);
+  applyEffects(w, m.effects, { by: "rule", ref: `${target}.force` }, { self: c.actor });
+  return { ok: true, minutes, summary: `forced ${w.label(target)} with ${w.label(tool)}` };
 }
 
 function consume(c: Ctx, item: string, on?: string): ActionResult {
@@ -883,6 +971,8 @@ function impact(c: Ctx, item: string, target: string, energy: number): void {
       setProp(w, id, "broken", true, c.cause, c.actor);
       w.emit("broken", { actor: c.actor, targets: [id], payload: { energy }, cause: c.cause });
       if (c.isPlayer || c.seen) w.say(w.msg("break.ok", { item: w.name(id) }, id));
+      makeNoise(w, id, BREAKING, c.cause, { actor: c.actor });
+      transgress(w, c.actor, id, "broke", c.cause);
     }
   }
 }
@@ -1091,6 +1181,7 @@ function attack(c: Ctx, req: ActionRequest): ActionResult {
   if (w.char(target).status === "dead") return fail(`${w.label(target)} is already dead`);
   const weapon = req.weapon && held(c, req.weapon) ? req.weapon : undefined;
   w.emit("attacked", { actor: c.actor, targets: [target], payload: { weapon: weapon ?? null }, cause: c.cause });
+  makeNoise(w, c.actor, FIGHTING, c.cause, { actor: c.actor });
   startCombat(w, c.actor, target, weapon, c.cause);
   return { ok: true, minutes: 0, summary: `attacked ${w.label(target)}` };
 }
@@ -1190,6 +1281,10 @@ function examine(c: Ctx, req: ActionRequest): ActionResult {
     return refuse(c, "examine.no-sight", { item: w.name(id) });
   }
   w.emit("examined", { actor: c.actor, targets: [id], cause: c.cause });
+  // Reading is learning, for anyone (§4.13).
+  for (const b of w.thing(id)?.teaches ?? []) {
+    if (!w.believes(c.actor, b)) addBelief(w, c.actor, b, 1, w.thing(id)!.name, c.cause);
+  }
   if (!c.isPlayer) return { ok: true, minutes: BASE_MINUTES.examine, summary: `examined ${w.label(id)}` };
   const def = w.thing(id)!;
   const text = w.text(def.description, { self: id });

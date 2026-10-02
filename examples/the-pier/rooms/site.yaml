@@ -13,7 +13,7 @@
   map:
     rows:
       - "#######I########"
-      - "#....y.........#"
+      - "#123.y.........#"
       - "#.ss.....tt..g.#"
       - "W......x.......#"
       - "#..m......p..r.#"
@@ -22,6 +22,9 @@
       ".": { terrain: concrete }
       "I": { exit: in }
       "y": { character: gary }
+      "1": { object: plasterboard-1 }
+      "2": { object: plasterboard-2 }
+      "3": { object: plasterboard-3 }
       "s": { object: skip }
       "t": { object: scaffold-tubes }
       "g": { object: generator }
@@ -43,7 +46,7 @@
       - "#dd..k..#"
       - "#.......#"
       - "#bb..g..O"
-      - "#......K#"
+      - "#.t....K#"
       - "#########"
     legend:
       ".": { terrain: lino }
@@ -54,10 +57,11 @@
       "g": { character: gary }
       "O": { exit: out }
       "K": { object: key-board }
+      "t": { object: timesheet }
 - id: hotel-lobby
   name: Hotel Lobby
   description:
-    - when: { flag: panelling_off }
+    - when: { property: { object: reception-panelling, key: fastened, value: false } }
       text: "The lobby of the Grand Atlantic, stripped back to brick. Where the reception panelling was, the old wall shows through, with a cavity at waist height. A staircase goes up into the dark."
     - when: { special: { PE: { gte: 7 } } }
       text: "The lobby of the Grand Atlantic, half gutted. Under the dust sheets you can see the pattern of the old tiles, and for a moment, palms in brass pots and a porter at the desk. The reception panelling is still to come off."
@@ -71,7 +75,7 @@
       - "#TTT....R..#"
       - "#..........#"
       - "#.PPPP..ss.#"
-      - "#..G.g..y..#"
+      - "#..G....y..#"
       - "#........t.#"
       - "######O#####"
     legend:
@@ -81,8 +85,7 @@
       "R": { object: radio }
       "P": { object: reception-panelling }
       "s": { object: dust-sheets }
-      "G": { object: guest-register }
-      "g": { object: photograph }
+      "G": { object: reception-cavity }
       "y": { character: gary }
       "t": { character: tommo }
       "O": { exit: out }
@@ -100,8 +103,8 @@
   map:
     rows:
       - "##################"
-      - "#v...m.......e...D"
-      - "#SSSS............#"
+      - "#v...........m.e.D"
+      - "#....SSSS...T....#"
       - "##################"
     legend:
       ".": { terrain: boards }
@@ -110,12 +113,19 @@
       "e": { character: edmund }
       "D": { exit: east }
       "S": { object: stacked-doors }
+      "T": { object: toolbox }
 - id: room-seven
   name: Room 7
   description:
     - when: { in_set_piece: the-lullaby }
       text: "Room 7 is furnished. It shouldn't be. A brass bed, a washstand, a lace-curtained window onto the pier. The air is warm and smells of lavender water."
-    - when: { any: [ { special: { PE: { gte: 7 } } }, { flag: marek_told }, { flag: saw_cradle } ] }
+    - when: { property: { object: floorboard, key: open, value: true } }
+      text: "Room 7: a sea view, bare boards, wallpaper hanging in tongues, and a black slot in the floor by the window where a board has come up."
+    - when:
+        any:
+          - { special: { PE: { gte: 7 } } }
+          - { believes: { who: player, belief: loose-board } }
+          - { property: { object: floorboard, key: revealed, value: true } }
       text: "Room 7: a sea view, bare boards, wallpaper hanging in tongues. The floor by the window is wrong somehow; one board sits slightly proud."
     - text: "Room 7: a sea view, bare boards, wallpaper hanging in tongues. It's colder in here than the corridor."
   exits:

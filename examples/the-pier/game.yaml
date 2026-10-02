@@ -1,13 +1,16 @@
 # The Pier: the first full example story (spec Q22), built from brief.md by following docs/authoring-guide.md.
 # A present-day ghost story on a Victorian pier. One ending, and it is inevitable: the player's agency is in how
-# much he understands before it happens. It is also a playthrough fixture (tests/pier.test.ts).
+# much he understands before it happens, and what state he leaves the block in. It is also a playthrough fixture
+# (tests/pier.test.ts).
 id: the-pier
 title: "The Pier"
 schema_version: "2.0"
-version: "0.3.0"
+version: "0.4.0"
 # 0.2.0 makes everything the room descriptions mention examinable; it only adds objects, so 0.1.0 saves still load.
 # 0.3.0 draws every room as a tile map (schema 2.0); older saves load and everyone is put on their authored tile.
-compatible_with: ["0.1.0", "0.2.0"]
+# 0.4.0 makes the block systemic (sound, forcing, ownership, the work): story pieces move, characters gain
+# behaviours and the clue flags become beliefs, so older saves are not compatible.
+compatible_with: []
 start: digs
 player:
   character: player

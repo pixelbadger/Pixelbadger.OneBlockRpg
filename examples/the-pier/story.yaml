@@ -6,10 +6,12 @@ synopsis: >
   been stillborn two months earlier, while Edmund was away; Clara hid it from him and carried the body
   wrapped in lace. On the pier he found out. That night he burned the glass house at the pier head with
   himself, his wife and the child inside. The pieces are a guest register behind the hotel's reception
-  panelling, Clara's letter under the floor of Room 7, and the 1893 newspaper in the pier archive (plus
-  Edith's legend and a silver rattle Shaun found on the beach). Each piece Liam uncovers drives him further
-  into the Ashdowns' story and out of his own. On the fifth night at the latest he goes out to the glass
-  house and recreates the fire. Nobody can stop it. What changes is how much he understands when he does.
+  panelling, Clara's letter under a loose board in Room 7, and the 1893 newspaper in the pier archive (plus
+  Edith's legend and a silver rattle Shaun found on the beach). Each piece Liam learns, by finding it or by
+  being told, drives him further into the Ashdowns' story and out of his own, while his ordinary life (the
+  job, Gary, his mates) carries on around him and frays. On the fifth night at the latest he goes out to the
+  glass house and recreates the fire. Nobody can stop it. What changes is what he understands, and what state
+  he leaves the block in: who still trusts him, who is out on the pier looking for him.
 tone: Quiet and accumulating, then unbearable. Grey sea, building dust, a pint at the Anchor, and the glass house.
 tensions:
   - "Liam is drifting away from the job, his mates and the pub; the more he learns, the less he is here."
@@ -23,45 +25,49 @@ beliefs:
   - { id: pier-fire-legend, text: "The glass house at the end of the pier burned down in 1893 with a couple inside." }
   - { id: child-had-a-name, text: "The Ashdowns' child was named Alice and was born on the 9th of June 1893." }
   - { id: singing-in-room-seven, text: "Someone sings in Room 7 of the hotel at night, where nobody is." }
+  - { id: room-seven-creaks, text: "A board creaks in Room 7 in the evenings, as if someone stood on it, though the room is locked and empty." }
+  - { id: loose-board, text: "One floorboard by the window of Room 7 is loose, and has been lifted before." }
   - { id: liam-not-right, text: "Liam isn't right lately; something is getting to him." }
 triggers:
-  # ─── Discoveries: the three pieces of the couple's story (brief §General plot) ───
+  # ─── Discoveries (brief §General plot). Reading a piece teaches whoever reads it (`teaches` on the object), so
+  # Gary learns from the register too. Liam can also be told (hooks, and Gary at the Anchor). The madness
+  # follows the beliefs, however they arrived; these triggers only mark the moment of reading. ───
   - id: read-register
     when: { event: { kind: examined, actor: player, target: guest-register } }
     do:
-      - { set_flag: clue_register }
-      - { add_belief: { who: player, belief: ashdowns-stayed } }
       - { award_xp: 50 }
       - narrate: "Room 7. Mr & Mrs E. Ashdown & infant. You read it three times. You know it's them the way you know your own handwriting."
     once: true
   - id: read-letter
     when: { event: { kind: examined, actor: player, target: claras-letter } }
     do:
-      - { set_flag: clue_letter }
-      - { add_belief: { who: player, belief: stillborn-secret } }
       - { award_xp: 50 }
       - narrate: "You fold the letter along its old creases. In the room behind you, very quietly, someone has stopped breathing in."
     once: true
   - id: read-newspaper
     when: { event: { kind: examined, actor: player, target: newspaper } }
     do:
-      - { set_flag: clue_newspaper }
-      - { add_belief: { who: player, belief: edmund-set-the-fire } }
       - { award_xp: 50 }
       - narrate: "The archive smells of damp and pencil shavings. Outside, the glass house catches the light, and for a moment every pane is orange."
     once: true
   - id: read-rattle
     when: { event: { kind: examined, actor: player, target: silver-rattle } }
-    do:
-      - { set_flag: clue_rattle }
-      - { add_belief: { who: player, belief: child-had-a-name } }
-      - { award_xp: 25 }
+    do: [ { award_xp: 25 } ]
+    once: true
+  # Hearing Room 7 yourself.
+  - id: heard-room-seven
+    when: { event: { kind: heard, actor: player, target: floorboard } }
+    do: [ { add_belief: { who: player, belief: room-seven-creaks, source: "heard it" } } ]
     once: true
 
   # ─── Madness: stage flags and SPECIAL modifiers (brief §Madness). Each story piece advances a stage, but the
   # madness takes days to set in: obsession from day 2, breakdown from day 3, so the earliest ending is night 3. ───
   - id: stage-unease
-    when: { any: [ { flag: clue_register }, { flag: clue_letter }, { flag: clue_newspaper } ] }
+    when:
+      any:
+        - { believes: { who: player, belief: ashdowns-stayed } }
+        - { believes: { who: player, belief: stillborn-secret } }
+        - { believes: { who: player, belief: edmund-set-the-fire } }
     do:
       - { set_flag: unease }
       - { modify: { who: player, id: madness-pe, attribute: PE, amount: 1 } }
@@ -74,9 +80,9 @@ triggers:
         - { flag: unease }
         - { day: { gte: 2 } }
         - any:
-            - { all: [ { flag: clue_register }, { flag: clue_letter } ] }
-            - { all: [ { flag: clue_register }, { flag: clue_newspaper } ] }
-            - { all: [ { flag: clue_letter }, { flag: clue_newspaper } ] }
+            - { all: [ { believes: { who: player, belief: ashdowns-stayed } }, { believes: { who: player, belief: stillborn-secret } } ] }
+            - { all: [ { believes: { who: player, belief: ashdowns-stayed } }, { believes: { who: player, belief: edmund-set-the-fire } } ] }
+            - { all: [ { believes: { who: player, belief: stillborn-secret } }, { believes: { who: player, belief: edmund-set-the-fire } } ] }
     do:
       - { set_flag: obsession }
       - { modify: { who: player, id: madness-pe, attribute: PE, amount: 2 } }
@@ -86,7 +92,12 @@ triggers:
     once: true
   - id: stage-breakdown
     when:
-      all: [ { flag: obsession }, { day: { gte: 3 } }, { flag: clue_register }, { flag: clue_letter }, { flag: clue_newspaper } ]
+      all:
+        - { flag: obsession }
+        - { day: { gte: 3 } }
+        - { believes: { who: player, belief: ashdowns-stayed } }
+        - { believes: { who: player, belief: stillborn-secret } }
+        - { believes: { who: player, belief: edmund-set-the-fire } }
     do:
       - { set_flag: breakdown }
       - { modify: { who: player, id: madness-pe, attribute: PE, amount: 4 } }
@@ -259,7 +270,12 @@ endings:
     title: "The Glass House"
     when: { flag: glass_house_burned }
     text:
-      - when: { all: [ { flag: clue_register }, { flag: clue_letter }, { flag: clue_newspaper }, { flag: clue_rattle } ] }
+      - when:
+          all:
+            - { believes: { who: player, belief: ashdowns-stayed } }
+            - { believes: { who: player, belief: stillborn-secret } }
+            - { believes: { who: player, belief: edmund-set-the-fire } }
+            - { believes: { who: player, belief: child-had-a-name } }
         text: >
           The deckchairs go up first, then the old varnish, then the glass, pane by pane, like applause.
           They are at their table. Clara pours. Edmund takes his cup and thanks her, and you know what he knows
@@ -267,7 +283,11 @@ endings:
           not angry any more. Nor are you. The heat is enormous and quite gentle. Across the water, Westcombe's
           lights come on one after another, and the town of 1893 comes on behind them, and somewhere a fire bell
           is ringing in both. You sit down with them. There is a cup for you. There has always been a cup for you.
-      - when: { all: [ { flag: clue_register }, { flag: clue_letter }, { flag: clue_newspaper } ] }
+      - when:
+          all:
+            - { believes: { who: player, belief: ashdowns-stayed } }
+            - { believes: { who: player, belief: stillborn-secret } }
+            - { believes: { who: player, belief: edmund-set-the-fire } }
         text: >
           The deckchairs go up first, then the old varnish, then the glass. They are at their table, Mr and Mrs
           Ashdown of Bath, Room 7, taking tea. She lifts the lace and he looks, and this time you look with him.

@@ -60,6 +60,10 @@ export function evalCondition(w: World, c: Condition, ctx: CondEnv = {}): boolea
     const id = who(c.in_room.who);
     return w.locationOf(id) === c.in_room.where || (!w.isChar(id) && w.roomOf(id) === c.in_room.where);
   }
+  if ("same_room" in c) {
+    const room = w.roomOf(who(c.same_room.who));
+    return !!room && room === w.roomOf(who(c.same_room.with));
+  }
   if ("holds" in c) return w.isWithin(c.holds.what, who(c.holds.who));
   if ("property" in c) {
     const id = who(c.property.object);
