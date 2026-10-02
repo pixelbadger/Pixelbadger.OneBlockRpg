@@ -1,0 +1,390 @@
+{
+  "tile": 32,
+  "sprites": {
+    "character/clara": {
+      "file": "character/clara.png",
+      "frames": 4,
+      "fps": 4
+    },
+    "character/edith": {
+      "file": "character/edith.png",
+      "frames": 4,
+      "fps": 4
+    },
+    "character/edmund": {
+      "file": "character/edmund.png",
+      "frames": 4,
+      "fps": 4
+    },
+    "character/gary": {
+      "file": "character/gary.png",
+      "frames": 4,
+      "fps": 4
+    },
+    "character/kez": {
+      "file": "character/kez.png",
+      "frames": 4,
+      "fps": 4
+    },
+    "character/marek": {
+      "file": "character/marek.png",
+      "frames": 4,
+      "fps": 4
+    },
+    "character/player": {
+      "file": "character/player.png",
+      "frames": 4,
+      "fps": 4
+    },
+    "character/shaun": {
+      "file": "character/shaun.png",
+      "frames": 4,
+      "fps": 4
+    },
+    "character/tommo": {
+      "file": "character/tommo.png",
+      "frames": 4,
+      "fps": 4
+    },
+    "exit/blocked": {
+      "file": "exit/blocked.png"
+    },
+    "exit/door": {
+      "file": "exit/door.png"
+    },
+    "exit/door-open": {
+      "file": "exit/door-open.png"
+    },
+    "exit/down": {
+      "file": "exit/down.png"
+    },
+    "exit/up": {
+      "file": "exit/up.png"
+    },
+    "fx/crit": {
+      "file": "fx/crit.png"
+    },
+    "fx/down": {
+      "file": "fx/down.png"
+    },
+    "fx/hit": {
+      "file": "fx/hit.png"
+    },
+    "fx/killed": {
+      "file": "fx/killed.png"
+    },
+    "fx/miss": {
+      "file": "fx/miss.png"
+    },
+    "object/anchor-window": {
+      "file": "object/room-seven-window.png",
+      "fit": "span"
+    },
+    "object/archive-cupboard": {
+      "file": "object/archive-cupboard.png"
+    },
+    "object/archive-key": {
+      "file": "object/archive-key.png"
+    },
+    "object/armchair": {
+      "file": "object/armchair.png"
+    },
+    "object/bar": {
+      "file": "object/bar.png"
+    },
+    "object/bassinet": {
+      "file": "object/bassinet.png"
+    },
+    "object/benches": {
+      "file": "object/benches.png"
+    },
+    "object/biscuit": {
+      "file": "object/biscuit.png"
+    },
+    "object/cabin-kettle": {
+      "file": "object/cabin-kettle.png"
+    },
+    "object/calendar": {
+      "file": "object/calendar.png"
+    },
+    "object/camp-bed": {
+      "file": "object/camp-bed.png",
+      "fit": "span"
+    },
+    "object/candyfloss-machine": {
+      "file": "object/candyfloss-machine.png"
+    },
+    "object/claras-letter": {
+      "file": "object/claras-letter.png"
+    },
+    "object/crowbar": {
+      "file": "object/crowbar.png"
+    },
+    "object/dartboard": {
+      "file": "object/dartboard.png"
+    },
+    "object/deck-rail": {
+      "file": "object/deck-rail.png"
+    },
+    "object/deckchairs": {
+      "file": "object/deckchairs.png"
+    },
+    "object/digs-bed": {
+      "file": "object/digs-bed.png",
+      "fit": "span"
+    },
+    "object/digs-kettle": {
+      "file": "object/digs-kettle.png"
+    },
+    "object/digs-telly": {
+      "file": "object/digs-telly.png"
+    },
+    "object/digs-window": {
+      "file": "object/room-seven-window.png",
+      "fit": "span"
+    },
+    "object/display-board": {
+      "file": "object/display-board.png"
+    },
+    "object/drawings": {
+      "file": "object/drawings.png",
+      "fit": "span"
+    },
+    "object/dresser": {
+      "file": "object/dresser.png",
+      "fit": "span"
+    },
+    "object/dust-sheets": {
+      "file": "object/dust-sheets.png",
+      "fit": "span"
+    },
+    "object/energy-cans": {
+      "file": "object/energy-cans.png"
+    },
+    "object/fairy-lights": {
+      "file": "object/fairy-lights.png"
+    },
+    "object/flat-telly": {
+      "file": "object/flat-telly.png"
+    },
+    "object/floorboard": {
+      "file": "object/floorboard.png"
+    },
+    "object/fruit-machine": {
+      "file": "object/fruit-machine.png"
+    },
+    "object/generator": {
+      "file": "object/generator.png"
+    },
+    "object/glass-house-outside": {
+      "file": "object/glass-house-outside.png"
+    },
+    "object/guest-register": {
+      "file": "object/guest-register.png"
+    },
+    "object/gulls": {
+      "file": "object/gulls.png"
+    },
+    "object/hard-hat": {
+      "file": "object/hard-hat.png"
+    },
+    "object/heras-fencing": {
+      "file": "object/heras-fencing.png"
+    },
+    "object/hi-vis": {
+      "file": "object/hi-vis.png"
+    },
+    "object/house-rules": {
+      "file": "object/house-rules.png"
+    },
+    "object/key-board": {
+      "file": "object/key-board.png"
+    },
+    "object/kez-bed": {
+      "file": "object/kez-bed.png",
+      "fit": "span"
+    },
+    "object/kiosk": {
+      "file": "object/kiosk.png"
+    },
+    "object/landing-stage": {
+      "file": "object/landing-stage.png"
+    },
+    "object/lifebuoy": {
+      "file": "object/lifebuoy.png"
+    },
+    "object/lobby-staircase": {
+      "file": "object/lobby-staircase.png"
+    },
+    "object/marek-bed": {
+      "file": "object/digs-bed.png",
+      "fit": "span"
+    },
+    "object/matches": {
+      "file": "object/matches.png"
+    },
+    "object/mug-of-tea": {
+      "file": "object/mug-of-tea.png"
+    },
+    "object/newspaper": {
+      "file": "object/newspaper.png"
+    },
+    "object/payphone": {
+      "file": "object/payphone.png"
+    },
+    "object/petrol-can": {
+      "file": "object/petrol-can.png"
+    },
+    "object/photograph": {
+      "file": "object/photograph.png"
+    },
+    "object/pier-legs": {
+      "file": "object/pier-legs.png"
+    },
+    "object/pier-sign": {
+      "file": "object/pier-sign.png"
+    },
+    "object/pier-view": {
+      "file": "object/pier-view.png"
+    },
+    "object/pint-1": {
+      "file": "object/pint-1.png"
+    },
+    "object/pint-2": {
+      "file": "object/pint-1.png"
+    },
+    "object/pint-3": {
+      "file": "object/pint-1.png"
+    },
+    "object/radio": {
+      "file": "object/radio.png"
+    },
+    "object/railings": {
+      "file": "object/railings.png"
+    },
+    "object/reception-panelling": {
+      "file": "object/reception-panelling.png"
+    },
+    "object/room-seven-key": {
+      "file": "object/room-seven-key.png"
+    },
+    "object/room-seven-window": {
+      "file": "object/room-seven-window.png",
+      "fit": "span"
+    },
+    "object/rosary": {
+      "file": "object/rosary.png"
+    },
+    "object/scaffold-tubes": {
+      "file": "object/scaffold-tubes.png",
+      "fit": "span"
+    },
+    "object/shelter": {
+      "file": "object/shelter.png",
+      "fit": "span"
+    },
+    "object/shingle": {
+      "file": "object/shingle.png"
+    },
+    "object/silver-rattle": {
+      "file": "object/silver-rattle.png"
+    },
+    "object/skip": {
+      "file": "object/skip.png",
+      "fit": "span"
+    },
+    "object/sleeping-tablets": {
+      "file": "object/sleeping-tablets.png"
+    },
+    "object/sofa": {
+      "file": "object/sofa.png",
+      "fit": "span"
+    },
+    "object/stacked-doors": {
+      "file": "object/stacked-doors.png"
+    },
+    "object/tea-flask": {
+      "file": "object/tea-flask.png"
+    },
+    "object/tea-room-sign": {
+      "file": "object/tea-room-sign.png"
+    },
+    "object/tea-table": {
+      "file": "object/tea-table.png"
+    },
+    "object/ticket-kiosk": {
+      "file": "object/ticket-kiosk.png"
+    },
+    "object/tommo-bed": {
+      "file": "object/tommo-bed.png",
+      "fit": "span"
+    },
+    "object/tray": {
+      "file": "object/tray.png"
+    },
+    "object/turnstile": {
+      "file": "object/turnstile.png"
+    },
+    "object/wallpaper": {
+      "file": "object/wallpaper.png"
+    },
+    "object/work-boots": {
+      "file": "object/work-boots.png"
+    },
+    "terrain/boards": {
+      "file": "terrain/boards.png"
+    },
+    "terrain/carpet": {
+      "file": "terrain/carpet.png"
+    },
+    "terrain/concrete": {
+      "file": "terrain/concrete.png"
+    },
+    "terrain/deck": {
+      "file": "terrain/deck.png"
+    },
+    "terrain/fence": {
+      "file": "terrain/fence.png"
+    },
+    "terrain/floor": {
+      "file": "terrain/floor.png"
+    },
+    "terrain/grass": {
+      "file": "terrain/grass.png"
+    },
+    "terrain/lino": {
+      "file": "terrain/lino.png"
+    },
+    "terrain/pavement": {
+      "file": "terrain/pavement.png"
+    },
+    "terrain/railing": {
+      "file": "terrain/railing.png"
+    },
+    "terrain/road": {
+      "file": "terrain/road.png"
+    },
+    "terrain/sand": {
+      "file": "terrain/sand.png"
+    },
+    "terrain/shingle": {
+      "file": "terrain/shingle.png"
+    },
+    "terrain/stairs": {
+      "file": "terrain/stairs.png"
+    },
+    "terrain/tiles": {
+      "file": "terrain/tiles.png"
+    },
+    "terrain/wall": {
+      "file": "terrain/wall.png"
+    },
+    "terrain/water": {
+      "file": "terrain/water.png",
+      "anim": "scroll"
+    },
+    "terrain/window": {
+      "file": "terrain/window.png"
+    }
+  }
+}
