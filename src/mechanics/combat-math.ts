@@ -2,6 +2,8 @@
 import type { Armour, Weapon } from "../payload/schema.js";
 
 export const AP_COST = {
+  /** One tile (§5.6). */
+  move: 1,
   aimed: 1,
   reload: 2,
   useItem: 2,
@@ -9,6 +11,9 @@ export const AP_COST = {
   leave: 4,
   bark: 0,
 } as const;
+
+/** Hit chance lost per tile beyond the first for ranged and thrown attacks (§5.6). */
+export const RANGE_PENALTY = 4;
 
 /** A round is 10 game seconds. */
 export const ROUND_SECONDS = 10;

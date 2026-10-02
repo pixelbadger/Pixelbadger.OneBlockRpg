@@ -6,6 +6,7 @@ import {
   AP_COST,
   damage as damageFormula,
   hitChance,
+  RANGE_PENALTY,
   ROUND_SECONDS,
   thrownWeapon,
   throwVelocity,
@@ -13,11 +14,27 @@ import {
 } from "../mechanics/combat-math.js";
 import { armourClass, criticalChance, luckNudge, meleeDamageBonus, sequence } from "../mechanics/special.js";
 import type { Exit, Weapon } from "../payload/schema.js";
-import { perform } from "./actions.js";
+import { attackRange, perform, walk } from "./actions.js";
 import { exitLabel } from "./describe.js";
 import { interpolate } from "./messages.js";
 import { awardXp, damage, moveThing, setProp } from "./mutate.js";
 import { set } from "./ops.js";
+import {
+  canSee,
+  cheb,
+  dirOffset,
+  distance,
+  exitOnTile,
+  findPath,
+  gridOf,
+  lineOfSight,
+  occupancy,
+  type Pos,
+  posOf,
+  standable,
+  terrainAt,
+  walkable,
+} from "./space.js";
 import type { Combatant, CombatState, Trail } from "./state.js";
 import type { Cause, World } from "./world.js";
 
@@ -25,6 +42,7 @@ const COMBAT: Cause = { by: "combat" };
 
 export type CombatIntent =
   | { kind: "attack"; target: string; aimed?: boolean }
+  | { kind: "move"; direction: string }
   | { kind: "use"; item: string }
   | { kind: "equip"; item: string }
   | { kind: "reload" }
@@ -117,7 +135,7 @@ export function startCombat(
     });
     const names = order.map((id) => w.label(id));
     show(w, w.msg("combat.start", { list: names.join(", ") }));
-    for (const f of fleeing) fleeRoom(w, f);
+    for (const f of fleeing) fleeRoom(w, f, undefined, true);
   } else {
     for (const id of [attacker, target]) {
       if (!combat.combatants.some((x) => x.id === id)) {
@@ -183,6 +201,18 @@ function strike(w: World, attacker: string, target: string, thrownItem: string |
     if (attacker === w.playerId) w.say(w.msg("combat.no-ap"), "system");
     return false;
   }
+  // Space (§5.6): melee needs an adjacent target; ranged and thrown need range and line of sight.
+  const range = attackRange(w, attacker, thrownItem);
+  const tiles = distance(w, attacker, target);
+  if (tiles > range) {
+    if (attacker === w.playerId) w.say(w.msg("combat.out-of-range", { target: w.label(target) }), "system");
+    return false;
+  }
+  if (range > 1 && !canSee(w, attacker, target)) {
+    if (attacker === w.playerId) w.say(w.msg("combat.no-sight", { target: w.label(target) }), "system");
+    return false;
+  }
+  const penalty = range > 1 && Number.isFinite(tiles) ? RANGE_PENALTY * Math.max(0, tiles - 1) : 0;
   if (weapon.ammo && item && !thrownItem) {
     const loaded = w.numProp(item, "loaded", weapon.ammo.capacity);
     if (loaded <= 0) {
@@ -198,12 +228,15 @@ function strike(w: World, attacker: string, target: string, thrownItem: string |
   const armourId = w.char(target).equipment.armour;
   const armour = armourId ? w.thing(armourId)?.armour : undefined;
   const ac = armourClass(ts, armour?.ac ?? 0);
-  const chance = hitChance(w.skill(attacker, weapon.skill), ac, weapon, as.ST, aimed, luckNudge(as.LK));
+  const chance = hitChance(w.skill(attacker, weapon.skill), ac, weapon, as.ST, aimed, luckNudge(as.LK) - penalty);
   const { roll, dmgRoll } = w.roll(
     (rng) => ({ roll: rng.die(100), dmgRoll: rng.int(weapon.damage[0], weapon.damage[1]) }),
     COMBAT,
   );
-  if (thrownItem) moveThing(w, thrownItem, c.room, "thrown", COMBAT, attacker, [target]);
+  if (thrownItem) {
+    const lands = posOf(w, target);
+    moveThing(w, thrownItem, c.room, "thrown", COMBAT, attacker, [target], lands ? { pos: lands } : {});
+  }
   const vars = {
     attacker: w.label(attacker),
     Attacker: w.label(attacker),
@@ -240,16 +273,82 @@ function passableExits(w: World, room: string, who: string): Exit[] {
   );
 }
 
-function fleeRoom(w: World, who: string, direction?: string): boolean {
+/** The tiles of an exit, by object identity. */
+function exitTiles(w: World, room: string, x: Exit): Pos[] {
+  const i = w.ix.rooms.get(room)?.exits.indexOf(x) ?? -1;
+  return gridOf(w, room)?.exitTiles.get(i) ?? [];
+}
+
+/** Path from `who` onto one of the exit's tiles (the last tile is the exit itself), or null. */
+function pathOnto(w: World, who: string, room: string, x: Exit): Pos[] | null {
+  const g = gridOf(w, room);
+  const from = w.state.objects[who]?.pos;
+  const tiles = exitTiles(w, room, x);
+  if (!g || !from) return [];
+  if (!tiles.length) return null;
+  return findPath(g, from, (p) => tiles.some((t) => t[0] === p[0] && t[1] === p[1]), occupancy(w, room, who));
+}
+
+/** Spends 1 AP a tile walking `who` along `path`, as far as their AP goes. Returns the tiles walked. */
+function combatWalk(w: World, who: string, path: readonly Pos[]): number {
+  const c = clone(cur(w)!);
+  const n = Math.min(path.length, Math.floor(c.ap / AP_COST.move));
+  if (n <= 0) return 0;
+  c.ap -= n * AP_COST.move;
+  update(w, c);
+  walk(w, who, path.slice(0, n), COMBAT);
+  return n;
+}
+
+/** A path for `who` to a tile it can attack `target` from (in range and, for ranged attacks, in sight). */
+function pathToStrike(w: World, who: string, target: string): Pos[] | null {
+  const room = w.roomOf(who);
+  const from = w.state.objects[who]?.pos;
+  const at = posOf(w, target);
+  if (!room || !from || !at) return [];
+  const g = gridOf(w, room)!;
+  const range = attackRange(w, who);
+  const ok = (p: Pos) => cheb(p, at) <= range && (range === 1 || canSeeTile(w, room, p, at));
+  if (ok(from)) return [];
+  const occ = occupancy(w, room, who);
+  return findPath(g, from, (p) => ok(p) && standable(g, p, occ), occ);
+}
+
+function canSeeTile(w: World, room: string, a: Pos, b: Pos): boolean {
+  return lineOfSight(w, room, a, b);
+}
+
+/**
+ * `who` leaves the room through an exit (§5.6): the one named, else the nearest. Out of combat (`free`), or with AP
+ * for the walk plus leave AP, they cross it; with less AP they walk towards it. Returns "fled", "moving" or "none".
+ */
+function fleeRoom(w: World, who: string, direction?: string, free = false): "fled" | "moving" | "none" {
   const room = w.roomOf(who)!;
   const exits = passableExits(w, room, who);
-  const x = direction
-    ? exits.find((e) => exitLabel(e).toLowerCase() === direction.toLowerCase() || e.to === direction)
-    : exits[0];
-  if (!x) return false;
+  const candidates = direction
+    ? exits.filter((e) => exitLabel(e).toLowerCase() === direction.toLowerCase() || e.to === direction)
+    : exits;
+  let best: { x: Exit; path: Pos[] } | null = null;
+  for (const x of candidates) {
+    const path = pathOnto(w, who, room, x);
+    if (path && (!best || path.length < best.path.length)) best = { x, path };
+  }
+  if (!best) return "none";
+  const { x, path } = best;
+  const approach = path.slice(0, -1);
+  if (!free) {
+    const c = cur(w)!;
+    if (c.ap < approach.length * AP_COST.move + AP_COST.leave) {
+      return combatWalk(w, who, approach) > 0 ? "moving" : "none";
+    }
+    combatWalk(w, who, approach);
+    const c2 = clone(cur(w)!);
+    c2.ap -= AP_COST.leave;
+    update(w, c2);
+  } else if (approach.length) walk(w, who, approach, COMBAT);
   if (x.via && w.prop(x.via, "open") !== true) setProp(w, x.via, "open", true, COMBAT, who);
   show(w, w.msg("combat.flee", { Actor: w.label(who), dir: exitLabel(x) }));
-  moveThing(w, who, x.to!, "moved", COMBAT, who, [room, x.to!]);
+  moveThing(w, who, x.to!, "moved", COMBAT, who, [room, x.to!], x.via ? { via: x.via } : {});
   w.emit("fled", { actor: who, targets: [who], cause: COMBAT });
   const c = cur(w);
   if (c) {
@@ -269,7 +368,7 @@ function fleeRoom(w: World, who: string, direction?: string): boolean {
     }
     update(w, c2);
   }
-  return true;
+  return "fled";
 }
 
 // ─── Pursuit (§5.6) ──────────────────────────────────────────────────────────
@@ -326,7 +425,8 @@ function pursue(w: World, who: string, trail: Trail): boolean {
   const vars = { Actor: w.label(who), target: w.label(trail.id), dir: trail.direction };
   if (who === w.playerId) w.say(w.msg("combat.pursue", vars), "combat");
   else if (w.roomOf(w.playerId) === from) w.say(w.msg("combat.pursue-npc", vars), "combat");
-  moveThing(w, who, trail.to, "moved", COMBAT, who, [from, trail.to]);
+  // The chase crosses the room to the same doorway; the pursuer arrives beside the quarry (§5.6).
+  moveThing(w, who, trail.to, "moved", COMBAT, who, [from, trail.to], x.via ? { via: x.via } : {});
   const c2 = clone(cur(w)!);
   c2.ap -= AP_COST.leave;
   c2.room = trail.to;
@@ -413,7 +513,8 @@ function npcTurn(w: World, id: string): void {
   const hpPct = (s.hp / w.maxHp(id)) * 100;
   const fleeAt = profile.flee_at ?? (profile.style === "coward" ? 60 : profile.style === "defensive" ? 20 : undefined);
   if (fleeAt !== undefined && hpPct <= fleeAt) {
-    if (cur(w)!.ap >= AP_COST.leave && fleeRoom(w, id)) return;
+    const fled = fleeRoom(w, id);
+    if (fled !== "none") return;
     const c = clone(cur(w)!);
     combatant(c, id)!.status = "surrendered";
     update(w, c);
@@ -449,7 +550,15 @@ function npcTurn(w: World, id: string): void {
       if (!reload(w, id)) return;
       continue;
     }
-    if (c.ap < weapon.ap) return;
+    // Close the distance first (§5.6): walk towards a tile it can strike from.
+    const path = pathToStrike(w, id, target);
+    if (path === null) return;
+    if (path.length) {
+      if (profile.style === "defensive" && attacks >= 1) return;
+      if (combatWalk(w, id, path) < path.length) return;
+      continue;
+    }
+    if (cur(w)!.ap < weapon.ap) return;
     if (profile.style === "defensive" && attacks >= 1) return;
     if (!strike(w, id, target, undefined, false)) return;
     attacks++;
@@ -510,8 +619,20 @@ export function playerCombat(w: World, intent: CombatIntent): CombatOutcome {
         break;
       }
       if (!combatant(c, intent.target)) break;
+      // Out of reach: walk towards the target with the AP there is, then strike if any is left.
+      const path = pathToStrike(w, p, intent.target);
+      if (path === null) {
+        w.say(w.msg("combat.out-of-range", { target: w.label(intent.target) }), "system");
+        break;
+      }
+      if (path.length && combatWalk(w, p, path) < path.length) break;
       const ok = strike(w, p, intent.target, undefined, intent.aimed ?? false);
       if (!ok) return endPlayerTurn(w);
+      break;
+    }
+    case "move": {
+      const r = combatStep(w, p, intent.direction);
+      if (r === "fled") return endPlayerTurn(w);
       break;
     }
     case "use": {
@@ -548,11 +669,13 @@ export function playerCombat(w: World, intent: CombatIntent): CombatOutcome {
         w.say(w.msg("combat.no-ap"), "system");
         break;
       }
-      if (!fleeRoom(w, p, intent.direction)) {
+      const fled = fleeRoom(w, p, intent.direction);
+      if (fled === "none") {
         w.say(w.msg("go.no-exit"), "system");
         break;
       }
-      return endPlayerTurn(w);
+      if (fled === "fled") return endPlayerTurn(w);
+      break;
     }
     case "pursue": {
       const trail = pursuable(w, p).find((t) => t.id === intent.target);
@@ -586,6 +709,8 @@ function endPlayerTurn(w: World): CombatOutcome {
 export function cheapestPlayerAction(w: World): number {
   const p = w.playerId;
   const costs = [weaponOf(w, p).weapon.ap, AP_COST.leave];
+  // Walking is worth a turn's AP only while someone is out of reach.
+  if (opponents(w, p).some((o) => distance(w, p, o) > attackRange(w, p))) costs.push(AP_COST.move);
   const inv = w.inventory(p);
   if (inv.some((x) => w.thing(x)?.consumable)) costs.push(AP_COST.useItem);
   if (inv.some((x) => w.thing(x)?.weapon && w.char(p).equipment.weapon !== x)) costs.push(AP_COST.equip);
@@ -595,4 +720,40 @@ export function cheapestPlayerAction(w: World): number {
 /** Opponents the player can target, for menus. */
 export function playerTargets(w: World): string[] {
   return cur(w) ? opponents(w, w.playerId) : [];
+}
+
+/**
+ * One tile in combat for 1 AP (§5.6). Onto an exit tile it is leaving, which also costs leave AP. Returns "moved",
+ * "fled" or "blocked".
+ */
+export function combatStep(w: World, who: string, direction: string): "moved" | "fled" | "blocked" {
+  const c = cur(w);
+  const room = w.roomOf(who);
+  const from = w.state.objects[who]?.pos;
+  const d = dirOffset(direction);
+  if (!c || !room || !from || !d) return "blocked";
+  const to: Pos = [from[0] + d[0], from[1] + d[1]];
+  const exit = exitOnTile(w, room, to);
+  if (exit) {
+    if (c.ap < AP_COST.leave) {
+      if (who === w.playerId) w.say(w.msg("combat.no-ap"), "system");
+      return "blocked";
+    }
+    return fleeRoom(w, who, exitLabel(exit.exit)) === "fled" ? "fled" : "blocked";
+  }
+  const g = gridOf(w, room)!;
+  const cornerCut =
+    d[0] !== 0 &&
+    d[1] !== 0 &&
+    (!walkable(terrainAt(g, [from[0] + d[0], from[1]])) || !walkable(terrainAt(g, [from[0], from[1] + d[1]])));
+  if (cornerCut || !standable(g, to, occupancy(w, room, who))) {
+    if (who === w.playerId) w.say(w.msg("step.wall"), "system");
+    return "blocked";
+  }
+  if (c.ap < AP_COST.move) {
+    if (who === w.playerId) w.say(w.msg("combat.no-ap"), "system");
+    return "blocked";
+  }
+  combatWalk(w, who, [to]);
+  return "moved";
 }

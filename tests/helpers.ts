@@ -18,7 +18,7 @@ export function mini(over: Partial<PayloadInput> = {}): Payload {
     game: {
       id: "mini",
       title: "Mini",
-      schema_version: "1.0",
+      schema_version: "2.0",
       start: "hall",
       player: { character: "player" },
       clock: { time: "08:00" },
@@ -33,12 +33,31 @@ export function mini(over: Partial<PayloadInput> = {}): Payload {
           { direction: "north", to: "kitchen", via: "door" },
           { direction: "east", blocked: "The ring road. The block ends here." },
         ],
+        map: {
+          rows: ["###D###", "#k...g#", "w.@.a.E", "#b.n.s#", "#######"],
+          legend: {
+            D: { exit: "north" },
+            E: { exit: "east" },
+            k: { object: "key" },
+            g: { object: "ghost" },
+            w: { object: "window" },
+            a: { object: "anvil" },
+            b: { object: "box" },
+            s: { object: "secret" },
+            n: { character: "npc" },
+            "@": { character: "player" },
+          },
+        },
       },
       {
         id: "kitchen",
         name: "Kitchen",
         description: "A kitchen.",
         exits: [{ direction: "south", to: "hall", via: "door" }],
+        map: {
+          rows: ["#####", "#B.l#", "#...#", "##S##"],
+          legend: { B: { object: "bed" }, l: { object: "bell" }, S: { exit: "south" } },
+        },
       },
     ],
     objects: [

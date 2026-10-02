@@ -1,6 +1,7 @@
 import { EVENT_KINDS } from "../core/event-kinds.js";
 import type { PayloadIssue } from "./issues.js";
 import { type Collection, type LoadResult, loadPayload, locate, locateEntity, type Origins } from "./loader.js";
+import { checkMaps } from "./maps.js";
 import {
   type Condition,
   DEFAULT_CONVERSATION_ACTIONS,
@@ -89,6 +90,9 @@ export function checkPayload(p: Payload, origins: Origins): PayloadIssue[] {
   const isPlace = (id: string) => rooms.has(id) || objects.has(id) || chars.has(id);
   const isWho = (id: string) => id === "player" || id === "self" || isThing(id);
   const isCharRef = (id: string) => id === "player" || id === "self" || chars.has(id);
+
+  // ── maps (§7.10) ──
+  for (const m of checkMaps(p)) add(m.severity, ent("rooms", m.room, ...m.path), m.message, m.fix);
 
   // ── game ──
   if (!rooms.has(p.game.start)) {

@@ -5,6 +5,7 @@
 export const EVENT_KINDS = [
   // actions (§4.3)
   "moved", // actor moved from one room to another (targets: [from, to])
+  "walked", // actor walked across tiles within a room (payload.path) (§4.10)
   "took",
   "dropped",
   "put",
@@ -81,6 +82,7 @@ export const EVENT_KINDS = [
   "callout",
   "narrated",
   "clock-advanced",
+  "seconds-carried", // walking time short of a whole minute (§4.10)
   "day-ended",
   "day-summary",
   "day-log",

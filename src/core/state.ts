@@ -10,6 +10,8 @@ import type { ActionRequest, CombatProfile, Scalar, SkillId, Special, Tier } fro
 export interface ObjState {
   /** Room, container or character id; null when off-stage (not yet spawned, or removed). */
   location: string | null;
+  /** The tile this stands on, when directly in a room (§4.10); null otherwise. */
+  pos?: [number, number] | null;
   props: Record<string, Scalar>;
 }
 
@@ -164,6 +166,8 @@ export interface WorldState {
   objects: Record<string, ObjState>;
   chars: Record<string, CharState>;
   visited: string[];
+  /** Seconds walked towards the next whole minute (§4.10: a step is 10 seconds). */
+  seconds?: number;
   triggersFired: string[];
   /** Last value of edge-triggered conditions, keyed by trigger or rule. */
   edges: Record<string, boolean>;

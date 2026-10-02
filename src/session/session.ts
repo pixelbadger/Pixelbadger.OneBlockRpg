@@ -44,6 +44,8 @@ import { parseCombat, parseCommand, parseSkill } from "./parser.js";
 import type { Intent, MenuItem, Mode, TurnOutput, ViewModel, ViewOf } from "./port.js";
 
 const PLAYER: Cause = { by: "player" };
+/** Game seconds per tile walked outside combat (§4.10, Q36). */
+const STEP_SECONDS = 10;
 
 export const HELP = `Type commands like: look, go north (or n), take kettle, open drawer, put key in drawer, use kettle,
 use deed on letters, give letters to dev, show deed to okafor, talk to okafor, buy bandage from ravi,
@@ -491,7 +493,7 @@ export class Session {
     const roomBefore = w.roomOf(p);
     this.lastMenu = [];
     const r = perform(w, p, action, PLAYER);
-    const minutes = r.fixedTime ? r.minutes : actionMinutes(r.minutes, w.ap(p));
+    const minutes = (r.fixedTime ? r.minutes : actionMinutes(r.minutes, w.ap(p))) + this.walked(r.steps ?? 0);
     if (action.act === "look") this.pushRoom();
     await this.advance(minutes);
     // Inside a set piece the director takes one turn after each player turn (Q29).
@@ -507,6 +509,18 @@ export class Session {
     }
     if (this.mode === "explore" && w.roomOf(p) !== roomBefore) this.pushRoom();
     await compactDayLogs(this.narrative);
+  }
+
+  /** Turns tiles walked into whole minutes, carrying the remainder (§4.10: a step is 10 seconds). */
+  private walked(steps: number): number {
+    if (!steps) return 0;
+    const w = this.w;
+    const total = (w.state.seconds ?? 0) + steps * STEP_SECONDS;
+    const rest = total % 60;
+    if (rest !== (w.state.seconds ?? 0)) {
+      w.emit("seconds-carried", { payload: { seconds: rest }, cause: PLAYER, ops: [set(["seconds"], rest)] });
+    }
+    return Math.floor(total / 60);
   }
 
   /** Advance time, then react: signals (conversations, callouts, sleep), combat, conversation endings. */

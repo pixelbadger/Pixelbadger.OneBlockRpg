@@ -28,11 +28,31 @@ import {
   setProp,
 } from "./mutate.js";
 import { set } from "./ops.js";
+import {
+  canSee,
+  cheb,
+  dirOffset,
+  distance,
+  exitOnTile,
+  findPath,
+  gridOf,
+  inReach,
+  isFixed,
+  occupancy,
+  type Pos,
+  pathNextTo,
+  posOf,
+  reachTiles,
+  standable,
+  terrainAt,
+  walkable,
+} from "./space.js";
 import type { Cause, World } from "./world.js";
 
 /** Base minutes at AP 8 (Q8: 1–5), scaled by 8 / AP. */
 export const BASE_MINUTES: Record<ActionVerb, number> = {
   go: 2,
+  step: 0,
   take: 1,
   drop: 1,
   put: 1,
@@ -72,6 +92,8 @@ export interface ActionResult {
   summary: string;
   /** True if time should not be scaled by AP (wait). */
   fixedTime?: boolean;
+  /** Tiles walked, on top of `minutes` (§4.10: 10 seconds each). */
+  steps?: number;
 }
 
 const fail = (summary: string): ActionResult => ({ ok: false, minutes: 0, summary });
@@ -83,6 +105,9 @@ interface Ctx {
   isPlayer: boolean;
   /** Player perceives this actor's actions (same room, awake). */
   seen: boolean;
+  /** Tiles walked so far during this action. */
+  steps: number;
+  inCombat: boolean;
 }
 
 /** Tell the player: second person if they did it, third person if they saw it. */
@@ -132,7 +157,15 @@ export function perform(
   cause: Cause,
   opts: { inCombat?: boolean } = {},
 ): ActionResult {
-  const c: Ctx = { w, actor, cause, isPlayer: actor === w.playerId, seen: playerSees(w, actor) };
+  const c: Ctx = {
+    w,
+    actor,
+    cause,
+    isPlayer: actor === w.playerId,
+    seen: playerSees(w, actor),
+    steps: 0,
+    inCombat: !!opts.inCombat,
+  };
   if (!w.isChar(actor)) return fail(`${actor} is not a character`);
   const st = w.char(actor);
   if (st.status !== "ok") return fail(`${w.label(actor)} is ${st.status === "dead" ? "dead" : "unconscious"}`);
@@ -148,15 +181,157 @@ export function perform(
     else if (req.act !== "look") sneakRolls(w, actor, w.roomOf(actor), c.cause);
     c.seen = playerSees(w, actor);
   }
-  const r = dispatch(c, req);
-  if (w.char(actor).sneaking && !r.fixedTime && r.minutes > 0) return { ...r, minutes: r.minutes * SNEAK_TIME };
-  return r;
+  const approached = c.inCombat ? null : approach(c, req);
+  const r = approached ?? dispatch(c, req);
+  const out = c.steps ? { ...r, steps: c.steps } : r;
+  if (w.char(actor).sneaking && !r.fixedTime && r.minutes > 0) return { ...out, minutes: r.minutes * SNEAK_TIME };
+  return out;
+}
+
+// ─── Space: walking and reach (§4.10) ────────────────────────────────────────
+
+/** Moves `who` along `path` within their room as one event. */
+export function walk(w: World, who: string, path: readonly Pos[], cause: Cause): void {
+  if (!path.length) return;
+  w.emit("walked", {
+    actor: who,
+    targets: [who],
+    payload: { path },
+    cause,
+    ops: [set(["objects", who, "pos"], path[path.length - 1])],
+  });
+}
+
+/** What an action needs within reach (adjacent tile), by verb. Things already held never need walking to. */
+function reachNeeds(c: Ctx, req: ActionRequest): string[] {
+  const { w } = c;
+  const free = (id: string | undefined): id is string => !!id && id !== c.actor && !w.isWithin(id, c.actor);
+  const ids: (string | undefined)[] = [];
+  switch (req.act) {
+    case "take": {
+      const item = req.item ?? req.target;
+      const holder = item ? w.holderOf(item) : null;
+      ids.push(holder && holder !== c.actor ? holder : item);
+      break;
+    }
+    case "put":
+      ids.push(req.on ?? req.target ?? req.to);
+      break;
+    case "open":
+    case "close":
+    case "lock":
+    case "unlock":
+    case "push":
+      ids.push(req.target ?? req.item);
+      break;
+    case "use": {
+      const item = req.item ?? req.target;
+      ids.push(item, req.item ? (req.on ?? (req.target !== req.item ? req.target : undefined)) : req.on);
+      break;
+    }
+    case "give":
+    case "show":
+      ids.push(req.to ?? req.target);
+      break;
+    case "steal":
+      ids.push(req.from ?? req.target);
+      break;
+    case "buy":
+      ids.push(req.from ?? req.target);
+      break;
+    case "sell":
+      ids.push(req.to ?? req.target);
+      break;
+    case "talk":
+      ids.push(req.target ?? req.to);
+      break;
+    case "sleep": {
+      const room = w.roomOf(c.actor);
+      ids.push(
+        (req.target ?? req.on ?? req.item) ||
+          w.scope(c.actor).find((x) => w.thing(x)?.affordances.includes("sleepable") && w.roomOf(x) === room),
+      );
+      break;
+    }
+    case "attack": {
+      const target = req.target;
+      // Ranged and thrown attacks fire from where you stand when you can (§5.6).
+      if (target && !rangedReach(w, c.actor, target, req.weapon)) ids.push(target);
+      break;
+    }
+  }
+  return ids.filter(free);
+}
+
+/** Can `who` hit `target` from here with a ranged weapon or a thrown item? */
+export function rangedReach(w: World, who: string, target: string, thrown?: string): boolean {
+  const range = attackRange(w, who, thrown);
+  return range > 1 && distance(w, who, target) <= range && canSee(w, who, target);
+}
+
+/** Reach of `who`'s attack in tiles: 1 for melee, the weapon's range, or 2 × ST for something thrown (§5.6). */
+export function attackRange(w: World, who: string, thrown?: string): number {
+  if (thrown) return 2 * w.special(who).ST;
+  const item = w.char(who).equipment.weapon;
+  const def = item && w.isWithin(item, who) ? w.thing(item)?.weapon : undefined;
+  if (!def?.ranged) return 1;
+  return def.range ?? 15;
+}
+
+/** Walks the actor next to whatever the action needs, or refuses if they can't get there. */
+function approach(c: Ctx, req: ActionRequest): ActionResult | null {
+  const { w } = c;
+  const room = w.roomOf(c.actor);
+  if (!room) return null;
+  for (const id of reachNeeds(c, req)) {
+    if (!w.thing(id) || inReach(w, c.actor, id)) continue;
+    const tiles = reachTiles(w, room, id);
+    if (!tiles.length) continue;
+    const path = pathNextTo(w, c.actor, tiles);
+    if (!path) return refuse(c, "reach.none", { item: w.name(id) });
+    walk(w, c.actor, path, c.cause);
+    c.steps += path.length;
+  }
+  return null;
+}
+
+/** One tile in one of eight directions; onto an exit tile it is `go` through that exit (§4.10). */
+function stepTo(c: Ctx, req: ActionRequest): ActionResult {
+  const { w } = c;
+  const room = w.roomOf(c.actor);
+  const from = w.state.objects[c.actor]?.pos;
+  const d = req.direction ? dirOffset(req.direction) : undefined;
+  if (!room || !from || !d) return refuse(c, "step.wall");
+  const g = gridOf(w, room)!;
+  const to: Pos = [from[0] + d[0], from[1] + d[1]];
+  const exit = exitOnTile(w, room, to);
+  if (exit) return traverse(c, exit.exit);
+  const occ = occupancy(w, room, c.actor);
+  const cornerCut =
+    d[0] !== 0 &&
+    d[1] !== 0 &&
+    (!walkable(terrainAt(g, [from[0] + d[0], from[1]])) || !walkable(terrainAt(g, [from[0], from[1] + d[1]])));
+  if (!cornerCut && standable(g, to, occ)) {
+    walk(w, c.actor, [to], c.cause);
+    c.steps += 1;
+    return { ok: true, minutes: 0, summary: `stepped ${req.direction}` };
+  }
+  const there = w.childrenOf(room).find((id) => {
+    const p = w.state.objects[id]?.pos;
+    if (w.isChar(id)) return !!p && p[0] === to[0] && p[1] === to[1] && w.char(id).status !== "dead";
+    return isFixed(w, id) && reachTiles(w, room, id).some((t) => t[0] === to[0] && t[1] === to[1]);
+  });
+  if (there && w.isChar(there)) return refuse(c, "step.someone", { Actor: w.label(there) });
+  if (there) return refuse(c, "step.blocked", { item: w.name(there) }, there);
+  return refuse(c, "step.wall");
 }
 
 function dispatch(c: Ctx, req: ActionRequest): ActionResult {
   switch (req.act) {
     case "go":
       return go(c, req);
+    case "step":
+      return stepTo(c, req);
     case "take":
       return take(c, req);
     case "drop":
@@ -212,7 +387,7 @@ function dispatch(c: Ctx, req: ActionRequest): ActionResult {
 export function sneakRolls(w: World, sneaker: string, room: string | null, cause: Cause): string[] {
   const s = w.char(sneaker).sneaking;
   if (!s || !room) return [];
-  const observers = w.witnessesIn(room).filter((o) => o !== sneaker && !s.aware.includes(o));
+  const observers = w.witnessesIn(room).filter((o) => o !== sneaker && !s.aware.includes(o) && canSee(w, o, sneaker));
   if (!observers.length) return [];
   const skill = w.skill(sneaker, "sneak");
   const LK = w.special(sneaker).LK;
@@ -363,7 +538,25 @@ function passDoor(c: Ctx, x: Exit): ActionResult | null {
   return null;
 }
 
-function step(c: Ctx, x: Exit): ActionResult {
+/** Walks the actor to an exit's tile, then through it (§4.10). */
+function traverse(c: Ctx, x: Exit): ActionResult {
+  const { w } = c;
+  const room = w.locationOf(c.actor)!;
+  const g = gridOf(w, room);
+  const from = w.state.objects[c.actor]?.pos;
+  const index = w.ix.rooms.get(room)?.exits.indexOf(x) ?? -1;
+  const tiles = g?.exitTiles.get(index) ?? [];
+  if (g && from && tiles.length && !tiles.some((t) => cheb(t, from) <= 1)) {
+    const occ = occupancy(w, room, c.actor);
+    const path = findPath(g, from, (p) => tiles.some((t) => cheb(t, p) <= 1) && standable(g, p, occ), occ);
+    if (!path) return refuse(c, "go.no-path", { dir: exitLabel(x) });
+    walk(w, c.actor, path, c.cause);
+    c.steps += path.length;
+  }
+  return cross(c, x);
+}
+
+function cross(c: Ctx, x: Exit): ActionResult {
   const { w } = c;
   const from = w.locationOf(c.actor)!;
   if (x.blocked) {
@@ -382,11 +575,11 @@ function step(c: Ctx, x: Exit): ActionResult {
   const compass = /^(north|south|east|west|up|down|in|out|north-?east|north-?west|south-?east|south-?west)$/i.test(dir);
   const room = w.ix.rooms.get(x.to!)!.name;
   const playerRoom = w.roomOf(w.playerId);
+  moveThing(w, c.actor, x.to!, "moved", c.cause, c.actor, [from, x.to!], x.via ? { via: x.via } : {});
+  pruneAware(w, c.actor);
   // A sneaker's arrival is a fresh chance for those in the next room to notice.
   sneakRolls(w, c.actor, x.to!, c.cause);
   const seenArriving = c.isPlayer || (w.perceives(w.playerId, c.actor) && w.isAwake(w.playerId));
-  moveThing(w, c.actor, x.to!, "moved", c.cause, c.actor, [from, x.to!]);
-  pruneAware(w, c.actor);
   if (c.isPlayer) {
     w.say(w.msg(compass ? "go.ok" : "go.ok-to", { dir, room }));
   } else if (seenArriving) {
@@ -404,14 +597,14 @@ function go(c: Ctx, req: ActionRequest): ActionResult {
   const token = req.direction ?? req.to;
   if (!token) return refuse(c, "go.no-exit");
   const x = findExit(w, room, token);
-  if (x) return step(c, x);
+  if (x) return traverse(c, x);
   // Characters may be sent to any room by id: walk the route one exit at a time.
   if (!c.isPlayer && w.isRoom(token)) {
     const path = route(w, room, token);
     if (!path) return fail(`no route to ${token}`);
     let minutes = 0;
     for (const e of path) {
-      const r = step(c, e);
+      const r = traverse(c, e);
       if (!r.ok) return { ...r, minutes };
       minutes += r.minutes;
     }
@@ -641,11 +834,16 @@ function throwIt(c: Ctx, req: ActionRequest): ActionResult {
   const ST = w.special(c.actor).ST;
   if (mass > maxThrowMass(ST)) return refuse(c, "throw.too-heavy", { item: w.name(item) }, item);
   if (target && !inScope(c, target)) return refuse(c, "not-here");
+  if (target && w.roomOf(target) === w.roomOf(c.actor)) {
+    if (!canSee(w, c.actor, target)) return refuse(c, "throw.no-sight", { target: w.name(target) });
+    if (distance(w, c.actor, target) > 2 * ST) return refuse(c, "throw.out-of-range", { target: w.name(target) });
+  }
   // Throwing at a person is an attack with an improvised weapon (§5.6).
   if (target && w.isChar(target)) return attack(c, { act: "attack", target, weapon: item });
   const velocity = throwVelocity(ST, mass);
   const room = w.roomOf(c.actor)!;
-  moveThing(w, item, room, "thrown", c.cause, c.actor, target ? [target] : []);
+  const lands = target ? posOf(w, target) : null;
+  moveThing(w, item, room, "thrown", c.cause, c.actor, target ? [target] : [], lands ? { pos: lands } : {});
   setProp(w, item, "velocity", velocity, c.cause, c.actor);
   if (target) {
     const vars = { item: w.name(item), target: w.name(target), Actor: w.label(c.actor) };
@@ -988,6 +1186,9 @@ function examine(c: Ctx, req: ActionRequest): ActionResult {
     return { ok: true, minutes: 0, summary: "examined themself" };
   }
   if (!id || (!inScope(c, id) && !doorHere(c, id))) return refuse(c, "not-here");
+  if (!w.isWithin(id, c.actor) && w.roomOf(id) === w.roomOf(c.actor) && !canSee(w, c.actor, id)) {
+    return refuse(c, "examine.no-sight", { item: w.name(id) });
+  }
   w.emit("examined", { actor: c.actor, targets: [id], cause: c.cause });
   if (!c.isPlayer) return { ok: true, minutes: BASE_MINUTES.examine, summary: `examined ${w.label(id)}` };
   const def = w.thing(id)!;
