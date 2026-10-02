@@ -287,6 +287,20 @@ describe("effects", () => {
   });
 });
 
+describe("reading (§4.13)", () => {
+  it("teaches whoever reads a document, player or not", () => {
+    const w = world(
+      block((p) => {
+        p.objects.find((o) => o.id === "coin")!.teaches = ["coin-is-old"];
+      }),
+    );
+    w.state.objects.coin!.location = "hall";
+    perform(w, "npc", { act: "examine", target: "coin" }, B);
+    expect(w.believes("npc", "coin-is-old")).toBe(true);
+    expect(w.char("npc").beliefs.find((b) => b.id === "coin-is-old")?.source).toBe("coin");
+  });
+});
+
 describe("validation", () => {
   it("checks owners, step noises and force tools", () => {
     const p = block((p) => {

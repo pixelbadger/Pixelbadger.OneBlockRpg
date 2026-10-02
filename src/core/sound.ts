@@ -142,7 +142,7 @@ function hear(
     payload: { sound: noise.sound, room, level, near },
     cause,
   });
-  const where = near ? "" : ` from ${roomName}`;
+  const where = near ? "" : `, from ${roomName}`;
   w.dayLog(who, "heard", `Heard ${noise.sound}${where}.`, cause);
   if (who !== w.playerId) return;
   // What you can see happening you don't also need telling you heard.

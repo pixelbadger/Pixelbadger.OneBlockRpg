@@ -363,6 +363,7 @@ describe("sneaking (§5.4)", () => {
       tags: [],
       uses: [],
       force: [],
+      teaches: [],
       messages: {},
     });
     const w = world(p, "quiet");

@@ -1157,6 +1157,14 @@
             ],
             "additionalProperties": false
           },
+          "teaches": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
           "owner": {
             "type": "string",
             "minLength": 1,
@@ -1866,6 +1874,14 @@
               "sound"
             ],
             "additionalProperties": false
+          },
+          "teaches": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
           },
           "owner": {
             "type": "string",
@@ -3098,6 +3114,7 @@
                     "act",
                     "say",
                     "narrate",
+                    "remember",
                     "set_intent",
                     "start_behaviour",
                     "stop_behaviour",
@@ -3490,6 +3507,33 @@
           },
           "required": [
             "in_room"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "same_room": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "with": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "who",
+                "with"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "same_room"
           ],
           "additionalProperties": false
         },
@@ -4666,6 +4710,33 @@
           },
           "required": [
             "narrate"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "remember": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "text": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "who",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "remember"
           ],
           "additionalProperties": false
         },

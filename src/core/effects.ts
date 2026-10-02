@@ -130,6 +130,8 @@ export function applyEffect(w: World, e: Effect, cause: Cause, ctx: EvalContext 
     w.emit("narrated", { payload: { text }, cause });
     w.say(text);
     w.dayLog(w.playerId, "witnessed", text, cause);
+  } else if ("remember" in e) {
+    w.dayLog(r(e.remember.who), "note", w.interpolate(e.remember.text), cause);
   } else if ("set_intent" in e) {
     const [who, intent] =
       e.set_intent === null || typeof e.set_intent === "string"

@@ -117,6 +117,7 @@ export type Condition =
   | { time_before: string }
   | { day: Comparison }
   | { in_room: { who: string; where: string } }
+  | { same_room: { who: string; with: string } }
   | { holds: { who: string; what: string } }
   | { property: { object: string; key: string; op?: "eq" | "ne" | "gt" | "gte" | "lt" | "lte"; value: Scalar } }
   | { special: { who?: string } & Partial<Record<Attribute, Comparison>> }
@@ -151,6 +152,7 @@ export const Condition: z.ZodType<Condition> = z.lazy(() =>
     z.strictObject({ time_before: ClockTime }),
     z.strictObject({ day: Comparison }),
     z.strictObject({ in_room: z.strictObject({ who: Who, where: Id }) }),
+    z.strictObject({ same_room: z.strictObject({ who: Who, with: Who }) }),
     z.strictObject({ holds: z.strictObject({ who: Who, what: Id }) }),
     z.strictObject({
       property: z.strictObject({
@@ -283,6 +285,7 @@ export type Effect =
   | ({ act: ActionVerb; actor?: string } & Omit<ActionRequest, "act">)
   | { say: string | { who: string; text: string } }
   | { narrate: TextVariants }
+  | { remember: { who: string; text: string } }
   | { set_intent: string | null | { who: string; intent: string | null } }
   | { start_behaviour: string | { who?: string; behaviour: string } }
   | { stop_behaviour: string | { who?: string; behaviour: string } }
@@ -341,6 +344,8 @@ export const Effect: z.ZodType<Effect> = z.lazy(() =>
     z.strictObject({ act: z.enum(ACTION_VERBS), actor: Who.optional(), ...actionParams }),
     z.strictObject({ say: z.union([z.string(), z.strictObject({ who: Who, text: z.string() })]) }),
     z.strictObject({ narrate: TextVariants }),
+    /** A note in a character's day log (§6.8): what they make of something, for their conversations and summaries. */
+    z.strictObject({ remember: z.strictObject({ who: Who, text: z.string().min(1) }) }),
     z.strictObject({
       set_intent: z.union([z.string(), z.null(), z.strictObject({ who: Who, intent: z.string().nullable() })]),
     }),
@@ -405,6 +410,7 @@ export const EFFECT_KINDS = [
   "act",
   "say",
   "narrate",
+  "remember",
   "set_intent",
   "start_behaviour",
   "stop_behaviour",
@@ -620,6 +626,8 @@ const objectFields = {
   force: z.array(ForceMethod).default([]),
   /** Sound made when someone walks over it (needs the `underfoot` affordance) (§4.11). */
   step_noise: Noise.optional(),
+  /** Beliefs (story belief ids) anyone who examines this learns: what a letter or a register says (§4.13). */
+  teaches: z.array(z.string().min(1)).default([]),
   /** The character it belongs to (§4.13). Others need `permitted` to take, force or break it unremarked. */
   owner: Id.optional(),
   /** Who else may take or force it, evaluated with `self` as the would-be taker. */

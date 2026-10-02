@@ -18,6 +18,7 @@ import { exitLabel } from "./describe.js";
 import { applyEffects, resolveCheck } from "./effects.js";
 import { listJoin } from "./messages.js";
 import {
+  addBelief,
   addModifier,
   adjustRelationship,
   awardXp,
@@ -1280,6 +1281,10 @@ function examine(c: Ctx, req: ActionRequest): ActionResult {
     return refuse(c, "examine.no-sight", { item: w.name(id) });
   }
   w.emit("examined", { actor: c.actor, targets: [id], cause: c.cause });
+  // Reading is learning, for anyone (§4.13).
+  for (const b of w.thing(id)?.teaches ?? []) {
+    if (!w.believes(c.actor, b)) addBelief(w, c.actor, b, 1, w.thing(id)!.name, c.cause);
+  }
   if (!c.isPlayer) return { ok: true, minutes: BASE_MINUTES.examine, summary: `examined ${w.label(id)}` };
   const def = w.thing(id)!;
   const text = w.text(def.description, { self: id });
