@@ -272,6 +272,31 @@ describe("ownership (§4.13)", () => {
   });
 });
 
+describe("ownership: what you carry (§4.13)", () => {
+  it("misses something lifted from your pocket in your sleep, once you wake", () => {
+    const w = world(
+      block((p) => {
+        p.objects.push({
+          id: "purse",
+          name: "purse",
+          location: "npc",
+          owner: "npc",
+          description: "A purse.",
+          affordances: ["takeable"],
+        } as never);
+      }),
+    );
+    perform(w, "npc", { act: "sleep" }, B);
+    perform(w, "player", { act: "steal", item: "purse", from: "npc" }, P);
+    expect(w.holderOf("purse")).toBe("player");
+    tick(w, 1);
+    expect(w.log.some((e) => e.kind === "noticed-missing")).toBe(false);
+    w.state.chars.npc!.asleepUntil = null;
+    tick(w, 1);
+    expect(w.log.some((e) => e.kind === "noticed-missing" && e.actor === "npc")).toBe(true);
+  });
+});
+
 describe("effects", () => {
   it("adjust_property adds to a number", () => {
     const w = world(block());

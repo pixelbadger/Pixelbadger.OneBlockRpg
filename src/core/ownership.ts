@@ -58,7 +58,8 @@ const ENGINE: Cause = { by: "engine", ref: "ownership" };
 
 /**
  * Owners notice what has happened to their things when they are where those things should be: gone from its place
- * (and not with someone entitled to it), or forced or broken. Each is noticed once, until it is put right.
+ * (and not with someone entitled to it), or forced or broken. Something they carry is missed wherever they are. Each
+ * is noticed once, until it is put right.
  */
 export function noticeLosses(w: World): void {
   for (const def of w.payload.objects) {
@@ -68,9 +69,10 @@ export function noticeLosses(w: World): void {
     const where = w.roomOf(owner);
     if (!where) continue;
     const home = def.location ?? null;
-    if (home && !w.isChar(home)) {
-      const homeRoom = w.isRoom(home) ? home : w.roomOf(home);
-      const here = w.locationOf(id) === home;
+    if (home && (!w.isChar(home) || home === owner)) {
+      const carried = home === owner;
+      const homeRoom = carried ? where : w.isRoom(home) ? home : w.roomOf(home);
+      const here = carried ? w.isWithin(id, owner) : w.locationOf(id) === home;
       const holder = w.holderOf(id);
       const missing = !here && !(holder && entitled(w, holder, id));
       if (!missing && w.prop(id, "_missing") === true) setProp(w, id, "_missing", false, ENGINE);
