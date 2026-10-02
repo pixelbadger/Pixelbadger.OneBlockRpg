@@ -5,7 +5,48 @@
 import type { CombatIntent } from "../core/combat.js";
 import type { RoomDescription } from "../core/describe.js";
 import type { Output } from "../core/world.js";
-import type { ActionRequest, SkillId, Special } from "../payload/schema.js";
+import type { ActionRequest, Look, SkillId, Special, Terrain } from "../payload/schema.js";
+
+export type Tile = [number, number];
+
+/** Something standing in the scene (§4.10). */
+export interface SceneThing {
+  id: string;
+  name: string;
+  kind: "character" | "fixed" | "item";
+  pos: Tile;
+  /** Every tile it covers (fixed objects can cover several). */
+  tiles: Tile[];
+  look?: Look;
+  player?: boolean;
+  status?: "ok" | "down" | "dead" | "asleep";
+  hostile?: boolean;
+  apparition?: boolean;
+  /** In the current fight: "a" is the player's side. */
+  side?: "a" | "b";
+  open?: boolean;
+  container?: boolean;
+  lockable?: boolean;
+  locked?: boolean;
+  merchant?: boolean;
+  /** What you can see in it (open containers and surfaces) or on them (characters' held things). */
+  contents?: { id: string; name: string }[];
+}
+
+/** Spatial things that happened this turn, for frontends that animate them. */
+export type Fx =
+  | { kind: "walk"; id: string; room: string; path: Tile[] }
+  | {
+      kind: "hit" | "miss";
+      actor: string;
+      target: string;
+      from?: Tile;
+      to?: Tile;
+      ranged: boolean;
+      crit?: boolean;
+      damage?: number;
+    }
+  | { kind: "down" | "killed"; id: string; at?: Tile };
 
 export type Mode = "create" | "explore" | "conversation" | "combat" | "ended";
 
@@ -40,7 +81,50 @@ export type ViewModel =
       skills: Record<SkillId, number>;
       tags: SkillId[];
     }
-  | { type: "inventory"; items: string[]; equipped: string[]; money: number }
+  | {
+      type: "inventory";
+      items: string[];
+      equipped: string[];
+      money: number;
+      /** The same items with their ids, for frontends that act on them. */
+      entries?: {
+        id: string;
+        name: string;
+        equipped: boolean;
+        weapon?: boolean;
+        armour?: boolean;
+        consumable?: boolean;
+      }[];
+    }
+  | {
+      /** The player's room as drawn (§4.10): terrain, exits and everything standing in it. */
+      type: "scene";
+      room: string;
+      name: string;
+      w: number;
+      h: number;
+      /** terrain[y][x] */
+      terrain: Terrain[][];
+      /** Authored terrain looks, keyed "x,y". */
+      looks: Record<string, Look>;
+      exits: {
+        pos: Tile;
+        label: string;
+        direction?: string;
+        to?: string;
+        /** The destination's name, once visited. */
+        toName?: string;
+        blocked: boolean;
+        door?: string;
+        open?: boolean;
+        locked?: boolean;
+      }[];
+      things: SceneThing[];
+      tags: string[];
+      /** Minutes into the day, for lighting. */
+      minute: number;
+    }
+  | { type: "fx"; fx: Fx[] }
   | {
       /** What the player knows of the block's layout: visited rooms, their visible exits and where those lead. */
       type: "map";

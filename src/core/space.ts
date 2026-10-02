@@ -156,6 +156,26 @@ export function compileMap(room: Room): Grid {
     }
     g.terrain.push(line);
   });
+  // A placed thing with no `on` stands on whatever floor surrounds it (§7.10), so a kettle on a carpet keeps the carpet.
+  const unset = new Set<string>();
+  rows.forEach((row, y) => {
+    [...row].forEach((ch, x) => {
+      const e = legend[ch];
+      if (e && !("terrain" in e) && !e.on && !("exit" in e)) unset.add(key([x, y]));
+    });
+  });
+  for (const k of unset) {
+    const [x, y] = k.split(",").map(Number) as Pos;
+    const counts = new Map<Terrain, number>();
+    for (const d of Object.values(DIRS)) {
+      const n: Pos = [x + d[0], y + d[1]];
+      if (!inBounds(g, n) || unset.has(key(n)) || g.exitAt.has(key(n))) continue;
+      const t = terrainAt(g, n);
+      if (walkable(t) && t !== "stairs") counts.set(t, (counts.get(t) ?? 0) + 1);
+    }
+    const best = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (best) g.terrain[y]![x] = best;
+  }
   return g;
 }
 

@@ -244,14 +244,21 @@ function strike(w: World, attacker: string, target: string, thrownItem: string |
     Target: w.label(target),
     weapon: item ? w.name(item) : "bare hands",
   };
+  // Where it happened, for frontends that draw the fight (§4.10).
+  const where = { from: posOf(w, attacker), to: posOf(w, target), ranged: range > 1 };
   if (roll > chance) {
-    w.emit("missed", { actor: attacker, targets: [target], payload: { roll, chance }, cause: COMBAT });
+    w.emit("missed", { actor: attacker, targets: [target], payload: { roll, chance, ...where }, cause: COMBAT });
     show(w, combatText(w, weapon.type, "miss", vars));
     return true;
   }
   const crit = roll <= criticalChance(as);
   const dmg = damageFormula(dmgRoll, weapon, meleeDamageBonus(as), armour, crit);
-  w.emit("hit", { actor: attacker, targets: [target], payload: { roll, chance, crit, damage: dmg }, cause: COMBAT });
+  w.emit("hit", {
+    actor: attacker,
+    targets: [target],
+    payload: { roll, chance, crit, damage: dmg, ...where },
+    cause: COMBAT,
+  });
   show(w, combatText(w, weapon.type, crit ? "crit" : "hit", { ...vars, damage: dmg }));
   const status = damage(w, target, dmg, COMBAT, attacker);
   if (status) {

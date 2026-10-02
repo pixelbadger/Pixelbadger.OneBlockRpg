@@ -16,6 +16,7 @@ import { describeRoom, visibleExits } from "../core/describe.js";
 import { endGame } from "../core/effects.js";
 import { giveMoney, heal, moveThing } from "../core/mutate.js";
 import { set } from "../core/ops.js";
+import { footprint, gridOf, isFixed, posOf } from "../core/space.js";
 import { tick } from "../core/tick.js";
 import type { Cause, World } from "../core/world.js";
 import type { LlmProvider, UsageRecord } from "../llm/provider.js";
@@ -41,7 +42,7 @@ import { compactDayLogs, endDay } from "../narrative/memory.js";
 import { ATTRIBUTES, type SkillId, type Special } from "../payload/schema.js";
 import { actionMenu } from "./menu.js";
 import { parseCombat, parseCommand, parseSkill } from "./parser.js";
-import type { Intent, MenuItem, Mode, TurnOutput, ViewModel, ViewOf } from "./port.js";
+import type { Fx, Intent, MenuItem, Mode, SceneThing, Tile, TurnOutput, ViewModel, ViewOf } from "./port.js";
 
 const PLAYER: Cause = { by: "player" };
 /** Game seconds per tile walked outside combat (§4.10, Q36). */
@@ -67,6 +68,8 @@ export class Session {
   readonly director: Director;
   private views: ViewModel[] = [];
   private lastMenu: MenuItem[] = [];
+  /** Log position at the end of the last turn, for collecting this turn's fx. */
+  private seen: number;
 
   constructor(
     readonly w: World,
@@ -75,6 +78,7 @@ export class Session {
     this.narrative = { w, provider: opts.provider, ...(opts.onUsage ? { onUsage: opts.onUsage } : {}) };
     this.conversations = new Conversations(this.narrative);
     this.director = new Director(this.narrative);
+    this.seen = w.log.length;
   }
 
   get mode(): Mode {
@@ -113,6 +117,8 @@ export class Session {
       this.views.push({ type: "ended", ending: e.ending, ...(e.title ? { title: e.title } : {}), text: e.text });
     }
     if (mode !== "create" && mode !== "ended") this.views.push(this.statusView());
+    const fx = this.fx();
+    if (fx.length) this.views.push({ type: "fx", fx });
     const views = this.views;
     this.views = [];
     return { views, mode };
@@ -153,12 +159,145 @@ export class Session {
     const w = this.w;
     const p = w.playerId;
     const eq = w.char(p).equipment;
+    const ids = w.inventory(p);
     return {
       type: "inventory",
-      items: w.inventory(p).map((id) => w.name(id)),
+      items: ids.map((id) => w.name(id)),
       equipped: [eq.weapon, eq.armour].filter((x): x is string => !!x).map((id) => w.name(id)),
       money: w.char(p).money,
+      entries: ids.map((id) => {
+        const def = w.thing(id)!;
+        return {
+          id,
+          name: w.name(id),
+          equipped: eq.weapon === id || eq.armour === id,
+          ...(def.weapon ? { weapon: true } : {}),
+          ...(def.armour ? { armour: true } : {}),
+          ...(def.consumable ? { consumable: true } : {}),
+        };
+      }),
     };
+  }
+
+  /** The player's room as drawn (§4.10). */
+  sceneView(): ViewOf<"scene"> {
+    const w = this.w;
+    const p = w.playerId;
+    const room = w.roomOf(p)!;
+    const r = w.ix.rooms.get(room)!;
+    const g = gridOf(w, room)!;
+    const visible = new Set(visibleExits(w, room).map((x) => x.label));
+    const exits: ViewOf<"scene">["exits"] = [];
+    r.exits.forEach((x, i) => {
+      const label = x.direction ?? x.label ?? "?";
+      if (!visible.has(label)) return;
+      for (const pos of g.exitTiles.get(i) ?? []) {
+        exits.push({
+          pos,
+          label: x.label ?? label,
+          ...(x.direction ? { direction: x.direction } : {}),
+          ...(x.to ? { to: x.to } : {}),
+          ...(x.to && w.state.visited.includes(x.to) ? { toName: w.ix.rooms.get(x.to)!.name } : {}),
+          blocked: !!x.blocked,
+          ...(x.via
+            ? { door: x.via, open: w.prop(x.via, "open") === true, locked: w.prop(x.via, "locked") === true }
+            : {}),
+        });
+      }
+    });
+    const combat = w.state.combat?.room === room ? w.state.combat : null;
+    const things: SceneThing[] = [];
+    for (const id of w.childrenOf(room)) {
+      const pos = w.state.objects[id]?.pos;
+      if (!pos || !w.perceives(p, id) || w.isHidden(id)) continue;
+      const def = w.thing(id)!;
+      const t: SceneThing = {
+        id,
+        name: id === p ? w.charDef(p).name : w.label(id),
+        kind: w.isChar(id) ? "character" : isFixed(w, id) ? "fixed" : "item",
+        pos,
+        tiles: footprint(w, id) as Tile[],
+        ...(def.look ? { look: def.look } : {}),
+      };
+      if (w.isChar(id)) {
+        const s = w.char(id);
+        t.status = s.status === "ok" ? (s.asleepUntil !== null ? "asleep" : "ok") : s.status;
+        if (id === p) t.player = true;
+        if (s.hostile) t.hostile = true;
+        if (!w.npcsPerceive(id)) t.apparition = true;
+        const side = combat?.combatants.find((x) => x.id === id && x.status === "in")?.side;
+        if (side) t.side = side;
+        if (w.charDef(id).merchant) t.merchant = true;
+        if (id !== p) t.contents = this.seenIn(id);
+      } else {
+        if (!w.npcsPerceive(id)) t.apparition = true;
+        if (w.isContainer(id)) t.container = true;
+        if (def.affordances.includes("openable")) t.open = w.prop(id, "open") === true;
+        if (def.affordances.includes("lockable")) {
+          t.lockable = true;
+          t.locked = w.prop(id, "locked") === true;
+        }
+        if (w.isContainer(id) && w.isOpen(id)) t.contents = this.seenIn(id);
+      }
+      things.push(t);
+    }
+    // Characters last, so they draw over things on the floor.
+    things.sort((a, b) => Number(a.kind === "character") - Number(b.kind === "character"));
+    return {
+      type: "scene",
+      room,
+      name: r.name,
+      w: g.w,
+      h: g.h,
+      terrain: g.terrain,
+      looks: Object.fromEntries(g.looks),
+      exits,
+      things,
+      tags: r.tags,
+      minute: w.state.clock % 1440,
+    };
+  }
+
+  /** What the player can see directly inside (or held by) `holder`. */
+  private seenIn(holder: string): { id: string; name: string }[] {
+    const w = this.w;
+    return w
+      .childrenOf(holder)
+      .filter((c) => !w.isChar(c) && !w.isHidden(c) && w.perceives(w.playerId, c))
+      .map((c) => ({ id: c, name: w.name(c) }));
+  }
+
+  /** Spatial events since the last turn, for frontends that animate them. */
+  private fx(): Fx[] {
+    const w = this.w;
+    const out: Fx[] = [];
+    const here = w.roomOf(w.playerId);
+    for (const e of w.log.slice(this.seen)) {
+      const pl = e.payload as Record<string, unknown>;
+      if (e.kind === "walked" && e.actor && w.roomOf(e.actor) === here) {
+        out.push({ kind: "walk", id: e.actor, room: here ?? "", path: pl.path as Tile[] });
+      } else if ((e.kind === "hit" || e.kind === "missed") && e.actor && e.targets[0]) {
+        out.push({
+          kind: e.kind === "hit" ? "hit" : "miss",
+          actor: e.actor,
+          target: e.targets[0],
+          ...(pl.from ? { from: pl.from as Tile } : {}),
+          ...(pl.to ? { to: pl.to as Tile } : {}),
+          ranged: !!pl.ranged,
+          ...(pl.crit ? { crit: true } : {}),
+          ...(typeof pl.damage === "number" ? { damage: pl.damage } : {}),
+        });
+      } else if ((e.kind === "downed" || e.kind === "killed") && e.targets[0]) {
+        const at = posOf(w, e.targets[0]);
+        out.push({
+          kind: e.kind === "downed" ? "down" : "killed",
+          id: e.targets[0],
+          ...(at ? { at: at as Tile } : {}),
+        });
+      }
+    }
+    this.seen = w.log.length;
+    return out;
   }
 
   sheetView(): ViewOf<"sheet"> {
