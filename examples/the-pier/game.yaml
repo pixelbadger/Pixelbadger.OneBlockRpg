@@ -3,10 +3,11 @@
 # much he understands before it happens. It is also a playthrough fixture (tests/pier.test.ts).
 id: the-pier
 title: "The Pier"
-schema_version: "1.0"
-version: "0.2.0"
+schema_version: "2.0"
+version: "0.3.0"
 # 0.2.0 makes everything the room descriptions mention examinable; it only adds objects, so 0.1.0 saves still load.
-compatible_with: ["0.1.0"]
+# 0.3.0 draws every room as a tile map (schema 2.0); older saves load and everyone is put on their authored tile.
+compatible_with: ["0.1.0", "0.2.0"]
 start: digs
 player:
   character: player

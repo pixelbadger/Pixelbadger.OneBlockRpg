@@ -20,6 +20,32 @@
     - direction: town
       label: town
       blocked: "The parade runs on past the bandstand into town. You haven't been into town in weeks. Everything you need is here."
+  map:
+    rows:
+      - "~~~~~~~~~PNP~~~~~~~~~~"
+      - "rrrrrrvrr...rrrrrrrrrr"
+      - "________t_____________"
+      - "W_ss_____c__h__k__g__E"
+      - ":::::::::::::::::::::T"
+      - "#########S############"
+    legend:
+      "~": { terrain: water }
+      "_": { terrain: pavement }
+      ":": { terrain: road }
+      "P": { object: pier-view, on: deck }
+      "N": { exit: north }
+      "r": { object: railings }
+      "v": { exit: down, on: stairs }
+      "t": { character: tommo }
+      "W": { exit: west }
+      "s": { object: shelter }
+      "c": { character: clara }
+      "h": { character: edmund }
+      "k": { object: kiosk }
+      "g": { object: gulls }
+      "E": { exit: east }
+      "T": { exit: town }
+      "S": { exit: south }
 - id: beach
   name: The Beach Under the Pier
   tags: [outdoors]
@@ -32,6 +58,22 @@
     - direction: out
       label: sea
       blocked: "The sea. Grey, cold and very patient. You don't go in."
+  map:
+    rows:
+      - "##########^#########"
+      - ",,,,,,,,,,,,,,,,,,,,"
+      - ",,L,,,,L,,,,L,,,,L,,"
+      - ",,,,z,,,,,,h,,,,,,,,"
+      - ",,L,,,,L,,,,L,,,,L,,"
+      - "~~~~~~~~~O~~~~~~~~~~"
+    legend:
+      ",": { terrain: shingle }
+      "~": { terrain: water }
+      "^": { exit: up, on: stairs }
+      "L": { object: pier-legs, on: shingle }
+      "z": { object: shingle, on: shingle }
+      "h": { character: shaun }
+      "O": { exit: out, on: water }
 - id: pier-tollhouse
   name: Pier Tollhouse
   tags: [public]
@@ -50,6 +92,26 @@
       to: pier-deck
       hidden: true
       when: { all: [ { flag: unease }, { not: { time_between: { from: "09:00", to: "21:00" } } } ] }
+  map:
+    rows:
+      - "####NO#####"
+      - "#K.T.....D#"
+      - "#.......a.#"
+      - "#..e...A..#"
+      - "#s........#"
+      - "#####S#####"
+    legend:
+      ".": { terrain: boards }
+      "N": { exit: north }
+      "O": { exit: over }
+      "K": { object: ticket-kiosk }
+      "T": { object: turnstile }
+      "D": { object: display-board }
+      "a": { object: archive-cupboard }
+      "e": { character: edith }
+      "A": { object: armchair }
+      "s": { object: pier-sign }
+      "S": { exit: south }
 - id: pier-deck
   name: The Pier
   tags: [outdoors, public]
@@ -66,6 +128,28 @@
       closed_text: "The turnstile is locked from this side too. You'll have to climb."
     - { label: over the gate, direction: over, to: pier-tollhouse, when: { not: { time_between: { from: "09:00", to: "21:00" } } }, hidden: true }
     - { direction: north, to: pier-head }
+  map:
+    rows:
+      - "~~R.N.R~~"
+      - "~~Rb..R~~"
+      - "~~R...R~~"
+      - "~~R.c.R~~"
+      - "~~R..bR~~"
+      - "~~R...R~~"
+      - "~~Rb.dR~~"
+      - "~~R...R~~"
+      - "~~R..bR~~"
+      - "~~RS.OR~~"
+    legend:
+      "~": { terrain: water }
+      ".": { terrain: deck }
+      "R": { object: deck-rail, on: deck }
+      "N": { exit: north }
+      "b": { object: benches, on: deck }
+      "c": { character: clara }
+      "d": { character: edmund }
+      "S": { exit: south }
+      "O": { exit: over }
 - id: pier-head
   name: The Pier Head
   tags: [outdoors, public]
@@ -79,6 +163,25 @@
     - direction: out
       label: sea
       blocked: "Nothing out there but the Holms and the Welsh coast, and the water in between."
+  map:
+    rows:
+      - "~~~~~~~~~~~~~"
+      - "~GGGGGIGGGGG~"
+      - "~L..........~"
+      - "~L...c.d....O"
+      - "~L........y.~"
+      - "~~~~~S~~~~~~~"
+    legend:
+      "~": { terrain: water }
+      ".": { terrain: deck }
+      "G": { object: glass-house-outside, on: deck }
+      "I": { exit: in }
+      "L": { object: landing-stage, on: deck }
+      "c": { character: clara }
+      "d": { character: edmund }
+      "O": { exit: out, on: water }
+      "y": { object: lifebuoy, on: deck }
+      "S": { exit: south, on: deck }
 - id: glass-house
   name: The Glass House
   description:
@@ -89,3 +192,21 @@
     - text: "Inside the glass house the light comes green through the old panes. It's used for storage now: deckchairs stacked to the roof, a broken candyfloss machine, a sign for a tea room that closed in 1994."
   exits:
     - { direction: out, to: pier-head }
+  map:
+    rows:
+      - "#=#=#=#=#=#=#"
+      - "=DDDD...DDDD="
+      - "#...........#"
+      - "=..C..t..e..="
+      - "#c.........s#"
+      - "======O======"
+    legend:
+      ".": { terrain: tiles }
+      "=": { terrain: window, look: { color: "#7fbf9f" } }
+      "D": { object: deckchairs }
+      "C": { character: clara }
+      "t": { object: tea-table }
+      "e": { character: edmund }
+      "c": { object: candyfloss-machine }
+      "s": { object: tea-room-sign }
+      "O": { exit: out }

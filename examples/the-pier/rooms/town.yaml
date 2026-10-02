@@ -9,11 +9,51 @@
   exits:
     - { direction: east, to: promenade }
     - { direction: up, to: anchor-flat }
+  map:
+    rows:
+      - "#############"
+      - "#U.....k....#"
+      - "#..BBBBBBB..#"
+      - "#....g...s..#"
+      - "#Ft.....m...E"
+      - "#D..........#"
+      - "####WW#######"
+    legend:
+      ".": { terrain: carpet, look: { color: "#5a2a2a" } }
+      "U": { exit: up, on: stairs }
+      "k": { character: kez }
+      "B": { object: bar }
+      "g": { character: gary }
+      "s": { character: shaun }
+      "F": { object: fruit-machine }
+      "t": { character: tommo }
+      "m": { character: marek }
+      "E": { exit: east }
+      "D": { object: dartboard }
+      "W": { object: anchor-window }
 - id: anchor-flat
   name: Kez's Flat
   description: "The flat above the Anchor: a sofa that is mostly Shaun, a telly, fairy lights, a cat called Biscuit who hates everyone."
   exits:
     - { direction: down, to: anchor }
+  map:
+    rows:
+      - "#LLLL#####"
+      - "#bb......#"
+      - "#........#"
+      - "#.SSS..T.#"
+      - "#.h.c..k.#"
+      - "#v########"
+    legend:
+      ".": { terrain: carpet }
+      "L": { object: fairy-lights }
+      "b": { object: kez-bed }
+      "S": { object: sofa }
+      "T": { object: flat-telly }
+      "h": { character: shaun }
+      "c": { object: biscuit }
+      "k": { character: kez }
+      "v": { exit: down, on: stairs }
 - id: seaview-hall
   name: Seaview Guest House
   description: "The Seaview's hall and kitchen: a payphone that doesn't work, a dresser with a tray of complimentary nothing, a laminated list of rules. The landlady is never seen. The stairs go up to the rooms."
@@ -21,6 +61,21 @@
     - { direction: north, to: promenade }
     - { direction: up, to: digs }
     - { label: the lads' room, direction: east, to: lads-room }
+  map:
+    rows:
+      - "####N#####"
+      - "#P......R#"
+      - "#........E"
+      - "#DD...^..#"
+      - "##########"
+    legend:
+      ".": { terrain: lino }
+      "N": { exit: north }
+      "P": { object: payphone }
+      "R": { object: house-rules }
+      "E": { exit: east }
+      "D": { object: dresser }
+      "^": { exit: up, on: stairs }
 - id: digs
   name: Your Room
   description:
@@ -33,8 +88,44 @@
     - text: "Your room at the Seaview: single bed, kettle, a telly that only gets three channels, and a window that looks straight out at the pier. Work boots by the door."
   exits:
     - { direction: down, to: seaview-hall }
+  map:
+    rows:
+      - "###WW###"
+      - "#bb..k.#"
+      - "#..@..T#"
+      - "#c..h..#"
+      - "#v.o...#"
+      - "########"
+    legend:
+      ".": { terrain: carpet }
+      "W": { object: digs-window }
+      "b": { object: digs-bed }
+      "k": { object: digs-kettle }
+      "@": { character: player }
+      "T": { object: digs-telly }
+      "c": { character: clara }
+      "h": { object: hard-hat }
+      "v": { exit: down, on: stairs }
+      "o": { object: work-boots }
 - id: lads-room
   name: The Lads' Room
   description: "Marek and Tommo's twin room: Marek's side squared away, a rosary on the bedpost; Tommo's side a crime scene of energy-drink cans and hi-vis."
   exits:
     - { direction: west, to: seaview-hall }
+  map:
+    rows:
+      - "#########"
+      - "#MM.r.TT#"
+      - "W..m.t..#"
+      - "#....eeh#"
+      - "#########"
+    legend:
+      ".": { terrain: carpet }
+      "M": { object: marek-bed }
+      "r": { object: rosary }
+      "T": { object: tommo-bed }
+      "W": { exit: west }
+      "m": { character: marek }
+      "t": { character: tommo }
+      "e": { object: energy-cans }
+      "h": { object: hi-vis }
