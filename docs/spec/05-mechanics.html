@@ -86,7 +86,7 @@ The core set trims Fallout's list to what suits a city block. A payload can enab
       (−1 per kg of the item), Speech vs the target's relationship trust plus 5×IN.</li>
   <li><strong>Sneaking</strong> is a stance, entered and left with the <code>sneak</code> action. While in it, actions take 1.5× time, and before each
       action every awake character in the room who has not yet noticed the sneaker rolls once (Sneak vs 10×PE, opposed). So does everyone in the
-      next room when the sneaker moves. Anyone who notices stays aware while they share a room, and a <code>noticed</code> event fires. Anyone who
+      next room when the sneaker moves. Only observers with line of sight to the sneaker roll (§4.10). Anyone who notices stays aware while they share a room, and a <code>noticed</code> event fires. Anyone who
       hasn't noticed does not perceive the sneaker or their actions, exactly as with apparitions (Q31): no day-log entry, no behaviour reaction,
       and no attack on sight. Talking or attacking ends the stance. Steal gets +20 against a victim who hasn't noticed the thief.</li>
   <li><strong>Luck nudge:</strong> the roller's Luck shifts every seeded d100 target (skill, opposed and hit chance) by <code>LK − 5</code> points,
@@ -102,6 +102,7 @@ The core set trims Fallout's list to what suits a city block. A payload can enab
   <li><strong>In combat</strong>, each round grants full AP, and actions spend it (5.6). A round is 10 game seconds.</li>
   <li><strong>Outside combat</strong>, every action has a base time of 1–5 game minutes (Q8), scaled by <code>8 / AP</code>. That makes AP 8 neutral (AG 6–7),
       AP 5 1.6× slower and AP 10 0.8×. Agile characters get more done in a day.</li>
+  <li><strong>Walking</strong> is 10 game seconds a tile outside combat (§4.10), and 1 AP a tile in it.</li>
 </ul>
 
 <h2>5.6 Combat</h2>
@@ -109,22 +110,28 @@ The core set trims Fallout's list to what suits a city block. A payload can enab
 <ol>
   <li><strong>Combatants</strong>: attacker and target, plus anyone in the room whose behaviour rules or relationships make them join or flee.</li>
   <li><strong>Order</strong>: by Sequence, then AG, then a seeded roll.</li>
-  <li><strong>Turns</strong>: each combatant spends AP: unarmed 3, melee 3–4, firearm 4–5 (per weapon), aimed shot +1, reload 2, use or equip item 2,
-      leave the room 4 (which exits combat unless pursued), bark 0.</li>
+  <li><strong>Turns</strong>: each combatant spends AP: move one tile 1, unarmed 3, melee 3–4, firearm 4–5 (per weapon), aimed shot +1, reload 2, use or equip item 2,
+      leave the room 4 (which exits combat unless pursued), bark 0. Combatants keep the tiles they were standing on when the fight began.</li>
+  <li><strong>Leaving</strong>: a combatant leaves by stepping onto an exit tile, which costs the move plus the leave AP. Cowards and anyone below their
+      flee threshold walk towards the nearest passable exit.</li>
   <li><strong>Pursuit</strong>: leaving the room leaves a trail. Each opponent may follow on their next turn, until the turn order comes back round to
       the fleer, by spending leave AP. The player gets a <em>pursue</em> option. An NPC gives chase if it is aggressive or hostile, isn't itself ready
       to flee, has nobody left to fight in the room, and isn't fighting alongside the player (that choice is the player's). The fight moves to the
-      new room with the pursuer and the quarry, and anyone else still in it is left behind. If nobody follows, the escape stands.</li>
-  <li><strong>Hit chance</strong> = weapon skill − target AC + weapon accuracy − 20 per point of ST below the weapon's minimum, plus the
-      attacker's Luck nudge (5.4), clamped to 5–95%.</li>
+      new room with the pursuer and the quarry, and anyone else still in it is left behind. The pursuer arrives at the same doorway, next to
+      the quarry. If nobody follows, the escape stands.</li>
+  <li><strong>Hit chance</strong> = weapon skill − target AC + weapon accuracy − 20 per point of ST below the weapon's minimum
+      − 4 per tile beyond the first for ranged and thrown attacks, plus the attacker's Luck nudge (5.4), clamped to 5–95%.</li>
   <li><strong>Critical</strong>: a hit roll ≤ critical chance doubles damage and ignores DT. Crit tables are deferred.</li>
   <li><strong>Damage</strong> = (weapon roll + melee damage bonus for melee/unarmed − armour DT) × (1 − armour DR%), minimum 0.</li>
   <li><strong>Down</strong>: at HP ≤ 0 a character is unconscious, and at HP ≤ −EN dead. Characters the payload marks <code>essential</code> are only ever knocked
       out, which protects the authored story. When the <strong>player</strong> is downed, the payload decides (Q27). The default is waking up hurt and robbed
       somewhere in the block. A payload may instead end the game.</li>
   <li><strong>NPC decisions</strong> are scripted. Each character has a <em>combat profile</em> (aggressive, defensive, coward, flee at X% HP, preferred weapon).
-      There are no LLM calls per round. Inside a set piece the director may override targets and intentions.</li>
-  <li><strong>Range</strong>: everyone in the same room can be targeted, and only them. Ranged weapons cannot fire into adjacent rooms in v1 (Q24).</li>
+      An NPC with a target in reach attacks; otherwise it walks the shortest path towards it, then attacks if AP remains. There are no LLM calls per round.
+      Inside a set piece the director may override targets and intentions.</li>
+  <li><strong>Range</strong> (Q32): melee and unarmed attacks need an adjacent target. Firearms reach their weapon's <code>range</code> in tiles (default 15) and
+      thrown things 2 × ST tiles; both need line of sight (§4.10). Only people in the same room can be targeted. Ranged weapons cannot fire into adjacent
+      rooms in v1 (Q24).</li>
   <li><strong>Text</strong>: hit, miss, crit and down messages are authored templates per weapon type. All combat time is added to the clock when combat ends.</li>
 </ol>
 

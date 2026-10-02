@@ -34,6 +34,11 @@
 <table>
 <thead><tr><th>#</th><th>Question</th><th>Decision</th></tr></thead>
 <tbody>
+<tr><td>Q32</td><td>Should rooms have space, and should combat use it?</td><td>Yes. P3 was rewritten: rooms are drawn tile maps in the manner of <em>Ultima V</em>, positions are ground, and combat is fought on the tiles (range, reach, line of sight, movement in AP). Geometry stays coarse: walkable, adjacent, visible, distance (§4.10, §5.6).</td></tr>
+<tr><td>Q33</td><td>Where do room maps come from?</td><td>Authored in the payload, one per room, required. No generated fallback (§7.10).</td></tr>
+<tr><td>Q34</td><td>Payload and save compatibility for maps</td><td>Schema 2.0 requires maps. Saves from before maps load: things that have no tile yet are placed on their authored tile, or the nearest free one.</td></tr>
+<tr><td>Q35</td><td>How does the player move in a tiled frontend?</td><td>One <code>step</code> action per tile, in eight directions; every other action walks to its target first (§4.10). The readline CLI keeps typed commands. The TUI is keys only, in the Ultima V manner.</td></tr>
+<tr><td>Q36</td><td>What does a step cost?</td><td>10 game seconds outside combat, 1 AP in it.</td></tr>
 <tr><td>Q1</td><td>Kieron Gillen's contribution</td><td>Dropped.</td></tr>
 <tr><td>Q2</td><td>Setting and tone</td><td>Per game: set by the story brief and payload.</td></tr>
 <tr><td>Q3</td><td>Where the block comes from</td><td>Authored as a game payload. A coding agent builds it from the user's story brief (§7).</td></tr>
