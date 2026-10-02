@@ -65,12 +65,18 @@ pnpm install
 pnpm build
 node bin/oneblock.js validate examples/the-pier
 node bin/oneblock.js play examples/the-pier                           # The Pier: the first full story
+node bin/oneblock.js play examples/the-pier --tui                     # full screen: story, room map, stats, inventory
 node bin/oneblock.js play examples/carver-street                      # Claude via your Claude Code login
 node bin/oneblock.js play examples/carver-street --provider offline   # no model: authored options only
 node bin/oneblock.js replay examples/carver-street carver-street.db   # check a save replays identically
 ```
 
 `play` saves after every turn to `<game id>.db` and resumes it next time (`--new` starts over). Type `help` in game.
+
+`--tui` plays full screen (80×24 or larger). The story scrolls on the left, with a sketch map of the rooms you've visited,
+your character (HP, fatigue, level, money, SPECIAL) and your inventory on the right. PgUp/PgDn scroll the story, ↑/↓
+recall earlier commands and Ctrl+C quits. On the map, `@` marks your room, `?` a room you haven't been into yet, `×` the
+edge of the block, and ▲ ▼ ◆ the ways up, down and elsewhere that the grid can't draw.
 During development, `pnpm oneblock <command>` runs the CLI from source.
 
 [`examples/the-pier`](examples/the-pier) is the first full story: a present-day ghost story on a Victorian pier,
@@ -93,7 +99,7 @@ the block, writes the payload, validates it to zero warnings and writes a playth
 | `src/llm` | provider interface; `claude-subscription`, `anthropic-api`, scripted, record and replay (§6.9) |
 | `src/narrative` | conversations, hooks, director, callouts, day summaries, context builder (§6) |
 | `src/session` | the loops, UI port, parser, action menu and SQLite saves (§3) |
-| `src/cli` | the readline CLI, the only frontend adapter |
+| `src/cli` | the frontend adapters: the readline CLI and the full-screen TUI (`src/cli/tui`) |
 | `schema/payload.schema.json` | the published payload JSON Schema (`pnpm schema` regenerates it) |
 | `docs/authoring-guide.md` | how to build a payload from a story brief (§7.9) |
 | `.claude/skills/make-game` | the Claude Code skill that wraps the guide |
