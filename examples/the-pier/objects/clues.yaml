@@ -1,37 +1,53 @@
-# The couple's story, in pieces (brief §General plot). Examining each piece fires a discovery trigger in story.yaml.
+# The couple's story, in pieces (brief §General plot). Each piece is somewhere physical, behind or under something,
+# and belongs to someone. Reading one gives Liam a belief (story.yaml); so can being told by someone who read it.
 
 # ─── Piece 1: they came here on holiday (the hotel) ───
+# The panelling is Liam's actual job (Gary wants it off). Any bar or claw gets it off; it is loud, so people hear
+# it. If he doesn't do it, Tommo does it on day two, and the register goes to Gary.
 - id: reception-panelling
   name: reception panelling
   aliases: [panelling, panels, reception desk, desk, reception]
   location: hotel-lobby
   scenery: true
   description:
-    - when: { flag: panelling_off }
+    - when: { property: { object: reception-panelling, key: fastened, value: false } }
       text: "The panelling is in a heap by the skip door. Behind where it was, a cavity in the old wall."
-    - text: "Dark varnished panelling round the old reception desk, screwed and glued and painted over. It'll need a bar."
-  properties: { mass: 80 }
-  uses:
-    - on: crowbar
-      when: { not: { flag: panelling_off } }
-      text: "You get the bar in behind the first panel and lean. It comes away with a shriek of old nails, then the next, then the next. Behind them, in a cavity in the brick, is a ledger furred with dust, and a photograph face down on top of it."
-      effects:
-        - { set_flag: panelling_off }
-        - { spawn: { object: guest-register, in: hotel-lobby } }
-        - { spawn: { object: photograph, in: hotel-lobby } }
-        - { award_xp: 25 }
+    - text: "Dark varnished panelling round the old reception desk, nailed and glued and painted over. It'll need a bar, or a claw hammer and a lot of patience."
+  properties: { mass: 80, fastened: true }
+  force:
+    - tools: [pry]
       minutes: 30
-    - on: crowbar
-      text: "There's nothing left to take off."
+      noise: { loudness: 8, sound: "old nails shrieking out of panelling" }
+      text: "You get the bar in behind the first panel and lean. It comes away with a shriek of old nails, then the next, then the next. Behind them, at waist height, is a cavity in the brick."
+      effects: [ { award_xp: 25 } ]
+    - tools: [claw]
+      minutes: 60
+      check: { skill: repair, tier: easy }
+      noise: { loudness: 7, sound: "someone hammering and levering at old wood" }
+      text: "It takes an hour with the claw, a panel at a time, nails bent over like fingers. Behind the last one is a cavity in the brick."
+      fail_text: "The claw slips off the varnish and takes the skin off your knuckle. The panel hasn't moved."
+      effects: [ { award_xp: 25 } ]
+- id: reception-cavity
+  name: cavity
+  aliases: [cavity, hole, wall]
+  location: hotel-lobby
+  scenery: true
+  hidden_unless: { property: { object: reception-panelling, key: fastened, value: false } }
+  description: "A cavity in the old brick behind where the reception panelling was, furred with a century of dust."
+  affordances: [container]
+  properties: { mass: 100 }
 - id: guest-register
   name: guest register
   aliases: [register, ledger, book]
+  location: reception-cavity
   description: "The Grand Atlantic Hotel guest register, July to September 1893. Copperplate. On the 11th of August: Mr & Mrs E. Ashdown & infant, Bath. Room 7. Under 'remarks', in another hand: Did not settle account."
+  teaches: [ashdowns-stayed]
   affordances: [takeable]
   properties: { mass: 2, value: 0 }
 - id: photograph
   name: old photograph
   aliases: [photograph, photo, picture]
+  location: reception-cavity
   description:
     - when: { special: { PE: { gte: 7 } } }
       text: "A couple on the pier in 1893. She holds a bundle in white lace; his hand is on her shoulder. The bundle's face is turned away from the camera, the way it is turned away in every look you have had at it. On the back: E. & C., Westcombe, Aug."
@@ -40,32 +56,69 @@
   properties: { mass: 0.05, value: 0 }
 
 # ─── Piece 2: the stillbirth she hid (Room 7) ───
+# Room 7 is Gary's to open: the key on his board (taking it unasked, with him there, is noticed), his say-so, a
+# forced door (loud, and he'll find it on his rounds), or the lullaby opening it.
 - id: door-room-seven
   name: door to Room 7
   aliases: [door, room 7 door, room seven door]
   location: hotel-corridor
   scenery: true
-  description: "A panelled door with a brass 7, the only one on the corridor not yet taken off its hinges."
+  description:
+    - when: { property: { object: door-room-seven, key: forced, value: true } }
+      text: "The door to Room 7, its frame split where somebody forced it. The brass 7 hangs by one screw."
+    - text: "A panelled door with a brass 7, the only one on the corridor not yet taken off its hinges."
   affordances: [openable, lockable]
   key: room-seven-key
+  owner: gary
   properties: { open: false, locked: true, mass: 30 }
+  force:
+    - tools: [pry]
+      minutes: 3
+      check: { attribute: ST }
+      noise: { loudness: 9, sound: "a door being forced, the frame splitting" }
+      text: "You get the bar into the gap by the lock and throw your weight on it. The frame splits with a crack like a shot, and the door swings in."
+      fail_text: "You lean on the bar until your arms shake. The old door holds."
 - id: room-seven-key
   name: key to Room 7
   aliases: [key, room 7 key, room seven key]
   location: key-board
   description: "A brass key on a wooden fob with a 7 burnt into it."
   affordances: [takeable]
-  properties: { mass: 0.1, value: 0 }
+  owner: gary
+  # Gary has to say so: the hook gary-lends-the-key or his conversation option.
+  permitted: { property: { object: room-seven-key, key: lent, value: true } }
+  properties: { mass: 0.1, value: 0, lent: false }
+# Loose, and screwed down over a void. It creaks: when you walk on it, and at night as if someone stood on it. Marek
+# hears it from the corridor when he works late; Liam can hear it there too, or underfoot. Any screwdriver lifts it
+# quietly, any bar or claw loudly.
 - id: floorboard
   name: raised floorboard
   aliases: [floorboard, board, floor]
   location: room-seven
   scenery: true
-  # Marek's tip, the lullaby (it leaves Liam kneeling beside it), or the sharpened eyes of obsession (PE 7).
-  hidden_unless: { any: [ { special: { PE: { gte: 7 } } }, { flag: marek_told }, { flag: saw_cradle } ] }
-  description: "One board by the window sits proud of the rest. It's been lifted before: there are old screw holes and new ones."
-  affordances: [container, openable]
-  properties: { open: false, mass: 2 }
+  hidden_unless:
+    any:
+      - { special: { PE: { gte: 7 } } }
+      - { believes: { who: player, belief: loose-board } }
+  description:
+    - when: { property: { object: floorboard, key: open, value: true } }
+      text: "The board by the window is up. Under it, a void between the joists, black and dry."
+    - text: "One board by the window sits proud of the rest, and gives under your foot. It's been lifted before: there are old screw holes and new ones."
+  affordances: [underfoot, container, openable]
+  behaviours: [board-creaks]
+  properties: { open: false, fastened: true, mass: 2 }
+  step_noise: { loudness: 5, sound: "a floorboard creak, hollow, like a drum with something under it" }
+  force:
+    - tools: [screwdriver]
+      minutes: 15
+      check: { skill: repair, tier: easy }
+      noise: { loudness: 2, sound: "a screw squeaking out of old wood" }
+      text: "The screws are rusted into the joist, but they come, one by one, squealing. You lift the board out."
+      fail_text: "The screwdriver skids out of the slot. The head is rounded now; you'll have to go gentler."
+    - tools: [pry, claw]
+      minutes: 5
+      noise: { loudness: 7, sound: "a floorboard being torn up" }
+      text: "You get the end under the board and heave. The screws tear out of the joist with a noise you feel in your teeth."
 - id: claras-letter
   name: folded letter
   aliases: [letter, letters, paper]
@@ -76,6 +129,7 @@
     I have told him she sleeps ever since. I keep her in the lace you made and nobody looks, nobody ever looks
     at a sleeping child, Lou. He wants to take us to the sea for her health. I think I shall tell him there.
     I think the sea will make it possible. Burn this. C.'
+  teaches: [stillborn-secret]
   affordances: [takeable]
   properties: { mass: 0.02, value: 0 }
 
@@ -92,17 +146,29 @@
   aliases: [cupboard, archive, cabinet]
   location: pier-tollhouse
   scenery: true
-  description: "A grey steel cupboard labelled ARCHIVE — ASK EDITH. Locked."
+  description:
+    - when: { property: { object: archive-cupboard, key: forced, value: true } }
+      text: "A grey steel cupboard labelled ARCHIVE — ASK EDITH, its door bent back at the lock."
+    - text: "A grey steel cupboard labelled ARCHIVE — ASK EDITH. Locked."
   affordances: [container, openable, lockable]
   key: archive-key
   lock_tier: hard
+  owner: edith
   properties: { open: false, locked: true, mass: 60 }
+  force:
+    - tools: [pry]
+      minutes: 5
+      check: { attribute: ST, modifier: -2 }
+      noise: { loudness: 9, sound: "metal shrieking as a cupboard door is wrenched" }
+      text: "The steel door bends, bends, and lets go of its lock with a bang."
+      fail_text: "The bar skates off the steel. The door is dented and still shut."
 - id: archive-key
   name: archive key
   aliases: [key, small key, cupboard key]
   location: edith
   description: "A small steel key on a loop of red wool."
   affordances: [takeable]
+  owner: edith
   properties: { mass: 0.02, value: 0 }
 - id: newspaper
   name: old newspaper
@@ -114,6 +180,7 @@
     on Saturday night. Witnesses state that Mr Ashdown was seen to break the lamps upon the floor. An attendant
     who tried the door reports that he cried out "She is cold, she has been cold all along." The Coroner,
     remarking on the condition of the infant's remains, has adjourned the inquest.'
+  teaches: [edmund-set-the-fire]
   affordances: [takeable]
   properties: { mass: 0.1, value: 0 }
 
@@ -122,7 +189,9 @@
   name: silver rattle
   aliases: [rattle, silver]
   location: shaun
+  owner: shaun
   description: "A child's rattle, black with tarnish, a coral teether at one end. Engraved round the bell: ALICE · 9th JUNE 1893. It doesn't rattle. Something inside has rusted solid."
+  teaches: [child-had-a-name]
   affordances: [takeable]
   properties: { mass: 0.1, value: 30 }
 

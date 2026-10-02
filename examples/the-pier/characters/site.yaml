@@ -21,10 +21,10 @@
     - "Keep the lads working, and keep Liam from skiving."
     - "Don't let anyone find out he's sleeping in the cabin."
   relationships:
-    player: { trust: 10, affinity: 0, notes: "Young Doyle. Can graft when he wants to. Doesn't often want to." }
+    player: { trust: 15, affinity: 0, notes: "Young Doyle. Can graft when he wants to. Doesn't often want to." }
     marek: { trust: 70, affinity: 40, notes: "Best worker he's got." }
     tommo: { trust: 20, affinity: 30, notes: "A clown, but a quick one." }
-  behaviours: [gary-routine]
+  behaviours: [gary-routine, gary-foreman]
   fallback_line: "Gary's phone goes. He holds up a finger and turns away."
 - id: marek
   name: Marek
@@ -33,7 +33,7 @@
   description: "Marek Nowak: fifty, broad, grey crew cut, a Saint Christopher on a chain. He works like a machine and crosses himself on the stairs."
   persona:
     identity: "Marek Nowak, 50, labourer from Kraków, lodging at the Seaview."
-    background: "Has worked on old buildings across Europe and believes old buildings remember. Has been hearing a woman singing in Room 7 on the evenings he works late, and has told nobody but God."
+    background: "Has worked on old buildings across Europe and believes old buildings remember. Works late most evenings at the far end of the first-floor corridor, by Room 7, and does not like it there after dark."
     personality: [steady, kind, devout, superstitious, private]
     voice: "Careful English, Polish word order, dry humour. Calls Liam 'young man'."
   special: { ST: 8, PE: 7, EN: 7, CH: 5, IN: 6, AG: 5, LK: 5 }
@@ -48,7 +48,7 @@
     player: { trust: 30, affinity: 40, notes: "A lost boy. Not a bad one." }
     tommo: { trust: 30, affinity: 50, notes: "Noisy. Kind." }
     gary: { trust: 50, affinity: 30, notes: "A fair boss with a sad marriage." }
-  behaviours: [marek-routine]
+  behaviours: [marek-routine, marek-listens, worried-friend]
 - id: tommo
   name: Tommo
   aliases: [tommo, tom, rafferty]
@@ -73,4 +73,4 @@
     player: { trust: 40, affinity: 60, notes: "His mate. Miserable sod, but his mate." }
     marek: { trust: 40, affinity: 50, notes: "The Pope. Brings tea." }
     kez: { trust: 50, affinity: 70, notes: "Fancies her. Everyone knows." }
-  behaviours: [tommo-routine]
+  behaviours: [tommo-routine, tommo-at-work, worried-friend, goes-looking]

@@ -21,7 +21,7 @@
     player: { trust: 60, affinity: 70, notes: "Known him since Year 7. Something's off with him lately." }
     shaun: { trust: 40, affinity: 60, notes: "Her cousin. A waste of space, lovingly." }
     tommo: { trust: 40, affinity: 40, notes: "Sweet. Tries too hard." }
-  behaviours: [kez-routine]
+  behaviours: [kez-routine, worried-friend, goes-looking]
 - id: shaun
   name: Shaun
   aliases: [shaun, maddox]
@@ -64,4 +64,4 @@
     - "Never let the 1893 story become more than a story."
   relationships:
     player: { trust: 0, affinity: 10, notes: "One of the builders from the hotel. Looks at the pier a lot." }
-  behaviours: [edith-routine]
+  behaviours: [edith-routine, edith-keeps-her-things]

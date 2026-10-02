@@ -1,4 +1,5 @@
 # Routines (§4.5). Everyone sleeps on schedule. Working hours are 08:00–17:30 with lunch on the parade at 12:30.
+# Routines move people and the things they carry; what happens when they collide is in behaviours/reactions.yaml.
 - id: gary-routine
   rules:
     - when: { time: "07:30" }
@@ -9,6 +10,10 @@
       do: [ { act: go, to: anchor }, { set_intent: "eating a pie with his phone to his ear" } ]
     - when: { time: "13:30" }
       do: [ { act: go, to: compound }, { set_intent: "arguing with a delivery driver on speaker" } ]
+    - when: { time: "15:00" }
+      do: [ { act: go, to: hotel-corridor }, { set_intent: "walking the job with a clipboard, sucking his teeth" } ]
+    - when: { time: "15:30" }
+      do: [ { act: go, to: compound }, { set_intent: "on the phone to the client, saying 'next week' a lot" } ]
     - when: { time: "17:30" }
       do: [ { act: go, to: site-office }, { set_intent: "doing the paperwork" } ]
     - when: { time: "19:00" }
@@ -25,7 +30,10 @@
       do: [ { act: go, to: compound }, { set_intent: "eating sandwiches on an upturned bucket" } ]
     - when: { time: "13:15" }
       do: [ { act: go, to: hotel-corridor }, { set_intent: "chasing out old plaster, not going near Room 7" } ]
+    # He works late, alone, at the far end of the corridor. That is when he hears Room 7.
     - when: { time: "17:30" }
+      do: [ { set_intent: "working late, alone, chasing out the last of the plaster near Room 7" } ]
+    - when: { time: "19:00" }
       do: [ { act: go, to: lads-room }, { set_intent: "writing a letter home" } ]
     - when: { time: "19:30" }
       do: [ { act: go, to: anchor }, { set_intent: "nursing a half by the window" } ]
@@ -35,8 +43,9 @@
       do: [ { act: sleep } ]
 - id: tommo-routine
   rules:
+    # He picks up the bar on his way in, if it's there, and drops it back at knocking-off time.
     - when: { time: "07:45" }
-      do: [ { act: go, to: compound }, { set_intent: "filming himself on the scaffold" } ]
+      do: [ { act: go, to: compound }, { act: take, item: crowbar }, { set_intent: "filming himself on the scaffold" } ]
     - when: { time: "10:00" }
       do: [ { act: go, to: hotel-lobby }, { set_intent: "knocking plaster off a wall and singing" } ]
     - when: { time: "12:30" }
@@ -44,7 +53,11 @@
     - when: { time: "13:30" }
       do: [ { act: go, to: hotel-lobby }, { set_intent: "sweeping, badly" } ]
     - when: { time: "17:30" }
-      do: [ { act: go, to: anchor }, { set_intent: "trying to win on the fruit machine" } ]
+      do:
+        - { act: go, to: compound }
+        - { act: drop, item: crowbar }
+        - { act: go, to: anchor }
+        - { set_intent: "trying to win on the fruit machine" }
     - when: { time: "23:15" }
       do: [ { act: go, to: lads-room }, { set_intent: null } ]
     - when: { time: "23:30" }
