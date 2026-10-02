@@ -6,8 +6,12 @@
 import { ATTRIBUTE_NAMES } from "../../mechanics/special.js";
 import { ATTRIBUTES } from "../../payload/schema.js";
 import { Canvas, type Rect, S, type Span, truncate, wrapSpans } from "./canvas.js";
+import { style } from "./color.js";
 import { attrSgr, bar } from "./log.js";
-import { type AnimFrame, drawScene } from "./scene.js";
+import type { Image } from "./png.js";
+import { rasterScene } from "./raster.js";
+import { type AnimFrame, drawScene, viewport } from "./scene.js";
+import type { SpriteSet } from "./sprites.js";
 import type { Ui } from "./ui.js";
 
 export const MIN_COLS = 80;
@@ -17,6 +21,8 @@ export interface LayoutOptions {
   t: number;
   emoji: boolean;
   frame?: AnimFrame;
+  /** Draw the scene as a picture from these sprites (the terminal shows images). */
+  sprites?: SpriteSet;
 }
 
 export interface Frame {
@@ -24,6 +30,8 @@ export interface Frame {
   /** Message pane height, for page-sized scrolling. */
   page: number;
   maxScroll: number;
+  /** In image mode: the scene's picture and the cells it covers (punched out of the canvas). */
+  picture?: { rect: Rect; draw: () => Image };
 }
 
 export function compose(ui: Ui, cols: number, rows: number, o: LayoutOptions): Frame {
@@ -46,13 +54,13 @@ export function compose(ui: Ui, cols: number, rows: number, o: LayoutOptions): F
   const sceneH = rows - 1 - msgH;
   const sceneRect: Rect = { x: 0, y: 1, w: leftW, h: sceneH };
   const msgRect: Rect = { x: 0, y: 1 + sceneH, w: leftW, h: msgH };
-  sceneBox(cv, ui, sceneRect, o);
+  const picture = sceneBox(cv, ui, sceneRect, o);
   const { page, maxScroll } = messages(cv, ui, msgRect);
   sidebar(cv, ui, { x: leftW, y: 1, w: sideW, h: rows - 1 });
   if (ui.menu) menuBox(cv, ui, sceneRect);
   if (ui.allot) allotBox(cv, ui, sceneRect);
   if (ui.overlay) overlayBox(cv, ui, sceneRect);
-  return { canvas: cv, page, maxScroll };
+  return { canvas: cv, page, maxScroll, ...(picture ? { picture } : {}) };
 }
 
 function header(cv: Canvas, ui: Ui, cols: number): void {
@@ -70,14 +78,31 @@ function header(cv: Canvas, ui: Ui, cols: number): void {
   cv.text(cols - 1 - [...text].length, 0, text, S.headerDim);
 }
 
-function sceneBox(cv: Canvas, ui: Ui, r: Rect, o: LayoutOptions): void {
+function sceneBox(cv: Canvas, ui: Ui, r: Rect, o: LayoutOptions): Frame["picture"] {
   const title: Span[] = [{ text: ui.scene?.name ?? ui.title, sgr: S.boldCyan }];
   cv.box(r, "round", ui.mode === "combat" ? S.red : S.grey, title);
   const inner = { x: r.x + 1, y: r.y + 1, w: r.w - 2, h: r.h - 2 };
   if (!ui.scene || ui.mode === "create") {
     const lines = wrapSpans([{ text: ui.title, sgr: S.boldYellow }], inner.w - 4);
     cv.block(inner.x + 2, inner.y + Math.floor(inner.h / 3), lines);
-    return;
+    return undefined;
+  }
+  if (o.sprites) {
+    // Image mode: tiles at least 4 columns by 2 rows (roughly square) unless the view is very small.
+    const scene = ui.scene;
+    const sprites = o.sprites;
+    const v = viewport(scene, inner, o.frame, inner.w >= 44 && inner.h >= 16 ? 2 : 1);
+    const rect = { x: inner.x + v.padX, y: inner.y + v.padY, w: v.tilesW * 2 * v.s, h: v.tilesH * v.s };
+    cv.fill(inner, " ", style(undefined, [8, 8, 10]));
+    cv.punch(rect);
+    const targeting = ui.targeting;
+    const draw = () =>
+      rasterScene(scene, sprites, v, {
+        t: o.t,
+        ...(o.frame ? { frame: o.frame } : {}),
+        ...(targeting ? { cursor: targeting.cursor } : {}),
+      });
+    return { rect, draw };
   }
   drawScene(cv, inner, ui.scene, {
     t: o.t,
