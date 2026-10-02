@@ -64,7 +64,9 @@ sprites:
     prompt: A flight of wooden stairs seen from above, treads running left to right, getting darker towards the top.
   terrain/wall:
     kind: texture
-    prompt: The top of an old interior wall seen from above, crumbling plaster over brick, cream and dusty pink.
+    prompt: >-
+      The top of a thick old wall seen from directly above: plain courses of weathered grey-brown brick with worn
+      cream mortar. Calm and low in contrast, as it borders every room.
   terrain/window:
     kind: texture
     prompt: A Victorian sash window set in a wall, seen from above, pale sea-green glass catching the light, white frame.
@@ -160,7 +162,9 @@ sprites:
     prompt: A short section of ornate green-painted Victorian cast-iron seafront railing, chipped to cream underneath.
   object/pier-view:
     kind: object
-    prompt: A distant view of a long Victorian iron pier on thin legs stretching out to sea, a glass pavilion at its end.
+    prompt: >-
+      A compact, square icon of a Victorian pier seen end-on from the shore: the glass-domed pavilion standing on rusty
+      iron legs above a strip of grey-green sea, filling the frame. Not a long diagonal view.
   object/shelter:
     kind: object
     span: [2, 1]
@@ -314,7 +318,9 @@ sprites:
     prompt: An old worn dartboard on a wooden backboard.
   object/bar:
     kind: object
-    prompt: A section of a long dark wooden pub bar counter with a brass hand pump on top.
+    prompt: >-
+      A straight section of a long dark wooden pub bar counter seen from the front, running the full width of the
+      image edge to edge so that sections placed side by side join into one counter, a brass hand pump on top.
   object/flat-telly:
     kind: object
     prompt: A big flat-screen TV on a small cheap table, screen glowing blue.
