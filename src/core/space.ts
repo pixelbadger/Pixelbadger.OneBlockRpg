@@ -246,6 +246,11 @@ export function isFixed(w: World, id: string): boolean {
   return !!def && !w.isChar(id) && !def.affordances.includes("takeable") && !isDoor(w, id);
 }
 
+/** Fixed objects you can walk over: floorboards, rugs, trapdoors (the `underfoot` affordance). */
+export function isUnderfoot(w: World, id: string): boolean {
+  return !!w.thing(id)?.affordances.includes("underfoot");
+}
+
 /** The tiles `id` covers: a fixed object at its authored place covers all its authored tiles. */
 export function footprint(w: World, id: string): Pos[] {
   const top = topInRoom(w, id);
@@ -282,7 +287,7 @@ export function occupancy(w: World, room: string, except?: string): Set<string> 
     if (w.isChar(id)) {
       const p = w.state.objects[id]?.pos;
       if (p && w.char(id).status !== "dead") out.add(key(p));
-    } else if (isFixed(w, id)) {
+    } else if (isFixed(w, id) && !isUnderfoot(w, id)) {
       for (const p of footprint(w, id)) out.add(key(p));
     }
   }

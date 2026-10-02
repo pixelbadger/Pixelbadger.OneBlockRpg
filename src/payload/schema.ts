@@ -212,6 +212,16 @@ export type TextVariants = z.infer<typeof TextVariants>;
 
 // ─── Effects (§7.5) ───────────────────────────────────────────────────────────
 
+/**
+ * A sound (§4.11). `loudness` is roughly how far it carries: it falls by one every three tiles and is muffled
+ * passing between rooms. `sound` completes "You hear …", e.g. "a board creaking".
+ */
+export const Noise = z.strictObject({
+  loudness: z.number().int().min(1).max(12),
+  sound: z.string().min(1),
+});
+export type Noise = z.infer<typeof Noise>;
+
 /** A number, or a reference to a hook argument (`{ $arg: amount }`), substituted when a hook fires. */
 export const NumArg = z.union([z.number(), z.strictObject({ $arg: z.string().min(1) })]);
 export type NumArg = z.infer<typeof NumArg>;
@@ -265,6 +275,8 @@ export type Effect =
   | { set_flag: string | { flag: string; value: Scalar } }
   | { clear_flag: string }
   | { set_property: { object: string; key: string; value: Scalar } }
+  | { adjust_property: { object: string; key: string; by: NumArg } }
+  | { noise: { source: string } & Noise }
   | { move: { object: string; to: string } }
   | { spawn: { object: string; in: string } }
   | { remove: string }
@@ -321,6 +333,8 @@ export const Effect: z.ZodType<Effect> = z.lazy(() =>
     }),
     z.strictObject({ clear_flag: z.string().min(1) }),
     z.strictObject({ set_property: z.strictObject({ object: Who, key: z.string().min(1), value: Scalar }) }),
+    z.strictObject({ adjust_property: z.strictObject({ object: Who, key: z.string().min(1), by: NumArg }) }),
+    z.strictObject({ noise: z.strictObject({ source: Who, ...Noise.shape }) }),
     z.strictObject({ move: z.strictObject({ object: Who, to: Who }) }),
     z.strictObject({ spawn: z.strictObject({ object: Id, in: Who }) }),
     z.strictObject({ remove: Who }),
@@ -383,6 +397,8 @@ export const EFFECT_KINDS = [
   "set_flag",
   "clear_flag",
   "set_property",
+  "adjust_property",
+  "noise",
   "move",
   "spawn",
   "remove",
@@ -507,8 +523,34 @@ export const UseRule = z.strictObject({
   /** Base minutes at AP 8 (default 2). */
   minutes: z.number().int().min(0).optional(),
   consume: z.boolean().optional(),
+  /** A sound this use makes, heard by whoever is in earshot (§4.11). */
+  noise: Noise.optional(),
 });
 export type UseRule = z.infer<typeof UseRule>;
+
+/**
+ * One way of forcing an object (§4.12): prying up a board, unscrewing a panel, jemmying a door. Any held object
+ * carrying one of `tools` as a tag will do. Forcing works on anything `fastened` or `locked`.
+ */
+export const ForceMethod = z.strictObject({
+  tools: z.array(z.string().min(1)).min(1),
+  /** A check the forcer must pass (skill or attribute, tier, modifier). Omit: it always works. */
+  check: z
+    .strictObject({
+      skill: z.enum(SKILLS).optional(),
+      attribute: z.enum(ATTRIBUTES).optional(),
+      tier: z.enum(TIERS).optional(),
+      modifier: z.number().optional(),
+    })
+    .optional(),
+  /** Base minutes at AP 8, pass or fail. */
+  minutes: z.number().int().min(0).default(5),
+  noise: Noise.optional(),
+  text: TextVariants.optional(),
+  fail_text: TextVariants.optional(),
+  effects: z.array(Effect).default([]),
+});
+export type ForceMethod = z.infer<typeof ForceMethod>;
 
 export const Weapon = z.strictObject({
   /** Combat-text key (§5.6): every weapon type needs entries in combat_text. */
@@ -574,6 +616,14 @@ const objectFields = {
   /** Impact (mass × velocity) at or above which this breaks (`broken: true`). */
   break_at: z.number().positive().optional(),
   uses: z.array(UseRule).default([]),
+  /** Ways to force this open or loose (§4.12). */
+  force: z.array(ForceMethod).default([]),
+  /** Sound made when someone walks over it (needs the `underfoot` affordance) (§4.11). */
+  step_noise: Noise.optional(),
+  /** The character it belongs to (§4.13). Others need `permitted` to take, force or break it unremarked. */
+  owner: Id.optional(),
+  /** Who else may take or force it, evaluated with `self` as the would-be taker. */
+  permitted: Condition.optional(),
   weapon: Weapon.optional(),
   armour: Armour.optional(),
   consumable: Consumable.optional(),

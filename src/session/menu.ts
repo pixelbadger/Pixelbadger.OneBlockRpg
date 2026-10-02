@@ -1,7 +1,7 @@
 /**
  * The action menu (§3.2, Q19): the actions available right now. Picks produce the same Intents as the parser.
  */
-import { availableConversation, priceOf } from "../core/actions.js";
+import { availableConversation, forceTool, priceOf } from "../core/actions.js";
 import { exitLabel } from "../core/describe.js";
 import type { World } from "../core/world.js";
 import type { ActionRequest } from "../payload/schema.js";
@@ -39,6 +39,10 @@ export function actionMenu(w: World): MenuItem[] {
     if (def.affordances.includes("lockable") && def.key && w.isWithin(def.key, p)) {
       const locked = w.prop(id, "locked") === true;
       out.push(item(`${locked ? "unlock" : "lock"} ${n}`, { act: locked ? "unlock" : "lock", target: id }));
+    }
+    if (!held && (w.prop(id, "fastened") === true || w.prop(id, "locked") === true)) {
+      const tool = forceTool(w, p, id);
+      if (tool) out.push(item(`force ${n} with ${w.name(tool)}`, { act: "use", item: tool, on: id }));
     }
     if (def.uses.some((u) => !u.on) || (def.consumable && held)) out.push(item(`use ${n}`, { act: "use", item: id }));
     for (const u of def.uses) {

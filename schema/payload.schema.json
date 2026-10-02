@@ -957,10 +957,213 @@
                 },
                 "consume": {
                   "type": "boolean"
+                },
+                "noise": {
+                  "type": "object",
+                  "properties": {
+                    "loudness": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 12
+                    },
+                    "sound": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "loudness",
+                    "sound"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
             }
+          },
+          "force": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tools": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "check": {
+                  "type": "object",
+                  "properties": {
+                    "skill": {
+                      "type": "string",
+                      "enum": [
+                        "small_guns",
+                        "melee_weapons",
+                        "unarmed",
+                        "throwing",
+                        "first_aid",
+                        "doctor",
+                        "speech",
+                        "barter",
+                        "gambling",
+                        "sneak",
+                        "lockpick",
+                        "steal",
+                        "traps",
+                        "science",
+                        "repair"
+                      ]
+                    },
+                    "attribute": {
+                      "type": "string",
+                      "enum": [
+                        "ST",
+                        "PE",
+                        "EN",
+                        "CH",
+                        "IN",
+                        "AG",
+                        "LK"
+                      ]
+                    },
+                    "tier": {
+                      "type": "string",
+                      "enum": [
+                        "trivial",
+                        "easy",
+                        "normal",
+                        "hard",
+                        "very_hard",
+                        "heroic"
+                      ]
+                    },
+                    "modifier": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "minutes": {
+                  "default": 5,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "noise": {
+                  "type": "object",
+                  "properties": {
+                    "loudness": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 12
+                    },
+                    "sound": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "loudness",
+                    "sound"
+                  ],
+                  "additionalProperties": false
+                },
+                "text": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "when": {
+                            "$ref": "#/$defs/__schema0"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  ]
+                },
+                "fail_text": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "when": {
+                            "$ref": "#/$defs/__schema0"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  ]
+                },
+                "effects": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                }
+              },
+              "required": [
+                "tools"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "step_noise": {
+            "type": "object",
+            "properties": {
+              "loudness": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 12
+              },
+              "sound": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "loudness",
+              "sound"
+            ],
+            "additionalProperties": false
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "permitted": {
+            "$ref": "#/$defs/__schema0"
           },
           "weapon": {
             "type": "object",
@@ -1464,10 +1667,213 @@
                 },
                 "consume": {
                   "type": "boolean"
+                },
+                "noise": {
+                  "type": "object",
+                  "properties": {
+                    "loudness": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 12
+                    },
+                    "sound": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "loudness",
+                    "sound"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
             }
+          },
+          "force": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tools": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "check": {
+                  "type": "object",
+                  "properties": {
+                    "skill": {
+                      "type": "string",
+                      "enum": [
+                        "small_guns",
+                        "melee_weapons",
+                        "unarmed",
+                        "throwing",
+                        "first_aid",
+                        "doctor",
+                        "speech",
+                        "barter",
+                        "gambling",
+                        "sneak",
+                        "lockpick",
+                        "steal",
+                        "traps",
+                        "science",
+                        "repair"
+                      ]
+                    },
+                    "attribute": {
+                      "type": "string",
+                      "enum": [
+                        "ST",
+                        "PE",
+                        "EN",
+                        "CH",
+                        "IN",
+                        "AG",
+                        "LK"
+                      ]
+                    },
+                    "tier": {
+                      "type": "string",
+                      "enum": [
+                        "trivial",
+                        "easy",
+                        "normal",
+                        "hard",
+                        "very_hard",
+                        "heroic"
+                      ]
+                    },
+                    "modifier": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "minutes": {
+                  "default": 5,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "noise": {
+                  "type": "object",
+                  "properties": {
+                    "loudness": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 12
+                    },
+                    "sound": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "loudness",
+                    "sound"
+                  ],
+                  "additionalProperties": false
+                },
+                "text": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "when": {
+                            "$ref": "#/$defs/__schema0"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  ]
+                },
+                "fail_text": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "when": {
+                            "$ref": "#/$defs/__schema0"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  ]
+                },
+                "effects": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/__schema1"
+                  }
+                }
+              },
+              "required": [
+                "tools"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "step_noise": {
+            "type": "object",
+            "properties": {
+              "loudness": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 12
+              },
+              "sound": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "loudness",
+              "sound"
+            ],
+            "additionalProperties": false
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "permitted": {
+            "$ref": "#/$defs/__schema0"
           },
           "weapon": {
             "type": "object",
@@ -2684,6 +3090,8 @@
                     "set_flag",
                     "clear_flag",
                     "set_property",
+                    "adjust_property",
+                    "noise",
                     "move",
                     "spawn",
                     "remove",
@@ -3962,6 +4370,87 @@
           },
           "required": [
             "set_property"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "adjust_property": {
+              "type": "object",
+              "properties": {
+                "object": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "by": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "$arg": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "$arg"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "object",
+                "key",
+                "by"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "adjust_property"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "noise": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "loudness": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 12
+                },
+                "sound": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "source",
+                "loudness",
+                "sound"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "noise"
           ],
           "additionalProperties": false
         },

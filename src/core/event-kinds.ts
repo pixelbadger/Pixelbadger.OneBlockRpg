@@ -34,6 +34,13 @@ export const EVENT_KINDS = [
   "sneak-started", // actor entered the sneaking stance
   "sneak-ended", // actor left it (payload.revealed when an attack or talk gave them away)
   "noticed", // actor noticed a sneaking character (targets: [sneaker])
+  "forced", // actor forced an object open or loose (targets: [object, tool]) (§4.12)
+  // sound and ownership (§4.11, §4.13)
+  "noise", // something made a sound (targets: [source]; payload: room, loudness, sound)
+  "heard", // actor heard a noise (targets: [source]; payload: sound, room, level, near)
+  "transgression", // actor took, forced or broke something not theirs, and was seen (targets: [object, owner])
+  "noticed-missing", // an owner noticed something of theirs gone from its place (targets: [object])
+  "noticed-damage", // an owner noticed something of theirs forced or broken (targets: [object])
   // combat (§5.6)
   "attacked",
   "combat-started",
