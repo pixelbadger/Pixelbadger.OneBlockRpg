@@ -1,26 +1,40 @@
 /**
- * The browser build: a static site that plays payloads entirely in the browser (src/cli/web), for GitHub Pages or
- * any static host. Each payload is validated, then embedded with its sprite art in its own page.
+ * The browser build: a static site that plays payloads entirely in the browser (the web host, src/hosts/web), for
+ * GitHub Pages or any static host. Each payload is validated, then embedded with its sprite art in its own page.
  *
  *   pnpm web examples/the-pier examples/carver-street [--out dist/web]
  *
- * writes <out>/index.html (the list of games), <out>/<game id>/index.html, and the shared oneblock.js and xterm.css.
- * The pages fetch nothing, so they also play straight from disk (file://).
+ * writes <out>/index.html (the list of games), <out>/<game id>/index.html, the shared oneblock.js and the font
+ * (<out>/fonts/). The pages fetch nothing but the font beside them, so they also play straight from disk (file://).
  */
 
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { build } from "esbuild";
-import { readSpriteFiles } from "../src/cli/tui/sprite-files.js";
-import { indexPage, page, type WebGame } from "../src/cli/web/page.js";
-import { formatIssue } from "../src/payload/issues.js";
-import { validatePayloadAt } from "../src/payload/validate.js";
+import type { SpriteManifest } from "../src/client/sprites.js";
+import { FONT_FILES } from "../src/client/theme.js";
+import { formatIssue } from "../src/engine/payload/issues.js";
+import { validatePayloadAt } from "../src/hosts/node/payload.js";
+import { fontPath, indexPage, page, type WebGame } from "../src/hosts/web/page.js";
 
-const ENTRY = fileURLToPath(new URL("../src/cli/web/main.ts", import.meta.url));
+const ENTRY = fileURLToPath(new URL("../src/hosts/web/main.tsx", import.meta.url));
 const require = createRequire(import.meta.url);
+
+/** A payload's sprite art (`assets/sprites.json` and the PNGs it names), path → base64, if it ships any. */
+function readAssets(payloadDir: string): Record<string, string> | undefined {
+  const dir = join(payloadDir, "assets");
+  const manifestPath = join(dir, "sprites.json");
+  if (!existsSync(manifestPath)) return undefined;
+  const manifest = readFileSync(manifestPath);
+  const files: Record<string, string> = { "sprites.json": manifest.toString("base64") };
+  for (const e of Object.values((JSON.parse(manifest.toString("utf8")) as SpriteManifest).sprites)) {
+    files[e.file] ??= readFileSync(join(dir, e.file)).toString("base64");
+  }
+  return files;
+}
 
 export interface WebBuild {
   out: string;
@@ -35,18 +49,8 @@ export async function buildWeb(payloads: string[], out: string, o: { minify?: bo
     if (!r.payload || errors.length) {
       throw new Error(`${path}: ${errors.length} error(s)\n${errors.map(formatIssue).join("\n")}`);
     }
-    const art = readSpriteFiles(join(path, "assets"));
-    return {
-      payload: r.payload,
-      ...(art
-        ? {
-            sprites: {
-              manifest: art.manifest,
-              files: Object.fromEntries([...art.files].map(([f, b]) => [f, Buffer.from(b).toString("base64")])),
-            },
-          }
-        : {}),
-    };
+    const assets = readAssets(path);
+    return { payload: r.payload, ...(assets ? { assets } : {}) };
   });
   const ids = games.map((g) => g.payload.game.id);
   const twice = ids.find((id, i) => ids.indexOf(id) !== i);
@@ -62,14 +66,16 @@ export async function buildWeb(payloads: string[], out: string, o: { minify?: bo
     format: "iife",
     platform: "browser",
     target: "es2022",
+    jsx: "automatic",
+    jsxImportSource: "preact",
     minify: o.minify ?? true,
     legalComments: "linked",
     logLevel: "silent",
   });
-  writeFileSync(
-    join(out, "xterm.css"),
-    readFileSync(join(dirname(require.resolve("@xterm/xterm/package.json")), "css/xterm.css")),
-  );
+  const fonts = dirname(require.resolve("@fontsource/jetbrains-mono/package.json"));
+  mkdirSync(join(out, "fonts"), { recursive: true });
+  for (const f of FONT_FILES) copyFileSync(join(fonts, f.file), join(out, fontPath(f.file)));
+  copyFileSync(join(fonts, "LICENSE"), join(out, "fonts", "OFL.txt"));
   for (const g of games) {
     const dir = join(out, g.payload.game.id);
     mkdirSync(dir, { recursive: true });

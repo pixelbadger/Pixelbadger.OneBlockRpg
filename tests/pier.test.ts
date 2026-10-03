@@ -1,15 +1,15 @@
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { parseClock } from "../src/core/clock.js";
-import { entitled } from "../src/core/ownership.js";
-import { tick } from "../src/core/tick.js";
-import { World } from "../src/core/world.js";
-import { ScriptedProvider } from "../src/llm/scripted.js";
-import { offlineProvider } from "../src/narrative/offline.js";
-import type { Payload } from "../src/payload/schema.js";
-import { validatePayloadAt } from "../src/payload/validate.js";
-import type { TurnOutput } from "../src/session/port.js";
-import { Session } from "../src/session/session.js";
+import { parseClock } from "../src/engine/core/clock.js";
+import { entitled } from "../src/engine/core/ownership.js";
+import { tick } from "../src/engine/core/tick.js";
+import { World } from "../src/engine/core/world.js";
+import { ScriptedProvider } from "../src/engine/llm/scripted.js";
+import { offlineProvider } from "../src/engine/narrative/offline.js";
+import type { Payload } from "../src/engine/payload/schema.js";
+import type { TurnOutput } from "../src/engine/session/port.js";
+import { Session } from "../src/engine/session/session.js";
+import { validatePayloadAt } from "../src/hosts/node/payload.js";
 
 /** The Pier (Q22): the first full example story, and the worked example of the authoring guide (§7.9). */
 const PIER = fileURLToPath(new URL("../examples/the-pier", import.meta.url));

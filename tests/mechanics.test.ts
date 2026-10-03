@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { damage, hitChance, UNARMED } from "../src/mechanics/combat-math.js";
-import { Rng, seedState } from "../src/mechanics/rng.js";
+import { damage, hitChance, UNARMED } from "../src/engine/mechanics/combat-math.js";
+import { Rng, seedState } from "../src/engine/mechanics/rng.js";
 import {
   actionMinutes,
   actionPoints,
@@ -20,7 +20,7 @@ import {
   skillCheck,
   skillValue,
   xpForLevel,
-} from "../src/mechanics/special.js";
+} from "../src/engine/mechanics/special.js";
 
 const avg = { ST: 5, PE: 5, EN: 5, CH: 5, IN: 5, AG: 5, LK: 5 };
 

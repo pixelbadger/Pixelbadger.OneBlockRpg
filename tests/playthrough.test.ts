@@ -2,13 +2,13 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { replaySave } from "../src/cli/main.js";
-import { World } from "../src/core/world.js";
-import { RecordingProvider, ScriptedProvider } from "../src/llm/scripted.js";
-import { offlineProvider } from "../src/narrative/offline.js";
-import type { Intent, TurnOutput } from "../src/session/port.js";
-import { openSqliteSave } from "../src/session/save-sqlite.js";
-import { Session } from "../src/session/session.js";
+import { World } from "../src/engine/core/world.js";
+import { RecordingProvider, ScriptedProvider } from "../src/engine/llm/scripted.js";
+import { offlineProvider } from "../src/engine/narrative/offline.js";
+import type { Intent, TurnOutput } from "../src/engine/session/port.js";
+import { Session } from "../src/engine/session/session.js";
+import { replaySave } from "../src/hosts/cli/main.js";
+import { openSqliteSave } from "../src/hosts/node/save-sqlite.js";
 import { example } from "./helpers.js";
 
 /** A scripted Mrs Okafor: once the deed conversation is on offer, she takes it up. */

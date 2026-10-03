@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { BASE_MINUTES, perform, SNEAK_TIME, UNNOTICED_STEAL_BONUS } from "../src/core/actions.js";
-import { playerCombat, pursuable, runCombat } from "../src/core/combat.js";
-import { describeRoom, indefinite } from "../src/core/describe.js";
-import { applyEffects } from "../src/core/effects.js";
-import { applyOps, clone } from "../src/core/ops.js";
-import { tick } from "../src/core/tick.js";
-import { initialState } from "../src/core/world.js";
-import { parseCommand } from "../src/session/parser.js";
+import { BASE_MINUTES, perform, SNEAK_TIME, UNNOTICED_STEAL_BONUS } from "../src/engine/core/actions.js";
+import { playerCombat, pursuable, runCombat } from "../src/engine/core/combat.js";
+import { describeRoom, indefinite } from "../src/engine/core/describe.js";
+import { applyEffects } from "../src/engine/core/effects.js";
+import { applyOps, clone } from "../src/engine/core/ops.js";
+import { tick } from "../src/engine/core/tick.js";
+import { initialState } from "../src/engine/core/world.js";
+import { parseCommand } from "../src/engine/session/parser.js";
 import { mini, world } from "./helpers.js";
 
 const P = { by: "player" as const };

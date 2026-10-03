@@ -1,8 +1,7 @@
 import { fileURLToPath } from "node:url";
-import { World } from "../src/core/world.js";
-import { loadPayload } from "../src/payload/loader.js";
-import { Payload, type PayloadInput } from "../src/payload/schema.js";
-import { validatePayloadAt } from "../src/payload/validate.js";
+import { World } from "../src/engine/core/world.js";
+import { Payload, type PayloadInput } from "../src/engine/payload/schema.js";
+import { loadPayload, validatePayloadAt } from "../src/hosts/node/payload.js";
 
 export const EXAMPLE = fileURLToPath(new URL("../examples/carver-street", import.meta.url));
 

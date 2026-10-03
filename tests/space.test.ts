@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { perform } from "../src/core/actions.js";
-import { playerCombat } from "../src/core/combat.js";
-import { canSee, compileMap, findPath, gridOf, occupancy } from "../src/core/space.js";
-import { tick } from "../src/core/tick.js";
-import { placeAll } from "../src/core/world.js";
-import { checkMaps } from "../src/payload/maps.js";
+import { perform } from "../src/engine/core/actions.js";
+import { playerCombat } from "../src/engine/core/combat.js";
+import { canSee, compileMap, findPath, gridOf, occupancy } from "../src/engine/core/space.js";
+import { tick } from "../src/engine/core/tick.js";
+import { placeAll } from "../src/engine/core/world.js";
+import { checkMaps } from "../src/engine/payload/maps.js";
 import { mini, world } from "./helpers.js";
 
 const P = { by: "player" as const };

@@ -1,18 +1,134 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
     "ignoreUnknown": true,
     "includes": ["src/**", "tests/**", "tools/**", "bin/**", "*.json", "*.ts"]
   },
-  "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
   "linter": {
     "enabled": true,
     "rules": {
       "preset": "recommended",
-      "style": { "noNonNullAssertion": "off" }
+      "style": {
+        "noNonNullAssertion": "off"
+      }
     }
   },
-  "javascript": { "formatter": { "quoteStyle": "double" } },
-  "assist": { "enabled": true, "actions": { "source": { "organizeImports": "on" } } }
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/engine/**", "src/platform/**", "src/client/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["node:*"],
+                    "message": "engine, platform and client run in every host: no Node built-ins (see docs/plans/frontend-platforms.md)."
+                  },
+                  {
+                    "group": ["**/hosts/**"],
+                    "message": "lower layers never import a host."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/hosts/web/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["node:*"],
+                    "message": "the web host runs in the browser: no Node built-ins."
+                  },
+                  {
+                    "group": ["**/hosts/node/**", "**/hosts/cli/**", "**/hosts/native/**"],
+                    "message": "the web host imports no other host."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/hosts/native/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/hosts/web/**", "**/hosts/cli/**"],
+                    "message": "the native host imports no web or command-line code."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/engine/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["node:*"],
+                    "message": "the engine runs in every host: no Node built-ins."
+                  },
+                  {
+                    "group": ["**/hosts/**", "**/client/**", "**/platform/**"],
+                    "message": "the engine imports nothing above it."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

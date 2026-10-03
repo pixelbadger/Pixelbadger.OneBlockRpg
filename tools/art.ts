@@ -1,6 +1,6 @@
 /**
  * Sprite art for a payload, generated with OpenAI's image API from an art brief (`<payload>/assets/art.yaml`).
- * Development tooling, not part of the engine: the engine and the TUI only read the PNGs and sprites.json it writes.
+ * Development tooling, not part of the engine: the hosts only read the PNGs and sprites.json it writes.
  *
  *   OPENAI_API_KEY=… pnpm art examples/the-pier [--only key,key] [--force] [--reprocess] [--concurrency 4] [--dry-run]
  *
@@ -12,8 +12,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { parse } from "yaml";
-import { decodePng, encodePng, type Image, image } from "../src/cli/tui/png.js";
-import type { SpriteEntry, SpriteManifest } from "../src/cli/tui/sprites.js";
+import type { SpriteEntry, SpriteManifest } from "../src/client/sprites.js";
+import { decodePng, encodePng, type Image, image } from "./png.js";
 
 export type ArtKind = "texture" | "object" | "character" | "effect";
 

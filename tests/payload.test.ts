@@ -2,9 +2,9 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { payloadJsonSchema } from "../src/payload/json-schema.js";
-import type { PayloadInput } from "../src/payload/schema.js";
-import { validatePayloadAt } from "../src/payload/validate.js";
+import { payloadJsonSchema } from "../src/engine/payload/json-schema.js";
+import type { PayloadInput } from "../src/engine/payload/schema.js";
+import { validatePayloadAt } from "../src/hosts/node/payload.js";
 import { EXAMPLE, mini } from "./helpers.js";
 
 /** Writes a single-file payload (merged form) and validates it. */

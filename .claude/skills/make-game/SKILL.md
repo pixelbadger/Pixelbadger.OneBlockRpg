@@ -38,8 +38,7 @@ genuinely missing, stop and tell the user what the engine would need.
 
 ```sh
 pnpm oneblock validate examples/<game-id>          # must be ok with zero warnings
-pnpm oneblock play examples/<game-id> --provider offline --new   # walk the critical path by hand
-pnpm oneblock play examples/<game-id> --provider offline --new --tui   # and look at every room drawn
+pnpm oneblock play examples/<game-id> --provider offline --new   # opens the window: walk the critical path by hand
 ```
 
 Then write `tests/<game-id>.test.ts` following `tests/pier.test.ts`: validation with no issues, one test per ending
@@ -50,7 +49,7 @@ the brief marks as decided, and tests for the unscripted routes to each story pi
 
 Tell the user:
 
-- the payload's location, and how to play it (`node bin/oneblock.js play examples/<game-id>`, after `pnpm build`)
+- the payload's location, and how to play it (`pnpm oneblock play examples/<game-id>`, which opens a window)
 - a short map of the block, the cast and the plot's flags
 - everything you decided where the brief was silent
 - anything in the brief you couldn't express, and what the engine would need for it
