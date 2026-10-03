@@ -19,24 +19,25 @@
     "format": "biome check --write .",
     "schema": "tsx src/cli/main.ts schema --out schema/payload.schema.json",
     "oneblock": "tsx src/cli/main.ts",
-    "art": "tsx tools/art.ts"
+    "art": "tsx tools/art.ts",
+    "web": "tsx tools/web.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.286",
     "@anthropic-ai/sdk": "^0.131.0",
-    "@noble/hashes": "2.4.0",
+    "@noble/hashes": "^2.4.0",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/addon-image": "^0.9.0",
     "@xterm/xterm": "^6.0.0",
-    "fflate": "0.8.3",
-    "ws": "^8.22.0",
+    "fflate": "^0.8.3",
     "yaml": "^2.9.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
     "@types/node": "^22.20.4",
-    "@types/ws": "^8.18.2",
+    "esbuild": "^0.28.2",
+    "fake-indexeddb": "^6.2.5",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"

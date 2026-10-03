@@ -1,9 +1,6 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 import { crc32, inflateSync } from "node:zlib";
-import { afterAll, describe, expect, it } from "vitest";
-import { WebSocket } from "ws";
+import { describe, expect, it } from "vitest";
 import { absorb } from "../src/cli/tui/app.js";
 import { Canvas } from "../src/cli/tui/canvas.js";
 import { detectGraphics, iipImage, kittyImage, Painter } from "../src/cli/tui/graphics.js";
@@ -11,7 +8,6 @@ import { compose } from "../src/cli/tui/layout.js";
 import { decodePng, encodePng, type Image, image } from "../src/cli/tui/png.js";
 import { frameAt, SpriteSet } from "../src/cli/tui/sprites.js";
 import { Controller, type Ui } from "../src/cli/tui/ui.js";
-import { serve } from "../src/cli/web/server.js";
 import { World } from "../src/core/world.js";
 import { offlineProvider } from "../src/narrative/offline.js";
 import { Session } from "../src/session/session.js";
@@ -253,58 +249,5 @@ describe("art tool (cutting generated images into sprites)", () => {
       file: "terrain/water.png",
       anim: "scroll",
     });
-  });
-});
-
-describe("oneblock serve", () => {
-  const saves = mkdtempSync(join(tmpdir(), "oneblock-serve-"));
-  afterAll(() => rmSync(saves, { recursive: true, force: true }));
-
-  it("serves the page and xterm.js, and plays a game per tab with pictures as inline images", async () => {
-    const server = await serve({
-      payload: mini(),
-      sprites: sprites(),
-      port: 0,
-      host: "127.0.0.1",
-      saves,
-      provider: "offline",
-    });
-    try {
-      const page = await (await fetch(server.url)).text();
-      expect(page).toContain("ImageAddon");
-      expect(page).toContain("<title>Mini</title>");
-      for (const f of ["xterm/xterm.js", "xterm/xterm.css", "xterm/addon-image.js", "xterm/addon-fit.js"]) {
-        expect((await fetch(server.url + f)).status).toBe(200);
-      }
-      expect((await fetch(`${server.url}nope`)).status).toBe(404);
-
-      const url = `${server.url.replace("http", "ws")}play?game=test-game-0001&cols=120&rows=40`;
-      const ws = new WebSocket(url);
-      let screen = "";
-      ws.on("message", (d) => {
-        screen += String(d);
-      });
-      await new Promise<void>((resolve, reject) => {
-        ws.once("open", () => resolve());
-        ws.once("error", reject);
-      });
-      // Character creation first (a menu), then the room: pick the first option and wait for a picture.
-      const until = async (re: RegExp) => {
-        for (let i = 0; i < 100 && !re.test(screen); i++) await new Promise((r) => setTimeout(r, 30));
-        return re.test(screen);
-      };
-      expect(await until(pattern(String.raw`ESC\[\?1049h`))).toBe(true);
-      ws.send(JSON.stringify({ t: "in", d: "\r" }));
-      expect(await until(pattern(String.raw`ESC\]1337;File=inline=1`))).toBe(true);
-
-      // A second tab on the same game is turned away.
-      const twin = new WebSocket(url);
-      const code = await new Promise<number>((resolve) => twin.once("close", (c) => resolve(c)));
-      expect(code).toBe(1008);
-      ws.close();
-      await new Promise((r) => ws.once("close", r));
-    } finally {
-      await server.close();
-    }
   });
 });

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * The `oneblock` CLI (§3.10): validate, schema, play and replay. src/cli is the only frontend adapter (§3.1).
+ * The `oneblock` CLI (§3.10): validate, schema, play and replay. src/cli holds the frontend adapters (§3.1): this
+ * one, and the browser build (src/cli/web, built by `pnpm web`).
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -19,8 +20,8 @@ import { openGame } from "./game.js";
 import { render, renderIntroductionPage } from "./render.js";
 import { runTui } from "./tui/app.js";
 import { detectGraphics, GRAPHICS, type Graphics } from "./tui/graphics.js";
-import { SpriteSet } from "./tui/sprites.js";
-import { serve } from "./web/server.js";
+import { nodeTerminal } from "./tui/node-terminal.js";
+import { loadSprites } from "./tui/sprite-files.js";
 
 const USAGE = `oneblock — a one block CRPG engine
 
@@ -40,12 +41,6 @@ Usage:
                            and a terminal that shows images (kitty, Ghostty, iTerm2, WezTerm), rooms are
                            drawn as pictures
       --no-color
-  oneblock serve <payload> [options]              Play in a browser: the --tui frontend in xterm.js, one game
-                                                   per tab, pictures and all
-      --port <n>           Port (default 8080)
-      --host <addr>        Address to listen on (default 127.0.0.1)
-      --saves <dir>        Where each tab's game is saved (default: saves/)
-      --provider, --model  As for play
   oneblock replay <payload> <save>                Replay a save's inputs against its recorded LLM responses
                                                    and check the result is identical (§3.8)
 `;
@@ -127,7 +122,10 @@ async function play(args: string[]): Promise<number> {
   const store = game.store;
   if (values.tui) {
     const graphics = pickGraphics(values.graphics);
-    const sprites = graphics === "none" ? undefined : SpriteSet.load(join(path, "assets"));
+    const sprites = graphics === "none" ? undefined : loadSprites(join(path, "assets"));
+    const stop = new AbortController();
+    const onTerm = () => stop.abort();
+    process.once("SIGTERM", onTerm);
     try {
       await runTui({
         session,
@@ -136,9 +134,12 @@ async function play(args: string[]): Promise<number> {
         flush: game.flush,
         emoji: !values["no-emoji"] && process.env.ONEBLOCK_EMOJI !== "0",
         graphics,
+        terminal: nodeTerminal(),
+        signal: stop.signal,
         ...(sprites ? { sprites } : {}),
       });
     } finally {
+      process.off("SIGTERM", onTerm);
       game.close();
     }
     return 0;
@@ -201,42 +202,6 @@ function pickGraphics(mode: string | undefined): Graphics {
   return mode as Graphics;
 }
 
-async function serveCommand(args: string[]): Promise<number> {
-  const { values, positionals } = parseArgs({
-    args,
-    allowPositionals: true,
-    options: {
-      port: { type: "string", default: "8080" },
-      host: { type: "string", default: "127.0.0.1" },
-      saves: { type: "string", default: "saves" },
-      provider: { type: "string", default: "claude-subscription" },
-      model: { type: "string" },
-    },
-  });
-  const path = positionals[0];
-  if (!path) {
-    console.error(USAGE);
-    return 2;
-  }
-  const payload = loadPayload(path, true);
-  const server = await serve({
-    payload,
-    sprites: SpriteSet.load(join(path, "assets")),
-    port: Number(values.port),
-    host: values.host!,
-    saves: values.saves!,
-    provider: values.provider!,
-    ...(values.model ? { model: values.model } : {}),
-  });
-  console.log(`${payload.game.title}: open ${server.url} (Ctrl+C to stop)`);
-  await new Promise<void>((resolve) => {
-    process.once("SIGINT", resolve);
-    process.once("SIGTERM", resolve);
-  });
-  await server.close();
-  return 0;
-}
-
 async function replay(args: string[]): Promise<number> {
   const { positionals } = parseArgs({ args, allowPositionals: true });
   const [payloadPath, savePath] = positionals;
@@ -297,8 +262,6 @@ async function main(argv: string[]): Promise<number> {
       return play(rest);
     case "replay":
       return replay(rest);
-    case "serve":
-      return serveCommand(rest);
     default:
       console.log(USAGE);
       return cmd ? 2 : 0;
