@@ -1,31 +1,16 @@
-/** Opening a game in the terminal: a SQLite save on disk and a provider chosen by id. */
+/** Opening a game in the terminal: the Node platform, with the save in one file and the provider chosen by id. */
 
-import { rmSync } from "node:fs";
-import { AnthropicApiProvider } from "../../engine/llm/anthropic-api.js";
-import type { LlmProvider } from "../../engine/llm/provider.js";
-import { offlineProvider } from "../../engine/narrative/offline.js";
 import type { Payload } from "../../engine/payload/schema.js";
-import { ClaudeSubscriptionProvider } from "../node/claude-subscription.js";
-import { openSqliteSave, saveExists } from "../node/save-sqlite.js";
-import { type Game, startGame } from "./start-game.js";
+import { type Game, startGame } from "../../platform/game.js";
+import { overlaySettings } from "../../platform/memory.js";
+import { nodePlatform } from "../node/platform.js";
+import { singleSqliteSave } from "../node/save-sqlite.js";
+import { FileSettings } from "../node/settings.js";
 
-export type { Game } from "./start-game.js";
-
-export function makeProvider(id: string, model?: string): LlmProvider {
-  switch (id) {
-    case "claude-subscription":
-      return new ClaudeSubscriptionProvider(model ? { model } : {});
-    case "anthropic-api":
-      return new AnthropicApiProvider(model ? { model } : {});
-    case "offline":
-    case "scripted":
-      return offlineProvider();
-    default:
-      throw new Error(`unknown provider '${id}' (claude-subscription | anthropic-api | offline)`);
-  }
-}
+export type { Game } from "../../platform/game.js";
 
 export interface GameOptions {
+  payloadDir: string;
   savePath: string;
   /** Start over, replacing the save. */
   fresh?: boolean;
@@ -34,10 +19,16 @@ export interface GameOptions {
   model?: string;
 }
 
-/** Opens (resuming if the save exists) or starts a game. */
+/** Opens (resuming if the save holds a game) or starts a game. */
 export async function openGame(payload: Payload, o: GameOptions): Promise<Game> {
-  if (o.fresh) rmSync(o.savePath, { force: true });
-  const resuming = saveExists(o.savePath);
-  const store = await openSqliteSave(o.savePath);
-  return startGame(payload, store, makeProvider(o.provider, o.model), { resuming, seed: o.seed });
+  const settings = new FileSettings();
+  const platform = nodePlatform(o.payloadDir, {
+    saves: singleSqliteSave(o.savePath),
+    settings: o.model ? overlaySettings(settings, { model: o.model }) : settings,
+  });
+  return startGame(payload, platform, {
+    providerId: o.provider,
+    ...(o.fresh ? { fresh: true } : {}),
+    ...(o.seed ? { seed: o.seed } : {}),
+  });
 }

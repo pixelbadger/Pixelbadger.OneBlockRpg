@@ -7,13 +7,13 @@ import { World } from "../src/engine/core/world.js";
 import { offlineProvider } from "../src/engine/narrative/offline.js";
 import { MemorySaveBackend, SaveStore } from "../src/engine/session/save.js";
 import { Session } from "../src/engine/session/session.js";
-import { startGame } from "../src/hosts/cli/start-game.js";
 import { runTui } from "../src/hosts/cli/tui/app.js";
 import { image } from "../src/hosts/cli/tui/png.js";
 import { SpriteSet } from "../src/hosts/cli/tui/sprites.js";
 import { GAME_DATA_ID, type WebGame } from "../src/hosts/cli/web/page.js";
 import { deleteBrowserSave, openBrowserSave } from "../src/hosts/cli/web/save-idb.js";
 import { decodeKeys, type XtermLike, xtermTerminal } from "../src/hosts/cli/web/terminal.js";
+import { gameOnStore as startGame } from "../src/platform/game.js";
 import { buildWeb } from "../tools/web.js";
 import { EXAMPLE, example, mini } from "./helpers.js";
 

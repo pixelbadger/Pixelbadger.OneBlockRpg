@@ -4,12 +4,12 @@
  * IndexedDB and resumes when the page comes back. Bundled by tools/web.ts; page.ts embeds the payload.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
 import { FitAddon } from "@xterm/addon-fit";
 import { ImageAddon } from "@xterm/addon-image";
 import { Terminal } from "@xterm/xterm";
 import { AnthropicApiProvider, DEFAULT_MODEL } from "../../../engine/llm/anthropic-api.js";
-import { startGame } from "../start-game.js";
+import { gameOnStore } from "../../../platform/game.js";
+import { browserClient, checkApiKey } from "../../web/providers.js";
 import { runTui } from "../tui/app.js";
 import { SpriteSet } from "../tui/sprites.js";
 import { GAME_DATA_ID, type WebGame } from "./page.js";
@@ -106,19 +106,10 @@ function askForKey(error?: string): Promise<Credentials> {
   });
 }
 
-const client = (apiKey: string) => new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+const client = browserClient;
 
 /** What is wrong with a key and model, if anything (one free API call). */
-async function check({ key, model }: Credentials): Promise<string | undefined> {
-  try {
-    await client(key).models.retrieve(model);
-    return undefined;
-  } catch (err) {
-    if (err instanceof Anthropic.AuthenticationError) return "The API didn't accept that key.";
-    if (err instanceof Anthropic.NotFoundError) return `The API doesn't know the model '${model}'.`;
-    return `Couldn't reach the API: ${message(err)}`;
-  }
-}
+const check = ({ key, model }: Credentials) => checkApiKey(client(key), model);
 
 async function main(): Promise<void> {
   const data = JSON.parse($(`#${GAME_DATA_ID}`).textContent ?? "{}") as WebGame;
@@ -174,7 +165,7 @@ async function main(): Promise<void> {
 
     const { store, resuming } = await openBrowserSave(saveId, (err) => bar(`Saving failed: ${message(err)}`));
     const provider = new AnthropicApiProvider({ client: client(key), model });
-    const game = startGame(payload, store, provider, { resuming });
+    const game = gameOnStore(payload, store, provider, { resuming });
     bar(`${resuming ? "Resumed" : "New game"} · ${model} · saved in this browser`, {
       "new game": newGame,
       "change API key": changeKey,

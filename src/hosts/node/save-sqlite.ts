@@ -1,11 +1,17 @@
-/** Saves on disk (§3.7, Q12): one SQLite database per save game. */
-import { existsSync } from "node:fs";
+/**
+ * Saves on disk (§3.7, Q12): one SQLite database per save game. SqliteSaveStorage keeps them as
+ * `<root>/<game id>/<slot>.db`, the root defaulting to `$XDG_DATA_HOME/oneblock/saves`.
+ */
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
+import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import type { EventRow, ExchangeRow, SaveBackend, SnapshotRow, UsageRow } from "../../engine/session/save.js";
 import { SaveStore } from "../../engine/session/save.js";
+import { DEFAULT_SLOT, type SaveInfo, type SaveStorage } from "../../platform/index.js";
+import { dataDir } from "./xdg.js";
 
 /** node:sqlite is still flagged experimental on Node 22; load it lazily and without the warning. */
-async function openDb(path: string): Promise<DatabaseSync> {
+async function openDb(path: string, readOnly = false): Promise<DatabaseSync> {
   const original = process.emitWarning;
   process.emitWarning = ((w: string | Error, ...rest: unknown[]) => {
     const text = typeof w === "string" ? w : w.message;
@@ -14,7 +20,7 @@ async function openDb(path: string): Promise<DatabaseSync> {
   }) as typeof process.emitWarning;
   try {
     const { DatabaseSync } = await import("node:sqlite");
-    return new DatabaseSync(path);
+    return new DatabaseSync(path, { readOnly });
   } finally {
     process.emitWarning = original;
   }
@@ -112,10 +118,90 @@ class SqliteSaveBackend implements SaveBackend {
 }
 
 /** Opens (creating if need be) the save database at `path`. */
-export async function openSqliteSave(path: string): Promise<SaveStore> {
+export async function openSqliteBackend(path: string): Promise<SaveBackend> {
   const db = await openDb(path);
   db.exec(SCHEMA);
-  return new SaveStore(new SqliteSaveBackend(db));
+  return new SqliteSaveBackend(db);
 }
 
-export const saveExists = (path: string): boolean => existsSync(path);
+export async function openSqliteSave(path: string): Promise<SaveStore> {
+  return new SaveStore(await openSqliteBackend(path));
+}
+
+/** A save holds a game once it has been given its payload. */
+const holdsGame = (b: SaveBackend) => b.meta().payloadId !== undefined;
+
+async function readMeta(path: string): Promise<Record<string, string>> {
+  const db = await openDb(path, true);
+  try {
+    const rows = db.prepare("SELECT key, value FROM meta").all() as { key: string; value: string }[];
+    return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  } catch {
+    return {};
+  } finally {
+    db.close();
+  }
+}
+
+function removeDb(path: string): void {
+  for (const suffix of ["", "-journal", "-wal", "-shm"]) rmSync(`${path}${suffix}`, { force: true });
+}
+
+/** Game ids and slots become path segments, so only plain names are allowed. */
+function segment(name: string, what: string): string {
+  if (!/^[A-Za-z0-9_-][A-Za-z0-9._-]*$/.test(name)) throw new Error(`bad save ${what} '${name}'`);
+  return name;
+}
+
+export const defaultSaveRoot = (env?: Record<string, string | undefined>): string => join(dataDir(env), "saves");
+
+/** Save slots on disk: `<root>/<game id>/<slot>.db`. */
+export class SqliteSaveStorage implements SaveStorage {
+  constructor(readonly root: string = defaultSaveRoot()) {}
+
+  pathOf(gameId: string, slot: string): string {
+    return join(this.root, segment(gameId, "game id"), `${segment(slot, "slot")}.db`);
+  }
+
+  async list(gameId: string): Promise<SaveInfo[]> {
+    const dir = join(this.root, segment(gameId, "game id"));
+    if (!existsSync(dir)) return [];
+    const out: SaveInfo[] = [];
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith(".db")) continue;
+      const path = join(dir, file);
+      out.push({ gameId, slot: file.slice(0, -3), updated: statSync(path).mtimeMs, meta: await readMeta(path) });
+    }
+    return out.sort((a, b) => b.updated - a.updated);
+  }
+
+  async open(gameId: string, slot: string): Promise<{ backend: SaveBackend; existed: boolean }> {
+    const path = this.pathOf(gameId, slot);
+    mkdirSync(join(this.root, gameId), { recursive: true });
+    const backend = await openSqliteBackend(path);
+    return { backend, existed: holdsGame(backend) };
+  }
+
+  async delete(gameId: string, slot: string): Promise<void> {
+    removeDb(this.pathOf(gameId, slot));
+  }
+
+  /** SQLite writes are durable when they return. */
+  async settled(): Promise<void> {}
+}
+
+/** One save file, whatever the game and slot: the terminal's `play --save <file>`. */
+export function singleSqliteSave(path: string): SaveStorage {
+  return {
+    list: async (gameId) =>
+      existsSync(path)
+        ? [{ gameId, slot: DEFAULT_SLOT, updated: statSync(path).mtimeMs, meta: await readMeta(path) }]
+        : [],
+    open: async () => {
+      const backend = await openSqliteBackend(path);
+      return { backend, existed: holdsGame(backend) };
+    },
+    delete: async () => removeDb(path),
+    settled: async () => {},
+  };
+}
