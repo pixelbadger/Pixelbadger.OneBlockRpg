@@ -49,8 +49,8 @@
 <tr><td>Q8</td><td>Base action time and clock pace</td><td>1–5 game minutes per action at AP 8, scaled by 8 / AP. Tune in playtesting (§4.8, §5.5).</td></tr>
 <tr><td>Q9</td><td>LLM interpreter</td><td>None. Exploration input is now Q19.</td></tr>
 <tr><td>Q10</td><td>Subscription access mechanism</td><td>Claude Agent SDK, in-process, tools disabled (§6.9). Confirming the terms is now Q30.</td></tr>
-<tr><td>Q11</td><td>Frontend</td><td>Plain readline CLI, behind a UI port that fully decouples it, so it can be replaced by a TUI or web frontend (§3.1).</td></tr>
-<tr><td>Q12</td><td>Persistence</td><td>SQLite, one database per save game (§3.7).</td></tr>
+<tr><td>Q11</td><td>Frontend</td><td>Graphical only, behind a UI port that fully decouples it: a web host (canvas scene, HTML panels) and a native Linux host (SDL + Skia), sharing one client layer and one look (§3.1).</td></tr>
+<tr><td>Q12</td><td>Persistence</td><td>One save slot per game behind a platform contract: SQLite natively, IndexedDB on the web (§3.7).</td></tr>
 <tr><td>Q13</td><td>Tooling</td><td>pnpm + vitest + biome (§3.10).</td></tr>
 <tr><td>Q14</td><td>Engine-level content boundaries</td><td>None from the engine. The payload's tone and the provider's own policies govern output (§6.1).</td></tr>
 <tr><td>Q15</td><td>Commit and PR conventions</td><td>Conventional Commits (CLAUDE.md).</td></tr>

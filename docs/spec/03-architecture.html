@@ -24,7 +24,12 @@
 
 <h2>3.1 Layers</h2>
 <pre><code>┌──────────────────────────────────────────────────────────┐
-│ Frontend          CLI first · swappable (UI port)        │
+│ Hosts             web (DOM + canvas) · native (SDL+Skia) │
+├──────────────────────────────────────────────────────────┤
+│ Client            shared UI model · input · scene · theme│
+├──────────────────────────────────────────────────────────┤
+│ Platform          saves · settings · assets · providers  │
+│                   · audio (contracts; hosts implement)   │
 ├──────────────────────────────────────────────────────────┤
 │ Session           loops · save/load · replay             │
 ├────────────────────────────────┬─────────────────────────┤
@@ -44,11 +49,20 @@
 <p>Dependency rule: the <strong>engine core has no dependency on the LLM layer</strong>. Exploration and combat are plain, deterministic TypeScript.
 The narrative system only changes the world through the action/hook executor, which calls ordinary core actions and effects.</p>
 <p>The <strong>frontend is fully decoupled</strong> (Q11). The session exposes a UI port: it emits view models (narration, room view, available actions,
-conversation options, combat state) and accepts player intents (a typed command, a menu pick, an option choice). It never formats text for a
-particular display. Nothing outside <code>src/cli</code> imports from it. v1 ships two adapters: a plain readline CLI and a full-screen TUI
-(<code>play --tui</code>: each room drawn as animated tiles in the manner of <em>Ultima V</em>, played with keys only, or as a picture from the payload's sprite art in terminals that show images). The browser build (<code>pnpm web</code>) runs the engine and the same TUI in a static page, drawn by xterm.js, with the Anthropic API as its provider (the player's own key) and saves in IndexedDB. The TUI reads the same
-view models, plus read-only scene, sheet and inventory views it polls after each turn and an <code>fx</code> view of what moved and struck,
-which it animates. Every key becomes an ordinary intent, so tiled play saves and replays like typed play. A native web frontend (rather than a terminal in a page) would be another adapter on the same port, with no engine changes.</p>
+conversation options, combat state, the drawn scene and an <code>fx</code> view of what moved and struck) and accepts player intents (a menu pick, an
+option choice, an action, a typed command). It never formats for a particular display. Play is <strong>graphical only</strong>, on two hosts:</p>
+<ul>
+  <li><strong>Web</strong> (<code>pnpm web</code>, a static site): the scene on a <code>&lt;canvas&gt;</code>, every text panel as HTML. Characters are played
+  through the Anthropic API with the player's own key; saves live in IndexedDB.</li>
+  <li><strong>Native</strong> (<code>oneblock play</code>, Linux, run from a checkout): an SDL window (<code>@kmamal/sdl</code>) drawn with Skia's Canvas 2D
+  (<code>@napi-rs/canvas</code>). Claude via the player's subscription by default; saves are SQLite files under <code>$XDG_DATA_HOME/oneblock</code>.</li>
+</ul>
+<p>Both hosts sit on a shared <strong>client</strong> layer: the UI model built from view models, the keys-only controller in the manner of
+<em>Ultima V</em> (plus pointer input), the animation timeline, the Canvas 2D scene renderer and one theme (a single monospace font and one set of
+colour tokens), so they play and look the same. Every key and click becomes an ordinary intent, so graphical play saves and replays like any other.
+Beneath the client, the <strong>platform</strong> contracts are what a host supplies: save storage, settings, payload assets, model providers and
+audio (a stub until there is sound). Layering is enforced: <code>src/engine</code>, <code>src/platform</code> and <code>src/client</code> compile without
+Node or DOM types and may not import a host.</p>
 
 <h2>3.2 Exploration loop (one turn)</h2>
 <ol>
@@ -95,7 +109,7 @@ and a summary goes into participants' day logs.</p>
 <h2>3.7 State &amp; persistence</h2>
 <ul>
   <li><strong>Event-sourced.</strong> An append-only event log, with snapshots. The current state is a fold over it.</li>
-  <li><strong>Save game</strong> = one <strong>SQLite</strong> database (Q12) holding the payload id and version, seed, snapshots, the event log, day summaries and the LLM exchange log. The browser build keeps the same rows in IndexedDB.</li>
+  <li><strong>Save game</strong> = one save slot (Q12) holding the payload id and version, seed, snapshots, the event log, day summaries and the LLM exchange log. Where slots live is the platform's: one <strong>SQLite</strong> database per slot natively, the same rows in <strong>IndexedDB</strong> on the web (read into memory when the game opens and written behind, since the engine writes synchronously).</li>
   <li>The payload is immutable at runtime. State holds only what has changed from it.</li>
 </ul>
 
@@ -120,7 +134,7 @@ and a summary goes into participants' day logs.</p>
 <h2>3.10 Tooling</h2>
 <p>Decided (Q13): Node 22+, TypeScript strict and ESM, <code>pnpm</code>, <code>vitest</code>, <code>zod</code>
 (runtime validation, a generated JSON Schema for payloads, and LLM structured output), and <code>biome</code>.
-A single package with <code>src/{core,mechanics,narrative,llm,payload,session,cli}</code>, plus a CLI with <code>validate</code>, <code>play</code> and <code>replay</code>. <code>src/cli</code> holds the only frontend adapters (3.1). Everything outside <code>src/cli</code> and the SQLite save also runs in a browser: the browser build bundles it with <code>esbuild</code>.</p>
+A single package: <code>src/engine/{core,mechanics,narrative,llm,payload,session}</code>, <code>src/platform</code>, <code>src/client</code> and <code>src/hosts/{web,native,node,cli}</code> (3.1). The <code>oneblock</code> command keeps <code>validate</code>, <code>schema</code> and <code>replay</code> as authoring tools, and <code>play</code> opens the native window. The web host is bundled with <code>esbuild</code>.</p>
 
 <footer>§3 of the One Block CRPG specification</footer>
 </main>
