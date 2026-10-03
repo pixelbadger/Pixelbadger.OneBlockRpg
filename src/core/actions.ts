@@ -28,7 +28,7 @@ import {
   setCharField,
   setProp,
 } from "./mutate.js";
-import { set } from "./ops.js";
+import { push, set } from "./ops.js";
 import { transgress } from "./ownership.js";
 import { makeNoise } from "./sound.js";
 import {
@@ -1280,8 +1280,16 @@ function examine(c: Ctx, req: ActionRequest): ActionResult {
   if (!w.isWithin(id, c.actor) && w.roomOf(id) === w.roomOf(c.actor) && !canSee(w, c.actor, id)) {
     return refuse(c, "examine.no-sight", { item: w.name(id) });
   }
-  w.emit("examined", { actor: c.actor, targets: [id], cause: c.cause });
-  // Reading is learning (§4.13). The player takes in what they read; a character weighs it against what they
+  // Reading (§4.13): whoever reads a document knows what it says (the `read` condition), deterministically.
+  const document = !!w.thing(id)?.teaches.length;
+  const firstRead = document && w.isChar(c.actor) && !w.hasRead(c.actor, id);
+  w.emit("examined", {
+    actor: c.actor,
+    targets: [id],
+    cause: c.cause,
+    ops: firstRead ? [push(["chars", c.actor, "read"], id)] : [],
+  });
+  // Believing it is another matter. The player takes in what they read; a character weighs it against what they
   // already believe, which takes the narrative layer (a `read` signal), and may not accept it at all.
   const teaches = (w.thing(id)?.teaches ?? []).filter((b) => !w.believes(c.actor, b));
   if (c.isPlayer) for (const b of teaches) addBelief(w, c.actor, b, 1, w.thing(id)!.name, c.cause);

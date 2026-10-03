@@ -4059,6 +4059,34 @@
         {
           "type": "object",
           "properties": {
+            "read": {
+              "type": "object",
+              "properties": {
+                "who": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "document": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                }
+              },
+              "required": [
+                "who",
+                "document"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "read"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
             "event": {
               "anyOf": [
                 {

@@ -221,6 +221,9 @@ Intelligence decides how fully the reader follows the text, not how credulous th
   mechanical anchor, so the constructed reaches the ground only through beliefs the author declared.</li>
   <li>A <code>read</code> event (targets: the document; payload: <code>accepted</code>, <code>rejected</code>) lets behaviours react to what was
   accepted or refused, and the reaction goes in the character's day log.</li>
+  <li><strong>Knowing is not believing.</strong> Whatever the verdict, the engine has already recorded that the character read the document
+  (the <code>read</code> condition, §7.5). Author what they <em>do</em> with what they read on <code>read</code>, and let <code>believes</code>
+  only change how they do it: Gary tells the pub about the register either way, as a ghost story or as a curiosity.</li>
   <li><strong>Fallback</strong> (6.9; also offline): the character takes in every taught belief at confidence 1, which is how reading worked before.</li>
 </ul>
 

@@ -32,6 +32,7 @@ ${beliefsText(w, who)}
 ${todayLog(w, who)}
 
 ## How you take it in
+You will remember what it says either way, and may well repeat it; this is only about what you believe.
 People don't simply absorb what they read. What fits what they already believe goes in easily. What contradicts something they hold firmly, or something that matters to them, is uncomfortable (cognitive dissonance), and people ease that discomfort in one of a few ways:
 - change their mind: accept it, and weaken or drop the beliefs it contradicts;
 - discount the source: a forgery, a mistake, gossip, someone's agenda;

@@ -566,6 +566,11 @@ export class World {
     return this.char(who).relationships[withWhom] ?? { trust: 0, affinity: 0, notes: "" };
   }
 
+  /** Whether a character has read a document, whatever they made of it (§4.13). */
+  hasRead(who: string, document: string): boolean {
+    return this.char(who).read?.includes(document) ?? false;
+  }
+
   believes(who: string, belief: string): boolean {
     return this.char(who).beliefs.some((b) => b.id === belief);
   }

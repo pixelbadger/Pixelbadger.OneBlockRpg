@@ -124,6 +124,7 @@ export type Condition =
   | { skill: { who?: string; skill: SkillId } & CmpFields }
   | { relationship: { who: string; with: string; trust?: Comparison; affinity?: Comparison } }
   | { believes: { who: string; belief: string } }
+  | { read: { who: string; document: string } }
   | { event: string | { kind: string; actor?: string; target?: string }; actor?: string; target?: string }
   | { turns: Comparison }
   | { hp: { who?: string } & CmpFields }
@@ -184,6 +185,8 @@ export const Condition: z.ZodType<Condition> = z.lazy(() =>
       }),
     }),
     z.strictObject({ believes: z.strictObject({ who: Who, belief: z.string().min(1) }) }),
+    /** Has read a document (an object that teaches), whether or not they believed it (§4.13). */
+    z.strictObject({ read: z.strictObject({ who: Who, document: Id }) }),
     z.strictObject({
       event: z.union([
         z.string().min(1),

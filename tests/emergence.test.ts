@@ -328,6 +328,24 @@ describe("reading (§4.13)", () => {
     expect(w.believes("npc", "coin-is-old")).toBe(false);
     expect(w.signals).toContainEqual({ kind: "read", who: "npc", thing: "coin" });
   });
+
+  it("records who has read a document, whatever they believe (the read condition)", () => {
+    const w = world(
+      block((p) => {
+        p.objects.find((o) => o.id === "coin")!.teaches = ["coin-is-old"];
+      }),
+    );
+    w.state.objects.coin!.location = "hall";
+    const read = { read: { who: "npc", document: "coin" } };
+    expect(w.cond(read)).toBe(false);
+    perform(w, "npc", { act: "examine", target: "coin" }, B);
+    expect(w.cond(read)).toBe(true);
+    expect(w.believes("npc", "coin-is-old")).toBe(false);
+    // Once only, and nothing is recorded for things that teach nothing.
+    perform(w, "npc", { act: "examine", target: "coin" }, B);
+    perform(w, "npc", { act: "examine", target: "anvil" }, B);
+    expect(w.char("npc").read).toEqual(["coin"]);
+  });
 });
 
 describe("validation", () => {

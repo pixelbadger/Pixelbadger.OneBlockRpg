@@ -55,6 +55,11 @@ export interface CharState {
   equipment: { weapon?: string; armour?: string };
   relationships: Record<string, Rel>;
   beliefs: Belief[];
+  /**
+   * Documents (objects that teach) this character has read (§4.13). Knowing what one says is not believing it: this is
+   * recorded by the engine on examining, whatever the reader then makes of it.
+   */
+  read?: string[];
   modifiers: Modifier[];
   /** Active behaviour ids. */
   behaviours: string[];

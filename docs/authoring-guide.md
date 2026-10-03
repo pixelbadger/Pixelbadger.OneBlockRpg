@@ -179,6 +179,8 @@ trigger, ask whether the world could do it instead:
   against what they believe (§6.11) and may refuse it, change their mind, or read it as proof of what they already
   thought, so knowledge travels unevenly: Gary reads the register Tommo found and tells the pub. Give the beliefs a
   character holds confidences and sources, so the model has something to weigh; offline, everyone simply learns it.
+  Knowing is not believing: key what a character *does* with a document on `read: { who, document }` (deterministic),
+  and let `believes` only flavour it. Gary tells the pub about the register whether he believes it or not.
 - **Give people a mundane life with stakes**: a job checked by behaviours (`adjust_property` on a ledger object,
   `remember` notes for their conversations), reactions to `noticed-missing`, `noticed-damage` and `transgression`.
 

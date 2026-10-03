@@ -413,6 +413,14 @@ export function checkPayload(p: Payload, origins: Origins): PayloadIssue[] {
           add("warning", loc(w), `belief '${c.believes.belief}' is not in story.beliefs`);
         }
       }
+      if ("read" in c) {
+        checkWho(c.read.who, w, "read.who", true);
+        const doc = p.objects.find((o) => o.id === c.read.document);
+        if (!doc) ref(false, { ...w, path: [...w.path, "read.document"] }, `'${c.read.document}' is not an object id`);
+        else if (!doc.teaches.length) {
+          add("warning", loc(w), `'${c.read.document}' teaches nothing, so nobody is ever recorded as reading it`);
+        }
+      }
       if ("event" in c) {
         const kind = typeof c.event === "string" ? c.event : c.event.kind;
         if (!(EVENT_KINDS as readonly string[]).includes(kind)) {
