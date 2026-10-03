@@ -7,7 +7,7 @@ import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import type { EventRow, ExchangeRow, SaveBackend, SnapshotRow, UsageRow } from "../../engine/session/save.js";
 import { SaveStore } from "../../engine/session/save.js";
-import { DEFAULT_SLOT, type SaveInfo, type SaveStorage } from "../../platform/index.js";
+import type { SaveInfo, SaveStorage } from "../../platform/index.js";
 import { dataDir } from "./xdg.js";
 
 /** node:sqlite is still flagged experimental on Node 22; load it lazily and without the warning. */
@@ -188,20 +188,4 @@ export class SqliteSaveStorage implements SaveStorage {
 
   /** SQLite writes are durable when they return. */
   async settled(): Promise<void> {}
-}
-
-/** One save file, whatever the game and slot: the terminal's `play --save <file>`. */
-export function singleSqliteSave(path: string): SaveStorage {
-  return {
-    list: async (gameId) =>
-      existsSync(path)
-        ? [{ gameId, slot: DEFAULT_SLOT, updated: statSync(path).mtimeMs, meta: await readMeta(path) }]
-        : [],
-    open: async () => {
-      const backend = await openSqliteBackend(path);
-      return { backend, existed: holdsGame(backend) };
-    },
-    delete: async () => removeDb(path),
-    settled: async () => {},
-  };
 }

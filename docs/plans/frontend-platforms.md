@@ -1,6 +1,6 @@
 # Frontend platforms: decisions and layering plan
 
-Status: agreed, in progress on `claude/frontend-platform-decoupling-xc54ta`.
+Status: phases 0–5 done on `claude/frontend-platform-decoupling-xc54ta`; audio (phase 6) is stubbed; the workspace-package split is deferred.
 
 Decided after review:
 
@@ -61,7 +61,7 @@ text layout, scrolling and accessibility.
 | Settings | JSON in `$XDG_CONFIG_HOME/oneblock/settings.json`. |
 | Model provider | `claude-subscription` (default) or `anthropic-api`. Staying on Node is what keeps the Claude Agent SDK, and so the subscription provider, available natively. |
 | Audio | SDL audio queue. Stub now. |
-| Launch | `oneblock play <payload>` opens a window; `--text` keeps the readline CLI. |
+| Launch | `oneblock play <payload>` opens a window. |
 
 Spike (done while writing this): `@kmamal/sdl` 0.11 and `@napi-rs/canvas` 1.0 install from prebuilts, render text
 into a window, and run headless with `SDL_VIDEODRIVER=offscreen SDL_AUDIODRIVER=dummy`, so the native host can be

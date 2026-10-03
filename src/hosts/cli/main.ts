@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 /**
- * The `oneblock` CLI (§3.10): validate, schema, play and replay. The browser build is the web host (src/hosts/web,
- * built by `pnpm web`).
+ * The `oneblock` command (§3.10): `play` opens the native window (src/hosts/native); `validate`, `schema` and
+ * `replay` are authoring and development tools.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { createInterface } from "node:readline/promises";
+import { dirname } from "node:path";
 import { parseArgs } from "node:util";
 import { World } from "../../engine/core/world.js";
 import { ReplayProvider } from "../../engine/llm/scripted.js";
@@ -14,35 +13,30 @@ import { payloadJsonSchema } from "../../engine/payload/json-schema.js";
 import type { Payload } from "../../engine/payload/schema.js";
 import type { SaveStore } from "../../engine/session/save.js";
 import { Session } from "../../engine/session/session.js";
+import { DEFAULT_SLOT } from "../../platform/index.js";
+import { overlaySettings } from "../../platform/memory.js";
+import { sdlAudio } from "../native/audio.js";
 import { validatePayloadAt } from "../node/payload.js";
+import { nodePlatform } from "../node/platform.js";
 import { openSqliteSave } from "../node/save-sqlite.js";
-import { openGame } from "./game.js";
-import { render, renderIntroductionPage } from "./render.js";
-import { runTui } from "./tui/app.js";
-import { detectGraphics, GRAPHICS, type Graphics } from "./tui/graphics.js";
-import { nodeTerminal } from "./tui/node-terminal.js";
-import { loadSprites } from "./tui/sprite-files.js";
+import { FileSettings } from "../node/settings.js";
 
 const USAGE = `oneblock — a one block CRPG engine
 
 Usage:
+  oneblock play <payload> [options]               Play, in a window (press ? in game for the keys)
+      --provider <id>      claude-subscription (default) | anthropic-api | offline; else the "provider" setting
+      --model <model>      Model override for the provider
+      --slot <name>        Save slot (default: ${DEFAULT_SLOT}); resumes the game saved there
+      --new                Start over in the slot
+      --seed <seed>        PRNG seed for a new game
   oneblock validate <payload> [--json]            Check a payload: schema, references, playability (§7.7)
   oneblock schema [--out <file>]                  Print (or write) the payload JSON Schema
-  oneblock play <payload> [options]               Play
-      --save <file>        Save database (default: <game id>.db); resumes if it exists
-      --new                Start over, replacing the save
-      --seed <seed>        PRNG seed for a new game
-      --provider <id>      claude-subscription (default) | anthropic-api | offline
-      --model <model>      Model override for the provider
-      --tui                Full screen, in the manner of Ultima V: each room drawn as animated tiles,
-                           keys only (press ? in game for the keys)
-      --no-emoji           With --tui: draw with plain characters instead of emoji
-      --graphics <mode>    With --tui: auto (default) | kitty | iip | none. With sprite art (<payload>/assets)
-                           and a terminal that shows images (kitty, Ghostty, iTerm2, WezTerm), rooms are
-                           drawn as pictures
-      --no-color
-  oneblock replay <payload> <save>                Replay a save's inputs against its recorded LLM responses
+  oneblock replay <payload> <save.db>             Replay a save's inputs against its recorded LLM responses
                                                    and check the result is identical (§3.8)
+
+Saves live in $XDG_DATA_HOME/oneblock/saves/<game id>/<slot>.db, settings (provider, model, anthropicApiKey,
+ui.scale) in $XDG_CONFIG_HOME/oneblock/settings.json.
 `;
 
 function loadPayload(path: string, quiet = false): Payload {
@@ -92,15 +86,11 @@ async function play(args: string[]): Promise<number> {
     args,
     allowPositionals: true,
     options: {
-      save: { type: "string" },
       new: { type: "boolean" },
       seed: { type: "string" },
-      provider: { type: "string", default: "claude-subscription" },
+      slot: { type: "string", default: DEFAULT_SLOT },
+      provider: { type: "string" },
       model: { type: "string" },
-      "no-color": { type: "boolean" },
-      tui: { type: "boolean" },
-      "no-emoji": { type: "boolean" },
-      graphics: { type: "string", default: "auto" },
     },
   });
   const path = positionals[0];
@@ -109,98 +99,26 @@ async function play(args: string[]): Promise<number> {
     return 2;
   }
   const payload = loadPayload(path, true);
-  const savePath = values.save ?? `${payload.game.id}.db`;
-  const game = await openGame(payload, {
-    payloadDir: path,
-    savePath,
-    fresh: !!values.new,
-    provider: values.provider!,
-    ...(values.seed ? { seed: values.seed } : {}),
-    ...(values.model ? { model: values.model } : {}),
+  const settings = new FileSettings();
+  const platform = nodePlatform(path, {
+    settings: values.model ? overlaySettings(settings, { model: values.model }) : settings,
+    audio: sdlAudio(),
   });
-  const { session, resuming } = game;
-  const w = game.world;
-  const store = game.store;
-  if (values.tui) {
-    const graphics = pickGraphics(values.graphics);
-    const sprites = graphics === "none" ? undefined : loadSprites(join(path, "assets"));
-    const stop = new AbortController();
-    const onTerm = () => stop.abort();
-    process.once("SIGTERM", onTerm);
-    try {
-      await runTui({
-        session,
-        title: payload.game.title,
-        banner: `${payload.game.title} (provider: ${game.providerId}; save: ${savePath}${resuming ? ", resumed" : ""}${sprites ? `; pictures: ${graphics}` : ""}; type help for commands)`,
-        flush: game.flush,
-        emoji: !values["no-emoji"] && process.env.ONEBLOCK_EMOJI !== "0",
-        graphics,
-        terminal: nodeTerminal(),
-        signal: stop.signal,
-        ...(sprites ? { sprites } : {}),
-      });
-    } finally {
-      process.off("SIGTERM", onTerm);
-      game.close();
-    }
-    return 0;
-  }
-  const color = !values["no-color"] && process.stdout.isTTY;
-  const print = (text: string) => text && console.log(text);
-  console.log(color ? `\x1b[1m${payload.game.title}\x1b[0m` : payload.game.title);
-  console.log(
-    `(provider: ${game.providerId}; save: ${savePath}${resuming ? ", resumed" : ""}; type help for commands)`,
-  );
-  const rl = createInterface({ input: process.stdin, terminal: process.stdin.isTTY });
-  const start = session.start().views;
-  store.flush(w);
-  // At a terminal the introduction is read a page at a time; piped input gets it all at once.
-  for (const v of start) {
-    if (v.type === "introduction" && process.stdin.isTTY) {
-      for (let i = 0; i < v.pages.length; i++) {
-        print(renderIntroductionPage(v, i, color));
-        const last = i === v.pages.length - 1;
-        await rl.question(color ? `\x1b[2m  [Enter${last ? " to begin" : ""}]\x1b[0m` : "  [Enter]");
-      }
-    } else print(render([v], color));
-  }
-  const prompt = () => process.stdout.write(color ? "\x1b[36m> \x1b[0m" : "> ");
-  try {
-    prompt();
-    for await (const line of rl) {
-      const text = line.trim();
-      if (!process.stdin.isTTY && text) console.log(text);
-      if (!text) {
-        prompt();
-        continue;
-      }
-      if (["quit", "exit", "q"].includes(text.toLowerCase())) break;
-      if (text.toLowerCase() === "save") {
-        store.flush(w);
-        console.log("Saved. (The game saves after every turn.)");
-      } else if (text.toLowerCase() === "usage") {
-        console.log(JSON.stringify(store.usageByPurpose(), null, 2));
-      } else {
-        const out = await session.handle({ type: "command", text });
-        store.flush(w);
-        print(render(out.views, color));
-      }
-      if (session.mode === "ended") break;
-      prompt();
-    }
-  } finally {
-    rl.close();
-    store.flush(w);
-    store.close();
-  }
+  const providerId = values.provider ?? settings.get("provider") ?? platform.providers.available()[0]!.id;
+  // SDL loads only to play, so the other commands run where it can't.
+  const { runNative } = await import("../native/app.js");
+  const app = await runNative({
+    payload,
+    platform,
+    providerId,
+    slot: values.slot!,
+    title: payload.game.title,
+    settingsPath: settings.path,
+    ...(values.new ? { fresh: true } : {}),
+    ...(values.seed ? { seed: values.seed } : {}),
+  });
+  await app.closed;
   return 0;
-}
-
-function pickGraphics(mode: string | undefined): Graphics {
-  if (!mode || mode === "auto") return detectGraphics();
-  if (!(GRAPHICS as string[]).includes(mode))
-    throw new Error(`unknown --graphics '${mode}' (auto | kitty | iip | none)`);
-  return mode as Graphics;
 }
 
 async function replay(args: string[]): Promise<number> {

@@ -1,6 +1,6 @@
 /**
  * The UI port (§3.1, Q11). The session emits view models and accepts player intents; it never formats for a
- * particular display. Any frontend (the readline CLI, a TUI, a web page) is an adapter on this port.
+ * particular display. Any host (the web page, the native window) is an adapter on this port.
  */
 import type { CombatIntent } from "../core/combat.js";
 import type { RoomDescription } from "../core/describe.js";

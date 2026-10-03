@@ -87,6 +87,26 @@
       }
     },
     {
+      "includes": ["src/hosts/native/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/hosts/web/**", "**/hosts/cli/**"],
+                    "message": "the native host imports no web or command-line code."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/engine/**"],
       "linter": {
         "rules": {
