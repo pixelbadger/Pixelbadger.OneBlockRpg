@@ -39,6 +39,7 @@ import { runCallout } from "../narrative/callouts.js";
 import { Conversations, type NarrativeDeps } from "../narrative/conversation.js";
 import { Director } from "../narrative/director.js";
 import { compactDayLogs, endDay } from "../narrative/memory.js";
+import { reconcileReading } from "../narrative/reading.js";
 import { ATTRIBUTES, type SkillId, type Special } from "../payload/schema.js";
 import { actionMenu } from "./menu.js";
 import { parseCombat, parseCommand, parseSkill } from "./parser.js";
@@ -707,6 +708,9 @@ export class Session {
           break;
         case "callout":
           await runCallout(this.narrative, s.id);
+          break;
+        case "read":
+          await reconcileReading(this.narrative, s.who, s.thing);
           break;
         case "sleep":
           await this.sleep(s.quality, s.on);

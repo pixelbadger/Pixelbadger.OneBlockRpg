@@ -47,6 +47,7 @@ export type CauseBy =
   | "director"
   | "conversation"
   | "combat"
+  | "reading"
   | "engine";
 
 export interface Cause {
@@ -79,7 +80,9 @@ export type Signal =
   | { kind: "callout"; id: string }
   | { kind: "sleep"; quality: number; on?: string }
   | { kind: "collapse" }
-  | { kind: "player-downed" };
+  | { kind: "player-downed" }
+  /** A character read a document that teaches something new: the narrative layer reconciles it (§4.13). */
+  | { kind: "read"; who: string; thing: string };
 
 export interface EvalContext {
   /** The owner/actor `self` resolves to. */

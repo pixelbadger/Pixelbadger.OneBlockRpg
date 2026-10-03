@@ -16,6 +16,7 @@ const DEFAULT_EFFORT: Record<Purpose, Effort> = {
   director: "medium",
   callout: "low",
   "day-summary": "low",
+  reading: "low",
 };
 
 export interface AnthropicApiOptions {

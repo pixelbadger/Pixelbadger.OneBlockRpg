@@ -27,6 +27,7 @@ export const EVENT_KINDS = [
   "equipped",
   "unequipped",
   "examined",
+  "read", // a character took in what a document says (targets: [document]; payload: accepted, rejected) (§4.13)
   "waited",
   "slept",
   "woke",

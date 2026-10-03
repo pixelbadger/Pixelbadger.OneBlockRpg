@@ -16,7 +16,10 @@ export interface ObjState {
 }
 
 export interface Belief {
+  /** A story belief id (§7.3), or `thought-…` for a belief held in the character's own words (`text`). */
   id: string;
+  /** The character's own wording (§4.13, reading): set on thoughts, which conditions cannot test. */
+  text?: string;
   confidence: number;
   source: string;
   day: number;

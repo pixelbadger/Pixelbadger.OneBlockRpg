@@ -1281,10 +1281,11 @@ function examine(c: Ctx, req: ActionRequest): ActionResult {
     return refuse(c, "examine.no-sight", { item: w.name(id) });
   }
   w.emit("examined", { actor: c.actor, targets: [id], cause: c.cause });
-  // Reading is learning, for anyone (§4.13).
-  for (const b of w.thing(id)?.teaches ?? []) {
-    if (!w.believes(c.actor, b)) addBelief(w, c.actor, b, 1, w.thing(id)!.name, c.cause);
-  }
+  // Reading is learning (§4.13). The player takes in what they read; a character weighs it against what they
+  // already believe, which takes the narrative layer (a `read` signal), and may not accept it at all.
+  const teaches = (w.thing(id)?.teaches ?? []).filter((b) => !w.believes(c.actor, b));
+  if (c.isPlayer) for (const b of teaches) addBelief(w, c.actor, b, 1, w.thing(id)!.name, c.cause);
+  else if (teaches.length) w.signals.push({ kind: "read", who: c.actor, thing: id });
   if (!c.isPlayer) return { ok: true, minutes: BASE_MINUTES.examine, summary: `examined ${w.label(id)}` };
   const def = w.thing(id)!;
   const text = w.text(def.description, { self: id });
