@@ -24,8 +24,8 @@ The schema is the source of truth: [`schema/payload.schema.json`](../schema/payl
 3. **Write the payload** in `examples/<game-id>/` (or wherever the user asks), file by file (section 2).
 4. **Validate** with `pnpm oneblock validate <dir>` until it reports `ok` with **zero warnings**. Every issue gives a
    file, a path and usually a fix.
-5. **Play it** offline: `pnpm oneblock play <dir> --provider offline --new`. Walk the critical path by hand, and
-   look for dead ends, text that reads wrong and things that fire at the wrong time.
+5. **Play it** offline: `pnpm oneblock play <dir> --provider offline --new` (it opens a window). Walk the critical
+   path by hand, and look for dead ends, text that reads wrong and things that fire at the wrong time.
 6. **Write a playthrough test** (`tests/<game-id>.test.ts`, section 9) that reaches every ending, then run `pnpm test`.
 7. Iterate until all three pass. Then report what you decided where the brief was silent.
 
@@ -135,8 +135,9 @@ of sight with it, so draw it as the floor plan the description implies.
   boxes, `t: { terrain: fence, look: { emoji: "🚏" } }` for a bus stop. Walls block sight; fences, railings, windows
   and water don't. Use emoji with a standard emoji presentation (no variation selectors) so they are two columns
   wide everywhere.
-- **Looks are optional.** The TUI dresses objects by keyword (a kettle gets 🫖) and characters with a person emoji;
-  add `look: { emoji, glyph, color }` to an object or character only when the default is wrong.
+- **Looks are optional.** Without sprite art the scene dresses objects by keyword (a kettle gets ♨, or 🫖 where the
+  host draws emoji) and characters by their initial; add `look: { emoji, glyph, color }` to an object or character only
+  when the default is wrong.
 
 ### Characters → `characters/`
 

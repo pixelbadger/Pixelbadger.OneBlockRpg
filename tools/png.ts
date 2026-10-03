@@ -1,5 +1,5 @@
 /**
- * A small PNG codec for sprite art and scene frames: 8-bit images in, RGBA out. Enough for the assets this repo
+ * A small PNG codec for the art tool (tools/art.ts): 8-bit images in, RGBA out. Enough for the assets this repo
  * ships and the images generators produce (greyscale, RGB, palette, with or without alpha; not interlaced).
  */
 
@@ -23,7 +23,7 @@ const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
 });
 
 /** CRC-32 (as PNG and zlib use it), unsigned. */
-export function crc32(data: Uint8Array): number {
+function crc32(data: Uint8Array): number {
   let c = 0xffffffff;
   for (let i = 0; i < data.length; i++) c = CRC_TABLE[(c ^ data[i]!) & 255]! ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;

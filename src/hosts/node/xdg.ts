@@ -1,4 +1,4 @@
-/** Where the native and terminal hosts keep things (XDG base directories, with their usual fallbacks). */
+/** Where the native host keeps things (XDG base directories, with their usual fallbacks). */
 import { homedir } from "node:os";
 import { join } from "node:path";
 

@@ -14,6 +14,7 @@ import { camera, sceneLayout, Timeline, tileAt } from "../src/client/timeline.js
 import { World } from "../src/engine/core/world.js";
 import { offlineProvider } from "../src/engine/narrative/offline.js";
 import type { Payload } from "../src/engine/payload/schema.js";
+import { parseInline, parseMarkdown } from "../src/engine/session/markdown.js";
 import type { Tile } from "../src/engine/session/port.js";
 import { Session } from "../src/engine/session/session.js";
 import { validatePayloadAt } from "../src/hosts/node/payload.js";
@@ -257,6 +258,39 @@ describe("client text and theme", () => {
     expect(paras[2]!.spans.map((s) => s.style)).toEqual(["plain", "strong", "plain", "emphasis", "plain"]);
     expect(paras[4]).toEqual({ spans: [{ text: "quoted", style: "quote" }], indent: 4 });
     expect(paras[6]!.spans[0]).toEqual({ text: "• ", style: "muted" });
+  });
+
+  it("parses light markdown: headings, paragraphs, quotes, lists and rules", () => {
+    const md = "# Title\n\nOne line\nand the next.\n\n> said\n> twice\n\n- a\n- **b**\n1. c\n\n---\nafter";
+    expect(parseMarkdown(md)).toEqual([
+      { kind: "heading", level: 1, runs: [{ text: "Title" }] },
+      { kind: "paragraph", runs: [{ text: "One line and the next." }] },
+      { kind: "quote", runs: [{ text: "said twice" }] },
+      { kind: "item", marker: "•", runs: [{ text: "a" }] },
+      { kind: "item", marker: "•", runs: [{ text: "b", bold: true }] },
+      { kind: "item", marker: "1.", runs: [{ text: "c" }] },
+      { kind: "rule" },
+      { kind: "paragraph", runs: [{ text: "after" }] },
+    ]);
+  });
+
+  it("parses emphasis, leaving lone markers, snake_case and escapes alone", () => {
+    expect(parseInline("a **bold *both*** and _it_")).toEqual([
+      { text: "a " },
+      { text: "bold ", bold: true },
+      { text: "both", bold: true, italic: true },
+      { text: " and " },
+      { text: "it", italic: true },
+    ]);
+    expect(parseInline("2 * 3 = six, snake_case_name, \\*not\\*")).toEqual([
+      { text: "2 * 3 = six, snake_case_name, *not*" },
+    ]);
+  });
+
+  it("keeps the introduction out of the message log", () => {
+    const { m } = game();
+    expect(m.overlay?.pages).toHaveLength(3);
+    expect(m.log.some((p) => p.spans.some((s) => s.text.includes("soot-dark")))).toBe(false);
   });
 
   it("wraps spans by measured width, keeping styles and hard breaks", () => {

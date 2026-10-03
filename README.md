@@ -64,21 +64,25 @@ point (`perceived_by: player`): apparitions are seen only by the player, can't b
 
 ```sh
 pnpm install
-pnpm build
-node bin/oneblock.js validate examples/the-pier
-node bin/oneblock.js play examples/the-pier                           # The Pier: the first full story
-node bin/oneblock.js play examples/the-pier --tui                     # Ultima V style: drawn rooms, keys only
-node bin/oneblock.js play examples/carver-street                      # Claude via your Claude Code login
-node bin/oneblock.js play examples/carver-street --provider offline   # no model: authored options only
-node bin/oneblock.js replay examples/carver-street carver-street.db   # check a save replays identically
+pnpm oneblock validate examples/the-pier
+pnpm oneblock play examples/the-pier                           # The Pier: the first full story, in a window
+pnpm oneblock play examples/carver-street --provider offline   # no model: authored options only
+pnpm oneblock replay examples/carver-street ~/.local/share/oneblock/saves/carver-street/main.db
 ```
 
-`play` saves after every turn to `<game id>.db` and resumes it next time (`--new` starts over). Type `help` in game.
+`play` opens a window (Linux; SDL through `@kmamal/sdl`, drawn with Skia through `@napi-rs/canvas`, both prebuilt).
+Characters are played by Claude through your Claude Code login unless `--provider` (or the `provider` setting) says
+`anthropic-api` or `offline`; `--model` overrides the model. The game saves after every turn to
+`$XDG_DATA_HOME/oneblock/saves/<game id>/<slot>.db` and resumes it next time: `--slot <name>` keeps several games
+(default `main`), `--new` starts the slot over and `--seed` fixes a new world. Settings live in
+`$XDG_CONFIG_HOME/oneblock/settings.json`: `provider`, `model`, `anthropicApiKey` (or set `ANTHROPIC_API_KEY`) and
+`ui.scale` (text and panels, default 1). After `pnpm build`, `node bin/oneblock.js` runs the same commands.
 
-`--tui` plays full screen (80×24 or larger, true colour and an emoji font for the best of it) in the manner of
-*Ultima V*. Your room is drawn as tiles, scaled up to fill the view: water ripples, apparitions flicker, night falls
-outdoors and dark rooms are lit only around you. Walks play tile by tile and fights show shots, hits and damage. Play is
-keys only:
+The window is drawn in the manner of *Ultima V*: your room as tiles on the left over the message log, and a column on
+the right with the clock, your health, money and level, and the fight or your pack. Water ripples, apparitions
+flicker, night falls outdoors and dark rooms are lit only around you; walks play tile by tile and fights show shots,
+hits and damage. A payload's sprite art (`<payload>/assets/sprites.json` and PNGs) is drawn where it has it; anything
+without a sprite is drawn from its glyph art, so payloads without art still play. Play is keys, or the mouse:
 
 | Keys | |
 |---|---|
@@ -88,17 +92,12 @@ keys only:
 | O K P | open/close, lock/unlock, push |
 | V F B | give, filch, barter |
 | W S Space | wait (or sleep), sneak, pass a minute (end your turn in a fight) |
-| Z J M ? | stats (and spending skill points), journal, every action here, help |
-| PgUp/PgDn, Q | scroll the messages, quit |
+| Z J N M ? | stats (and spending skill points), journal, introduction, every action here, help |
+| PgUp/PgDn (or the wheel), Q | scroll the messages, quit |
 
 Verbs that need a target put up a cursor on the nearest one: arrows move it, Tab cycles, Enter acts, Esc cancels.
-Conversations, character creation and trades are menus. `--no-emoji` draws with plain characters instead.
-During development, `pnpm oneblock <command>` runs the CLI from source.
-
-**Pictures.** A payload can ship sprite art (`<payload>/assets/sprites.json` and PNGs). In a terminal that shows
-images, `--tui` then draws each room as a picture: kitty and Ghostty through the kitty graphics protocol, iTerm2 and
-WezTerm through iTerm2's inline images. `--graphics auto|kitty|iip|none` overrides the guess (tmux and screen get
-`none`). Anything without a sprite falls back to its glyph art, so payloads without art still play.
+Conversations, character creation and trades are menus. Click a tile to step towards it, a person to talk (an enemy,
+in a fight, to attack), a thing to get or look at; right-click looks. Menu rows and buttons click too.
 
 **In a browser.** `pnpm web examples/the-pier examples/carver-street` builds a static site in `dist/web` (`--out`
 for elsewhere) that runs the whole engine and the same frontend in the page, drawn by xterm.js and its image addon.
@@ -136,7 +135,11 @@ the block, writes the payload, validates it to zero warnings and writes a playth
 | `src/llm` | provider interface; `claude-subscription`, `anthropic-api`, scripted, record and replay (§6.9) |
 | `src/narrative` | conversations, hooks, director, callouts, reading, day summaries, context builder (§6) |
 | `src/session` | the loops, UI port, parser, action menu and saves (SQLite on disk) (§3) |
-| `src/cli` | the frontend adapters: the readline CLI, the full-screen TUI (`src/cli/tui`) and the browser build (`src/cli/web`) |
+| `src/platform` | the contracts a host supplies (saves, settings, assets, providers, audio), their memory versions, and starting a game on them |
+| `src/client` | the presentation shared by every host: model, controller and keymap, scene renderer (Canvas 2D), styled text, theme |
+| `src/hosts/node` | the Node platform: SQLite saves and settings under XDG, payload assets from disk, the providers |
+| `src/hosts/native` | the native window: SDL events and frame loop, a Skia widget kit and the HUD |
+| `src/hosts/cli` | the `oneblock` command: `play` (opens the native window), `validate`, `schema`, `replay` |
 | `tools` | development tooling: `art.ts` generates sprite art from a payload's art brief; `web.ts` builds the static site |
 | `schema/payload.schema.json` | the published payload JSON Schema (`pnpm schema` regenerates it) |
 | `docs/authoring-guide.md` | how to build a payload from a story brief (§7.9) |
