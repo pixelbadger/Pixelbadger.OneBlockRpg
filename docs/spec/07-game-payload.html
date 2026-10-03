@@ -191,7 +191,11 @@ playthrough fixture (<code>tests/pier.test.ts</code>).</p>
 <ul>
   <li><code>terrain</code> picks a kind from the engine list (§4.10). <code>on</code> sets the terrain under a placed thing (default <code>floor</code>).</li>
   <li><code>look</code> is an optional hint to frontends: an <code>emoji</code>, a fallback <code>glyph</code> (one or two characters), a <code>color</code>, and
-      <code>frames</code> for animation. Objects and characters take the same <code>look</code> field. The engine ignores it.</li>
+      <code>frames</code> for animation, and a <code>sprite</code> key. Objects and characters take the same <code>look</code> field. The engine ignores it.</li>
+  <li>A payload may also ship sprite art in <code>assets/</code>: PNG strips and a <code>sprites.json</code> manifest keyed <code>terrain/&lt;kind&gt;</code>,
+      <code>object/&lt;id&gt;</code>, <code>character/&lt;id&gt;</code>, <code>exit/&lt;kind&gt;</code> and <code>fx/&lt;kind&gt;</code>. Frontends that draw
+      pictures look a thing up by <code>look.sprite</code>, then by its key, and fall back to its glyph art. The art is generated from an art brief
+      (<code>assets/art.yaml</code>) by <code>pnpm art</code>; like <code>look</code>, it is data the engine never reads.</li>
   <li>A character placed in a room they don't start in gets a home tile there (§4.10). An object that starts off-stage may be placed where it will
       appear when spawned.</li>
   <li>Maps are at most 64 × 64 tiles. Small is good: most rooms in the examples are 8–20 tiles across.</li>

@@ -203,22 +203,50 @@ function put(cv: Canvas, x: number, y: number, art: Art, emoji: boolean, s: numb
 const lit = (art: Art, k: number): Art =>
   k >= 1 ? art : { ...art, fg: nightTint(art.fg, k), bg: nightTint(art.bg, k) };
 
-/** The biggest tile scale (1–3) at which the whole room fits in `r`. */
-export function tileScale(scene: Scene, r: Rect): number {
-  for (let s = 3; s > 1; s--) if (scene.w * 2 * s <= r.w && scene.h * s <= r.h) return s;
-  return 1;
+/** The biggest tile scale (`min`–3) at which the whole room fits in `r` (`min` even if it doesn't). */
+export function tileScale(scene: Scene, r: Rect, min = 1): number {
+  for (let s = 3; s > min; s--) if (scene.w * 2 * s <= r.w && scene.h * s <= r.h) return s;
+  return min;
+}
+
+/** Where the room lands in a screen rectangle: tile scale, tiles in view, padding and camera. */
+export interface Viewport {
+  /** Each tile is 2s columns by s rows. */
+  s: number;
+  tilesW: number;
+  tilesH: number;
+  /** Columns and rows of padding around the tiles, inside the rectangle. */
+  padX: number;
+  padY: number;
+  /** Where the map's (0, 0) is, in viewport tiles. */
+  ox: number;
+  oy: number;
+  /** The player's tile (mid-walk during an animation). */
+  playerAt?: Tile;
+}
+
+export function viewport(scene: Scene, r: Rect, frame?: AnimFrame, minScale = 1): Viewport {
+  const s = tileScale(scene, r, minScale);
+  const tilesW = Math.max(1, Math.floor(r.w / (2 * s)));
+  const tilesH = Math.max(1, Math.floor(r.h / s));
+  const player = scene.things.find((t) => t.player);
+  const playerAt = (player && frame?.pos.get(player.id)) ?? player?.pos;
+  const [ox, oy] = camera(scene, tilesW, tilesH, playerAt);
+  return {
+    s,
+    tilesW,
+    tilesH,
+    padX: Math.floor((r.w - tilesW * 2 * s) / 2),
+    padY: Math.floor((r.h - tilesH * s) / 2),
+    ox,
+    oy,
+    ...(playerAt ? { playerAt } : {}),
+  };
 }
 
 /** Draws the scene into `r`: each tile is 2s columns by s rows, s chosen so small rooms fill the view. */
 export function drawScene(cv: Canvas, r: Rect, scene: Scene, o: SceneOptions): void {
-  const s = tileScale(scene, r);
-  const tilesW = Math.floor(r.w / (2 * s));
-  const tilesH = Math.floor(r.h / s);
-  const padX = Math.floor((r.w - tilesW * 2 * s) / 2);
-  const padY = Math.floor((r.h - tilesH * s) / 2);
-  const player = scene.things.find((t) => t.player);
-  const playerAt = (player && o.frame?.pos.get(player.id)) ?? player?.pos;
-  const [ox, oy] = camera(scene, tilesW, tilesH, playerAt);
+  const { s, tilesW, tilesH, padX, padY, ox, oy, playerAt } = viewport(scene, r, o.frame);
   const sx = (mx: number) => r.x + padX + (ox + mx) * 2 * s;
   const sy = (my: number) => r.y + padY + (oy + my) * s;
   const inView = (p: Tile) => {
@@ -336,7 +364,7 @@ function tint(cv: Canvas, x: number, y: number, c: RGB, k: number): void {
 }
 
 /** Apparitions flicker: now you see them, now you don't. */
-function apparitionShows(t: SceneThing, ms: number): boolean {
+export function apparitionShows(t: SceneThing, ms: number): boolean {
   let h = 0;
   for (const ch of t.id) h = (h * 31 + ch.charCodeAt(0)) | 0;
   const v = Math.sin(ms / 340 + h) + Math.sin(ms / 910 + h * 0.37) * 0.8;

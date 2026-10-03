@@ -30,7 +30,9 @@ This repo uses plain **git**. The upstream is GitHub and is the source of truth.
 3. **Never delete remote branches** unless explicitly told to.
 4. **Never run anything interactive.** Always pass `-m` for commit messages. No `git rebase -i`, `git add -i` or
    `git add -p`, and nothing that opens an editor (set `GIT_EDITOR=false` if in doubt).
-5. Don't commit secrets, build outputs or large binaries. Check `.gitignore` before adding new kinds of files, and
+5. Don't commit secrets, build outputs or large binaries. The exception is a payload's cut sprite art
+   (`examples/*/assets/**/*.png` and `sprites.json`, small pixel-art PNGs written by `pnpm art`); never commit the raw
+   generated images (`assets/.raw/`, git-ignored). Check `.gitignore` before adding new kinds of files, and
    stage paths explicitly rather than with `git add -A` when unsure.
 6. If something goes wrong, prefer `git revert` or `git reflog` recovery over destructive fixes, and tell the human
    what you did.

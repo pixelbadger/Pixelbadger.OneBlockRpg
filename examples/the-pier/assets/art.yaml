@@ -1,0 +1,422 @@
+# The Pier: art brief for `pnpm art examples/the-pier` (tools/art.ts).
+#
+# Each sprite is generated from `style` + its kind's framing + its prompt, then cut down to `tile` pixels and
+# written to sprites.json, which the TUI's image mode reads. Keys follow sprites.ts: terrain/<kind>, object/<id>,
+# character/<id>, exit/<kind>, fx/<kind>. `same:` reuses another sprite's art.
+#
+# kinds: texture (fills its tile, made seamless), object (one thing on a transparent ground), character (a strip of
+# animation frames), effect (a small burst or icon).
+
+tile: 32
+model: gpt-image-2.5-flare
+quality: medium
+
+style: >-
+  16-bit pixel art for a top-down tile-based computer role-playing game in the manner of Ultima V and early-1990s
+  CRPGs. Chunky square pixels on a coarse 32 by 32 pixel grid, hard edges, no anti-aliasing, no blur, no text, no
+  watermark, no border. A muted, overcast British seaside palette: slate and gull greys, sea green, weathered wood
+  browns, rust, faded cream, Victorian maroon, with the occasional bright accent (hi-vis yellow, orange, neon).
+
+sprites:
+  # ─── Terrain ──────────────────────────────────────────────────────────────
+  terrain/water:
+    kind: texture
+    anim: scroll
+    prompt: Choppy grey-green estuary sea water with small white wave crests, seen from directly above.
+  terrain/deck:
+    kind: texture
+    prompt: Weathered pier decking, grey-brown wooden planks running top to bottom with thin dark gaps between them.
+  terrain/boards:
+    kind: texture
+    prompt: Old stripped floorboards, honey-brown, planks running left to right, a few nail heads and paint spots.
+  terrain/carpet:
+    kind: texture
+    prompt: Swirly patterned 1970s British pub carpet in burgundy, mustard and brown.
+  terrain/lino:
+    kind: texture
+    prompt: Worn sage-green linoleum floor with a faint square grid pattern and scuff marks.
+  terrain/tiles:
+    kind: texture
+    prompt: Victorian encaustic floor tiles in a geometric pattern of terracotta, cream and deep blue, slightly dusty.
+  terrain/concrete:
+    kind: texture
+    prompt: Rough grey building-site concrete with cracks, mud and a few chips of gravel.
+  terrain/pavement:
+    kind: texture
+    prompt: Grey square paving slabs of a seaside promenade, slightly uneven, with gum spots.
+  terrain/road:
+    kind: texture
+    prompt: Dark asphalt road surface with fine grit, no markings.
+  terrain/shingle:
+    kind: texture
+    prompt: A beach of grey and brown shingle pebbles with a few strands of black seaweed.
+  terrain/sand:
+    kind: texture
+    prompt: Damp khaki estuary sand with ripples.
+  terrain/grass:
+    kind: texture
+    prompt: Short, wind-flattened seafront grass, dull green.
+  terrain/floor:
+    kind: texture
+    prompt: Plain bare plaster-dusted floor screed, light grey-brown.
+  terrain/stairs:
+    kind: texture
+    prompt: A flight of wooden stairs seen from above, treads running left to right, getting darker towards the top.
+  terrain/wall:
+    kind: texture
+    prompt: >-
+      The top of a thick old wall seen from directly above: plain courses of weathered grey-brown brick with worn
+      cream mortar. Calm and low in contrast, as it borders every room.
+  terrain/window:
+    kind: texture
+    prompt: A Victorian sash window set in a wall, seen from above, pale sea-green glass catching the light, white frame.
+  terrain/railing:
+    kind: texture
+    prompt: Ornate green-painted cast-iron seafront railing seen from above, running left to right, over grey paving.
+  terrain/fence:
+    kind: texture
+    prompt: Galvanised steel mesh fence panel seen from above, running left to right, over dirt.
+
+  # ─── Exits ────────────────────────────────────────────────────────────────
+  exit/door:
+    kind: texture
+    prompt: A closed panelled wooden door with a brass handle, set in a doorway, seen from a three-quarter top-down view.
+  exit/door-open:
+    kind: texture
+    prompt: An open doorway with the panelled wooden door swung back, a worn threshold, seen from a three-quarter top-down view.
+  exit/up:
+    kind: texture
+    prompt: The bottom of a staircase leading up, wooden treads, a small pale up-arrow worn into the floor.
+  exit/down:
+    kind: texture
+    prompt: The top of a staircase leading down into shadow, wooden treads fading into darkness.
+  exit/blocked:
+    kind: object
+    prompt: A red and white striped construction barrier with a DANGER sign shape (no readable text).
+
+  # ─── Characters (4-frame walk cycle) ──────────────────────────────────────
+  character/player:
+    kind: character
+    prompt: >-
+      Liam, a young disaffected British labourer in his early twenties: thin, hollow-eyed, unshaven, grey hoodie under
+      a dusty orange hi-vis vest, work jeans, steel-toe boots, plaster dust on his hands.
+  character/gary:
+    kind: character
+    prompt: >-
+      Gary, a sunburnt site foreman in his fifties: stocky, balding, white hard hat, yellow hi-vis vest over a polo
+      shirt, tape measure on his belt, phone in one hand.
+  character/marek:
+    kind: character
+    prompt: >-
+      Marek, a broad Polish labourer of fifty: grey crew cut, navy work jacket, cargo trousers, a small silver Saint
+      Christopher on a chain.
+  character/tommo:
+    kind: character
+    prompt: >-
+      Tommo, a cheeky young ginger labourer: messy ginger hair, freckles, hi-vis vest worn open over a football shirt,
+      grinning.
+  character/kez:
+    kind: character
+    prompt: >-
+      Kez, a barmaid in her late twenties: dark hair scraped back, big gold hoop earrings, black top, a pen behind her
+      ear.
+  character/shaun:
+    kind: character
+    prompt: >-
+      Shaun, a lad in his twenties: grey tracksuit, black beanie, a metal detector carried over one shoulder.
+  character/edith:
+    kind: character
+    prompt: >-
+      Edith, a tiny woman of eighty: white hair, a navy anorak, a pier volunteer badge, arms full of leaflets.
+  character/clara:
+    kind: character
+    prompt: >-
+      A Victorian woman ghost from 1893: black silk mourning dress with a bustle, black veil, holding a small bundle
+      wrapped in white lace. Pale, faintly translucent, desaturated.
+  character/edmund:
+    kind: character
+    prompt: >-
+      A Victorian gentleman ghost from 1893: black frock coat, top hat, grey side-whiskers, a gold watch chain. Pale,
+      faintly translucent, desaturated.
+
+  # ─── Effects ──────────────────────────────────────────────────────────────
+  fx/hit:
+    kind: effect
+    prompt: A small orange and white impact burst, like a comic-book punch star.
+  fx/crit:
+    kind: effect
+    prompt: A bright yellow jagged lightning-bolt impact spark.
+  fx/miss:
+    kind: effect
+    prompt: A small grey puff of dust or wind swoosh lines.
+  fx/down:
+    kind: effect
+    prompt: A ring of small yellow dizzy stars, as over a knocked-out character.
+  fx/killed:
+    kind: effect
+    prompt: A small white skull.
+
+  # ─── Seafront ─────────────────────────────────────────────────────────────
+  object/railings:
+    kind: object
+    prompt: A short section of ornate green-painted Victorian cast-iron seafront railing, chipped to cream underneath.
+  object/pier-view:
+    kind: object
+    prompt: >-
+      A compact, square icon of a Victorian pier seen end-on from the shore: the glass-domed pavilion standing on rusty
+      iron legs above a strip of grey-green sea, filling the frame. Not a long diagonal view.
+  object/shelter:
+    kind: object
+    span: [2, 1]
+    prompt: A Victorian seafront shelter, green ironwork and a glass back, a wooden bench inside, seen from above at an angle.
+  object/kiosk:
+    kind: object
+    prompt: A small shuttered seafront kiosk with a faded ice-cream board.
+  object/gulls:
+    kind: object
+    prompt: Two fat herring gulls standing on the ground, one missing a leg.
+  object/pier-legs:
+    kind: object
+    prompt: A rusty cast-iron pier leg rising out of the shingle, scabbed with barnacles and green weed.
+  object/shingle:
+    kind: object
+    prompt: A little heap of grey shingle, black bladderwrack seaweed and a lost flip-flop.
+  object/turnstile:
+    kind: object
+    prompt: An old iron pier turnstile with three bars.
+  object/pier-sign:
+    kind: object
+    prompt: A painted wooden sign on a post, cream lettering shapes on dark green (no readable text).
+  object/ticket-kiosk:
+    kind: object
+    prompt: A little Victorian ticket window booth in green and cream, with a brass coin dish and a donations jar.
+  object/benches:
+    kind: object
+    prompt: A weathered wooden seafront bench with a small brass plaque, seen from above at an angle.
+  object/deck-rail:
+    kind: object
+    prompt: A section of white-painted iron pier railing with a wooden top rail.
+  object/landing-stage:
+    kind: object
+    prompt: Iron steps going down to a slimy green landing stage, seen from above.
+  object/lifebuoy:
+    kind: object
+    prompt: An orange lifebuoy ring in a small glass-fronted wooden box.
+  object/glass-house-outside:
+    kind: object
+    prompt: A section of a Victorian glass pavilion wall, white-painted iron frames with pale sea-green glass panes.
+  object/display-board:
+    kind: object
+    prompt: A heritage display board on legs with old sepia photographs of steamers pinned on it.
+  object/archive-cupboard:
+    kind: object
+    prompt: A grey steel office cupboard with a small paper label and a lock.
+  object/armchair:
+    kind: object
+    prompt: A wing-backed armchair with a tartan blanket and a hot-water bottle on it.
+
+  # ─── Glass house ──────────────────────────────────────────────────────────
+  object/tea-table:
+    kind: object
+    prompt: A small round tea table with a white cloth, a silver teapot and three cups.
+  object/candyfloss-machine:
+    kind: object
+    prompt: A broken candyfloss machine half under a dust sheet, its bowl furred with old pink sugar.
+  object/tea-room-sign:
+    kind: object
+    prompt: A faded painted wooden tea-room sign in cream and maroon (no readable text).
+  object/deckchairs:
+    kind: object
+    prompt: A stack of folded striped canvas deckchairs, red and white stripes.
+
+  # ─── Building site ────────────────────────────────────────────────────────
+  object/heras-fencing:
+    kind: object
+    prompt: A temporary steel mesh construction fence panel on a black rubber foot.
+  object/skip:
+    kind: object
+    span: [2, 1]
+    prompt: A yellow builder's skip full of rubble, lath, plaster and old carpet, seen from above at an angle.
+  object/scaffold-tubes:
+    kind: object
+    span: [2, 1]
+    prompt: A neat stack of long galvanised scaffold tubes lying horizontally.
+  object/crowbar:
+    kind: object
+    prompt: A long steel wrecking bar with orange paint worn off its ends, lying on the ground.
+  object/petrol-can:
+    kind: object
+    prompt: A red metal jerrycan of petrol.
+  object/generator:
+    kind: object
+    prompt: A yellow portable site generator on a steel frame.
+  object/cabin-kettle:
+    kind: object
+    prompt: A grubby white electric kettle and a jar of instant coffee.
+  object/calendar:
+    kind: object
+    prompt: A wall calendar with a picture of a yellow digger at sunset.
+  object/drawings:
+    kind: object
+    span: [2, 1]
+    prompt: Architect's floor plan drawings spread out on a trestle table, held down by a mug.
+  object/key-board:
+    kind: object
+    prompt: A wooden board of hooks with a few hotel room key fobs hanging on it.
+  object/camp-bed:
+    kind: object
+    span: [2, 1]
+    prompt: A green canvas camp bed seen from above, lying horizontally, a sleeping bag balled up at one end.
+
+  # ─── Hotel ────────────────────────────────────────────────────────────────
+  object/reception-panelling:
+    kind: object
+    prompt: A section of dark varnished Victorian wooden wall panelling.
+  object/guest-register:
+    kind: object
+    prompt: A big old leather-bound guest register book lying open on a reception desk.
+  object/photograph:
+    kind: object
+    prompt: An old sepia photograph in a dark wooden frame, a Victorian couple on a pier.
+  object/dust-sheets:
+    kind: object
+    span: [2, 1]
+    prompt: Paint-spattered white dust sheets lying rumpled on the floor.
+  object/radio:
+    kind: object
+    prompt: A paint-spattered yellow and black job-site radio.
+  object/lobby-staircase:
+    kind: object
+    prompt: A section of a grand mahogany staircase stripped to bare treads, its banister wrapped in bubble wrap.
+  object/stacked-doors:
+    kind: object
+    prompt: Old panelled bedroom doors off their hinges, stacked leaning against a wall, brass numbers on them.
+  object/floorboard:
+    kind: object
+    prompt: A single raised floorboard, lifted at one end, with screw holes.
+  object/wallpaper:
+    kind: object
+    prompt: A torn strip of wallpaper peeling away to show older patterned paper beneath, roses and tiny lambs.
+  object/bassinet:
+    kind: object
+    prompt: A Victorian wicker bassinet draped in white lace.
+  object/room-seven-window:
+    kind: object
+    span: [2, 1]
+    prompt: A wide Victorian bay window with pale sea-green glass and a white frame, seen from inside at an angle.
+  object/digs-window:
+    same: object/room-seven-window
+  object/anchor-window:
+    same: object/room-seven-window
+
+  # ─── The Anchor and the flat ──────────────────────────────────────────────
+  object/fruit-machine:
+    kind: object
+    prompt: A lit-up pub fruit machine, gaudy rainbow colours, lights glowing.
+  object/dartboard:
+    kind: object
+    prompt: An old worn dartboard on a wooden backboard.
+  object/bar:
+    kind: object
+    prompt: >-
+      A straight section of a long dark wooden pub bar counter seen from the front, running the full width of the
+      image edge to edge so that sections placed side by side join into one counter, a brass hand pump on top.
+  object/flat-telly:
+    kind: object
+    prompt: A big flat-screen TV on a small cheap table, screen glowing blue.
+  object/fairy-lights:
+    kind: object
+    prompt: A short string of warm fairy lights, some bulbs dead.
+  object/biscuit:
+    kind: object
+    prompt: A fat ginger cat sitting and staring.
+  object/sofa:
+    kind: object
+    span: [3, 1]
+    prompt: A long saggy brown three-seater sofa seen from the front at an angle.
+  object/kez-bed:
+    kind: object
+    span: [2, 1]
+    prompt: A double bed with a purple duvet seen from above, lying horizontally, a pillow at the left end.
+
+  # ─── The Seaview ──────────────────────────────────────────────────────────
+  object/house-rules:
+    kind: object
+    prompt: A laminated sheet of rules pinned to a wall (no readable text).
+  object/payphone:
+    kind: object
+    prompt: A grey British payphone mounted on a wall, receiver on a steel cord.
+  object/dresser:
+    kind: object
+    span: [2, 1]
+    prompt: A dark wooden dresser with a doily and a tray on top.
+  object/digs-bed:
+    kind: object
+    span: [2, 1]
+    prompt: A narrow single bed seen from above, lying horizontally, a faded candlewick bedspread, pillow at the left end.
+  object/marek-bed:
+    same: object/digs-bed
+  object/tommo-bed:
+    kind: object
+    span: [2, 1]
+    prompt: A messy single bed seen from above, lying horizontally, tangled duvet, clothes and crisp packets on it.
+  object/rosary:
+    kind: object
+    prompt: A wooden bead rosary with a small cross.
+  object/energy-cans:
+    kind: object
+    prompt: A small pyramid of empty energy-drink cans, neon green and silver.
+  object/hi-vis:
+    kind: object
+    prompt: A heap of crumpled yellow hi-vis vests.
+  object/work-boots:
+    kind: object
+    prompt: A pair of scuffed brown steel-toe work boots, laces knotted.
+  object/digs-kettle:
+    kind: object
+    prompt: A white plastic kettle furred with limescale, a saucer of teabags beside it.
+  object/digs-telly:
+    kind: object
+    prompt: A small old portable television with a coat-hanger aerial, screen of static.
+  object/hard-hat:
+    kind: object
+    prompt: A white builder's hard hat with a sticker on it.
+
+  # ─── Things that start off-stage (shown if dropped) ───────────────────────
+  object/room-seven-key:
+    kind: object
+    prompt: A brass key on a wooden fob.
+  object/archive-key:
+    kind: object
+    prompt: A small steel key on a loop of red wool.
+  object/claras-letter:
+    kind: object
+    prompt: A folded old letter, yellowed paper with copperplate handwriting shapes.
+  object/newspaper:
+    kind: object
+    prompt: An old Victorian newspaper in a clear plastic sleeve.
+  object/silver-rattle:
+    kind: object
+    prompt: A tarnished Victorian silver baby rattle with a coral teether.
+  object/mug-of-tea:
+    kind: object
+    prompt: A mug of strong builder's tea.
+  object/tray:
+    kind: object
+    prompt: A small tray with a doily and an empty sugar bowl.
+  object/matches:
+    kind: object
+    prompt: A small box of matches.
+  object/pint-1:
+    kind: object
+    prompt: A pint glass of amber bitter beer.
+  object/pint-2:
+    same: object/pint-1
+  object/pint-3:
+    same: object/pint-1
+  object/sleeping-tablets:
+    kind: object
+    prompt: A blister strip of white tablets.
+  object/tea-flask:
+    kind: object
+    prompt: A tartan thermos flask.

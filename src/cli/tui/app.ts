@@ -9,9 +9,11 @@ import { SKILL_NAMES } from "../../mechanics/special.js";
 import type { Intent, Tile, ViewModel } from "../../session/port.js";
 import type { Session } from "../../session/session.js";
 import { setColorDepth } from "./color.js";
+import { type Graphics, Painter } from "./graphics.js";
 import { compose } from "./layout.js";
 import { type Paragraph, toParagraphs } from "./log.js";
 import { Timeline } from "./scene.js";
+import type { SpriteSet } from "./sprites.js";
 import { Controller, type Key, type Ui } from "./ui.js";
 
 export interface TuiOptions {
@@ -23,11 +25,22 @@ export interface TuiOptions {
   flush: () => void;
   /** Draw with emoji (default) or with plain glyphs. */
   emoji?: boolean;
+  /** The payload's sprite art; with `graphics`, the scene is drawn as a picture. */
+  sprites?: SpriteSet;
+  /** How the terminal shows images ("none" draws tiles with glyphs). */
+  graphics?: Graphics;
+  /** True colour (default: from COLORTERM). */
+  truecolor?: boolean;
+  /** Ends the game (e.g. its browser tab closed). */
+  signal?: AbortSignal;
+  /** Another terminal than this process's (the web frontend's); then process signals are left alone. */
   input?: NodeJS.ReadStream;
   output?: NodeJS.WriteStream;
 }
 
 const FRAME_MS = 80;
+/** In image mode, ambient animation (water, idle frames, pulses) steps at this rate, so pictures are sent less. */
+const PICTURE_MS = 200;
 
 /** Turns session output into UI state: the log, the panels and any sheet to show. */
 export function absorb(ui: Ui, session: Session, views: readonly ViewModel[]): Timeline | undefined {
@@ -69,6 +82,10 @@ export function absorb(ui: Ui, session: Session, views: readonly ViewModel[]): T
   return timeline;
 }
 
+/** The hole key of a rectangle with nothing over it (Canvas.holeKey). */
+const fullKey = (r: { x: number; y: number; w: number; h: number }) =>
+  Array.from({ length: r.h }, (_, i) => `${r.x},${r.y + i},${r.w}`).join(";");
+
 function push(ui: Ui, paras: Paragraph[]): void {
   ui.log.push(...paras);
   if (ui.log.length > 3000) ui.log.splice(0, ui.log.length - 3000);
@@ -79,9 +96,12 @@ export async function runTui(opts: TuiOptions): Promise<void> {
   const input = opts.input ?? process.stdin;
   const output = opts.output ?? process.stdout;
   if (!input.isTTY || !output.isTTY) throw new Error("--tui needs an interactive terminal");
-  setColorDepth();
+  setColorDepth(opts.truecolor);
   const { session } = opts;
   const emoji = opts.emoji ?? true;
+  const painter = opts.sprites && opts.graphics && opts.graphics !== "none" ? new Painter(opts.graphics) : undefined;
+  const sprites = painter ? opts.sprites : undefined;
+  let holes = "";
   const ui: Ui = { title: opts.title, mode: session.mode, log: [], scroll: 0, busy: false };
   let anim: { timeline: Timeline; start: number } | undefined;
   let done: () => void = () => {};
@@ -92,6 +112,8 @@ export async function runTui(opts: TuiOptions): Promise<void> {
   const epoch = Date.now();
 
   const draw = () => {
+    // A slow connection: skip frames rather than queue them.
+    if (output.writableNeedDrain) return;
     const cols = output.columns ?? 80;
     const rows = output.rows ?? 24;
     const now = Date.now();
@@ -101,13 +123,33 @@ export async function runTui(opts: TuiOptions): Promise<void> {
       if (ms >= anim.timeline.duration) anim = undefined;
       else frame = anim.timeline.at(ms, new Map((ui.scene?.things ?? []).map((t) => [t.id, t.pos])));
     }
-    const f = compose(ui, cols, rows, { t: now - epoch, emoji, ...(frame ? { frame } : {}) });
+    const t = now - epoch;
+    const f = compose(ui, cols, rows, {
+      t: sprites && !frame ? Math.floor(t / PICTURE_MS) * PICTURE_MS : t,
+      emoji,
+      ...(frame ? { frame } : {}),
+      ...(sprites ? { sprites } : {}),
+    });
     ui.scroll = Math.min(ui.scroll, f.maxScroll);
-    let out = "\x1b[?25l";
+    // Synchronised output, so a picture and the text over it land together.
+    let out = "\x1b[?2026h\x1b[?25l";
+    if (painter) {
+      // Holes change when a menu opens or closes over the scene: wipe them, then send the picture again.
+      const key = f.canvas.holeKey();
+      const moved = key !== holes;
+      holes = key;
+      if (moved) out += f.canvas.clearHoles();
+      if (f.picture) {
+        const r = f.picture.rect;
+        // Inline images can't sit under text: while a menu covers part of the scene, keep the picture still.
+        const covered = painter.mode === "iip" && key !== fullKey(r);
+        if (moved || !covered) out += painter.paint(f.picture.draw(), r, moved);
+      } else out += painter.clear();
+    }
     f.canvas.lines(true).forEach((line, i) => {
       out += `\x1b[${i + 1};1H${line}`;
     });
-    output.write(out);
+    output.write(`${out}\x1b[?2026l`);
   };
 
   const quit = () => {
@@ -158,7 +200,7 @@ export async function runTui(opts: TuiOptions): Promise<void> {
     output.off("resize", draw);
     if (input.isTTY) input.setRawMode(false);
     input.pause();
-    output.write("\x1b[0m\x1b[?25h\x1b[?1049l");
+    output.write(`${painter?.clear() ?? ""}\x1b[0m\x1b[?25h\x1b[?1049l`);
   };
   const onExit = () => restore();
 
@@ -168,8 +210,13 @@ export async function runTui(opts: TuiOptions): Promise<void> {
   input.resume();
   input.on("keypress", onKey);
   output.on("resize", draw);
-  process.once("exit", onExit);
-  process.once("SIGTERM", quit);
+  const own = !opts.input;
+  if (own) {
+    process.once("exit", onExit);
+    process.once("SIGTERM", quit);
+  }
+  opts.signal?.addEventListener("abort", quit, { once: true });
+  if (opts.signal?.aborted) quit();
   const ticker = setInterval(draw, FRAME_MS);
   try {
     push(ui, [{ spans: [{ text: opts.banner, sgr: "90" }] }]);
@@ -180,8 +227,11 @@ export async function runTui(opts: TuiOptions): Promise<void> {
     draw();
     await finished;
   } finally {
-    process.off("exit", onExit);
-    process.off("SIGTERM", quit);
+    if (own) {
+      process.off("exit", onExit);
+      process.off("SIGTERM", quit);
+    }
+    opts.signal?.removeEventListener("abort", quit);
     restore();
   }
 }

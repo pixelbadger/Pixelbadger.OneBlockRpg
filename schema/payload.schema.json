@@ -608,6 +608,10 @@
                                 "type": "string",
                                 "minLength": 1
                               }
+                            },
+                            "sprite": {
+                              "type": "string",
+                              "minLength": 1
                             }
                           },
                           "additionalProperties": false
@@ -1422,6 +1426,10 @@
                   "type": "string",
                   "minLength": 1
                 }
+              },
+              "sprite": {
+                "type": "string",
+                "minLength": 1
               }
             },
             "additionalProperties": false
@@ -2140,6 +2148,10 @@
                   "type": "string",
                   "minLength": 1
                 }
+              },
+              "sprite": {
+                "type": "string",
+                "minLength": 1
               }
             },
             "additionalProperties": false

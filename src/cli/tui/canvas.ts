@@ -13,6 +13,8 @@ export interface Span {
 
 /** Marks the second cell of a double-width character; never printed. */
 const WIDE_TAIL = "";
+/** Marks a cell left alone when printing, because a picture is there (graphics.ts). */
+const HOLE = "\u0000";
 
 interface Cell {
   ch: string;
@@ -106,6 +108,41 @@ export class Canvas {
     this.cells[y]![x + 1] = { ch: WIDE_TAIL, sgr };
   }
 
+  /** Leaves `r` alone when printing (a picture shows through); drawing over a cell fills it in again. */
+  punch(r: Rect): void {
+    this.fill(r, HOLE, "");
+  }
+
+  /** Where the holes are, as one string per frame: it changes when a menu opens or closes over a picture. */
+  holeKey(): string {
+    return this.holeRuns()
+      .map((h) => `${h.x},${h.y},${h.n}`)
+      .join(";");
+  }
+
+  /** Escape codes that blank every hole (to wipe text a previous frame left there). */
+  clearHoles(): string {
+    return this.holeRuns()
+      .map((h) => `\x1b[${h.y + 1};${h.x + 1}H\x1b[0m${" ".repeat(h.n)}`)
+      .join("");
+  }
+
+  private holeRuns(): { x: number; y: number; n: number }[] {
+    const runs: { x: number; y: number; n: number }[] = [];
+    this.cells.forEach((row, y) => {
+      let start = -1;
+      for (let x = 0; x <= row.length; x++) {
+        const hole = x < row.length && row[x]!.ch === HOLE;
+        if (hole && start < 0) start = x;
+        if (!hole && start >= 0) {
+          runs.push({ x: start, y, n: x - start });
+          start = -1;
+        }
+      }
+    });
+    return runs;
+  }
+
   /** Changes a cell's style, keeping its character. */
   restyle(x: number, y: number, sgr: Sgr): void {
     const b = this.bounds;
@@ -166,13 +203,26 @@ export class Canvas {
     }
   }
 
-  /** The frame as lines with SGR codes (or plain text when `color` is false). */
+  /**
+   * The frame as lines with SGR codes (or plain text when `color` is false). With colour, holes are skipped by moving
+   * the cursor over them; in plain text they are spaces.
+   */
   lines(color = true): string[] {
     return this.cells.map((row) => {
       let out = "";
       let cur = "";
+      let skip = 0;
       for (const c of row) {
         if (c.ch === WIDE_TAIL) continue;
+        if (c.ch === HOLE) {
+          if (!color) out += " ";
+          else skip++;
+          continue;
+        }
+        if (skip) {
+          out += `\x1b[${skip}C`;
+          skip = 0;
+        }
         if (color && c.sgr !== cur) {
           out += c.sgr ? `\x1b[0;${c.sgr}m` : "\x1b[0m";
           cur = c.sgr;

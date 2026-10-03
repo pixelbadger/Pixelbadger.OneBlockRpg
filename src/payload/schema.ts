@@ -470,6 +470,8 @@ export const Look = z.strictObject({
   color: z.string().min(1).optional(),
   /** Alternate emoji (or glyphs) cycled for animation. */
   frames: z.array(z.string().min(1)).optional(),
+  /** A sprite key from the payload's `assets/sprites.json`, for frontends that draw images (e.g. "terrain/water"). */
+  sprite: z.string().min(1).optional(),
 });
 export type Look = z.infer<typeof Look>;
 

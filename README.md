@@ -95,6 +95,21 @@ Verbs that need a target put up a cursor on the nearest one: arrows move it, Tab
 Conversations, character creation and trades are menus. `--no-emoji` draws with plain characters instead.
 During development, `pnpm oneblock <command>` runs the CLI from source.
 
+**Pictures.** A payload can ship sprite art (`<payload>/assets/sprites.json` and PNGs). In a terminal that shows
+images, `--tui` then draws each room as a picture: kitty and Ghostty through the kitty graphics protocol, iTerm2 and
+WezTerm through iTerm2's inline images. `--graphics auto|kitty|iip|none` overrides the guess (tmux and screen get
+`none`). Anything without a sprite falls back to its glyph art, so payloads without art still play.
+
+**In a browser.** `oneblock serve examples/the-pier` serves the same frontend through xterm.js and its image addon at
+http://127.0.0.1:8080 (`--port`, `--host`, `--saves <dir>`, `--provider`, `--model`). Each tab is its own game,
+saved under `saves/` and resumed when the tab comes back; *new game* starts another.
+
+**Making art.** `pnpm art <payload>` generates a payload's sprites with OpenAI's image API from its art brief
+(`assets/art.yaml`: a house style, then one prompt per terrain, exit, effect, character and object), cuts them down to
+tiles, and writes `sprites.json`. It needs `OPENAI_API_KEY`; `--dry-run` lists what it would generate, `--only k,k`
+and `--force` redo some, and `--reprocess` re-cuts the cached raw images (`assets/.raw/`, git-ignored) without new
+calls.
+
 [`examples/the-pier`](examples/the-pier) is the first full story: a present-day ghost story on a Victorian pier,
 built from its [brief](examples/the-pier/brief.md). [`examples/carver-street`](examples/carver-street) is a small
 demo block built from the examples in the spec. Both are playthrough fixtures.
@@ -115,7 +130,8 @@ the block, writes the payload, validates it to zero warnings and writes a playth
 | `src/llm` | provider interface; `claude-subscription`, `anthropic-api`, scripted, record and replay (§6.9) |
 | `src/narrative` | conversations, hooks, director, callouts, day summaries, context builder (§6) |
 | `src/session` | the loops, UI port, parser, action menu and SQLite saves (§3) |
-| `src/cli` | the frontend adapters: the readline CLI and the full-screen TUI (`src/cli/tui`) |
+| `src/cli` | the frontend adapters: the readline CLI, the full-screen TUI (`src/cli/tui`) and its browser host (`src/cli/web`) |
+| `tools` | development tooling: `art.ts` generates sprite art from a payload's art brief |
 | `schema/payload.schema.json` | the published payload JSON Schema (`pnpm schema` regenerates it) |
 | `docs/authoring-guide.md` | how to build a payload from a story brief (§7.9) |
 | `.claude/skills/make-game` | the Claude Code skill that wraps the guide |
