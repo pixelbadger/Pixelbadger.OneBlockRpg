@@ -11,7 +11,8 @@ import type { LlmProvider } from "../llm/provider.js";
 import { RecordingProvider } from "../llm/scripted.js";
 import { offlineProvider } from "../narrative/offline.js";
 import type { Payload } from "../payload/schema.js";
-import { SaveStore } from "../session/save.js";
+import type { SaveStore } from "../session/save.js";
+import { openSqliteSave, saveExists } from "../session/save-sqlite.js";
 import { Session } from "../session/session.js";
 
 export function makeProvider(id: string, model?: string): LlmProvider {
@@ -50,8 +51,8 @@ export interface Game {
 /** Opens (resuming if the save exists) or starts a game. */
 export async function openGame(payload: Payload, o: GameOptions): Promise<Game> {
   if (o.fresh) rmSync(o.savePath, { force: true });
-  const resuming = SaveStore.exists(o.savePath);
-  const store = await SaveStore.open(o.savePath);
+  const resuming = saveExists(o.savePath);
+  const store = await openSqliteSave(o.savePath);
   const inner = makeProvider(o.provider, o.model);
   const provider = new RecordingProvider(inner, (c, req) => store.recordExchange(c, req));
   let world: World;

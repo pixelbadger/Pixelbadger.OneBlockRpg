@@ -12,7 +12,8 @@ import { formatIssue } from "../payload/issues.js";
 import { payloadJsonSchema } from "../payload/json-schema.js";
 import type { Payload } from "../payload/schema.js";
 import { validatePayloadAt } from "../payload/validate.js";
-import { SaveStore } from "../session/save.js";
+import type { SaveStore } from "../session/save.js";
+import { openSqliteSave } from "../session/save-sqlite.js";
 import { Session } from "../session/session.js";
 import { openGame } from "./game.js";
 import { render, renderIntroductionPage } from "./render.js";
@@ -244,7 +245,7 @@ async function replay(args: string[]): Promise<number> {
     return 2;
   }
   const payload = loadPayload(payloadPath, true);
-  const store = await SaveStore.open(savePath);
+  const store = await openSqliteSave(savePath);
   const result = await replaySave(payload, store);
   store.close();
   console.log(
