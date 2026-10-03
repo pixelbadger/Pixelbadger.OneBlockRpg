@@ -28,9 +28,18 @@ ends_when:
   any:
     - { flag: glass_house_burning }
     - { time_between: { from: "04:00", to: "06:00" } }
+# The block arrives with him: who is out on the pier, whether he still has a job, what's been noticed.
 outcomes:
   - when: { not: { flag: glass_house_burning } }
     do:
       - { set_flag: glass_house_burning }
       - { narrate: "You watch your own hand take out a match. You watch it strike. It is not a decision. It was decided a long time ago, in this room, by somebody else." }
+  - when: { any: [ { in_room: { who: kez, where: pier-head } }, { in_room: { who: kez, where: pier-deck } } ] }
+    do: [ { narrate: "Out on the pier-head someone is shouting your name, over and over. Kez. She came looking. She is the only one who ever does." } ]
+  - when: { any: [ { in_room: { who: tommo, where: pier-head } }, { in_room: { who: tommo, where: pier-deck } } ] }
+    do: [ { narrate: "Tommo's phone torch swings across the glass, and stops on you, and doesn't film." } ]
+  - when: { property: { object: timesheet, key: sacked, value: true } }
+    do: [ { narrate: "Nobody from the site comes. You don't work there any more. Gary will hear about it on the radio and say he saw it coming, and not mean it." } ]
+  - when: { property: { object: petrol-can, key: _missing, value: true } }
+    do: [ { narrate: "Back at the compound the generator has gone quiet. Gary noticed his petrol was gone hours ago. In the morning he will remember who was looking at it." } ]
   - do: [ { set_flag: glass_house_burned } ]

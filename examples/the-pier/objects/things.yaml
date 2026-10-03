@@ -1,6 +1,8 @@
 # Everything else: tools, the fire's makings, food and drink, beds and doors.
 
 # ─── The site ───
+# Site gear is Gary's. Anyone he trusts at all may use it; someone he doesn't is taking it. Tools circulate: Tommo
+# picks the bar up in the morning and drops it back at knocking-off time, so where it is depends on the hour.
 - id: crowbar
   name: crowbar
   aliases: [bar, wrecking bar, jemmy]
@@ -8,23 +10,107 @@
   description: "A three-foot wrecking bar, orange paint worn back to the steel at both ends."
   affordances: [takeable]
   tags: [pry]
+  owner: gary
+  permitted: { relationship: { who: gary, with: self, trust: { gte: 5 } } }
   properties: { mass: 3, value: 12 }
   weapon: { type: blunt, skill: melee_weapons, damage: [3, 8], ap: 4, min_st: 4 }
+- id: claw-hammer
+  name: claw hammer
+  aliases: [hammer, claw]
+  location: marek
+  description: "Marek's claw hammer, the handle wrapped in black tape worn grey where his hand goes."
+  affordances: [takeable]
+  tags: [claw]
+  owner: marek
+  properties: { mass: 0.8, value: 8 }
+  weapon: { type: blunt, skill: melee_weapons, damage: [2, 6], ap: 3, min_st: 2 }
+- id: toolbox
+  name: Marek's toolbox
+  aliases: [toolbox, tool box, box, tools]
+  location: hotel-corridor
+  room_text: "Marek's red toolbox sits open against the wall."
+  description: "A red steel toolbox, MAREK N. scratched in the lid. Everything in it is clean."
+  affordances: [container, takeable]
+  owner: marek
+  permitted: { relationship: { who: marek, with: self, trust: { gte: 20 } } }
+  properties: { mass: 6, value: 20 }
+- id: screwdriver
+  name: screwdriver
+  aliases: [screwdriver, driver]
+  location: toolbox
+  description: "A long flat-bladed screwdriver, the kind that's been sharpened on a step."
+  affordances: [takeable]
+  tags: [screwdriver]
+  owner: marek
+  permitted: { relationship: { who: marek, with: self, trust: { gte: 20 } } }
+  properties: { mass: 0.2, value: 3 }
 - id: petrol-can
   name: petrol can
   aliases: [petrol, jerrycan, can, fuel]
   location: compound
-  description: "A red jerrycan of petrol for the generator, two-thirds full."
+  description:
+    - when: { property: { object: petrol-can, key: fuel, op: lte, value: 0 } }
+      text: "A red jerrycan for the generator, empty. It smells like a headache."
+    - text: "A red jerrycan of petrol for the generator. It sloshes: there's a good few litres in it."
   room_text: "A red jerrycan stands by the generator."
   affordances: [takeable]
-  properties: { mass: 12, value: 15 }
+  owner: gary
+  permitted: { relationship: { who: gary, with: self, trust: { gte: 5 } } }
+  properties: { mass: 12, value: 15, fuel: 10 }
+# The generator burns through its fuel over the working day; Gary tops it up from the can (behaviours/site.yaml).
+# If the can has walked, he'll notice.
 - id: generator
   name: generator
   aliases: [genny]
   location: compound
   scenery: true
-  description: "A yellow site generator that thuds all day and coughs at night."
-  properties: { mass: 300 }
+  description:
+    - when: { property: { object: generator, key: fuel, op: lte, value: 0 } }
+      text: "The yellow site generator, silent, out of petrol. Nothing on site has power."
+    - text: "A yellow site generator that thuds all day and coughs at night."
+  behaviours: [generator-burns]
+  properties: { mass: 300, fuel: 3 }
+  uses:
+    - on: petrol-can
+      when: { property: { object: petrol-can, key: fuel, op: gte, value: 2 } }
+      text: "You top the generator up from the can. It coughs and thuds back up to speed."
+      effects:
+        - { adjust_property: { object: generator, key: fuel, by: 4 } }
+        - { adjust_property: { object: petrol-can, key: fuel, by: -2 } }
+      minutes: 3
+    - on: petrol-can
+      text: "There isn't enough in the can to bother with."
+# A delivery to carry up to the first floor (Gary checks at five). Real weight: 22 kg a sheet.
+- id: plasterboard-1
+  name: sheet of plasterboard
+  aliases: [plasterboard, sheet, board, sheets]
+  location: compound
+  description: "An eight-by-four sheet of plasterboard, heavier than it has any right to be. Gary wants them up on the first floor."
+  room_text: "A sheet of plasterboard leans against the fencing, waiting to be carried up to the first floor."
+  affordances: [takeable]
+  owner: gary
+  permitted: { relationship: { who: gary, with: self, trust: { gte: 5 } } }
+  properties: { mass: 22, value: 8 }
+- id: plasterboard-2
+  name: sheet of plasterboard
+  aliases: [plasterboard, sheet, board, sheets]
+  location: compound
+  description: "An eight-by-four sheet of plasterboard, heavier than it has any right to be. Gary wants them up on the first floor."
+  room_text: "A sheet of plasterboard leans against the fencing, waiting to be carried up to the first floor."
+  affordances: [takeable]
+  owner: gary
+  permitted: { relationship: { who: gary, with: self, trust: { gte: 5 } } }
+  properties: { mass: 22, value: 8 }
+- id: plasterboard-3
+  name: sheet of plasterboard
+  aliases: [plasterboard, sheet, board, sheets]
+  location: compound
+  description: "An eight-by-four sheet of plasterboard, heavier than it has any right to be. Gary wants them up on the first floor."
+  room_text: "A sheet of plasterboard leans against the fencing, waiting to be carried up to the first floor."
+  affordances: [takeable]
+  owner: gary
+  permitted: { relationship: { who: gary, with: self, trust: { gte: 5 } } }
+  properties: { mass: 22, value: 8 }
 - id: key-board
   name: key board
   aliases: [keys, board, hooks]
@@ -33,6 +119,20 @@
   description: "A board of hooks by the cabin door, each with a hotel room fob. Most hooks are empty."
   affordances: [surface]
   properties: { mass: 3 }
+# Gary's timesheet: the work sim's ledger. Strikes for being off site when he looks; three and you're done.
+- id: timesheet
+  name: timesheet
+  aliases: [timesheet, clipboard, sheet, rota]
+  location: site-office
+  scenery: true
+  owner: gary
+  description:
+    - when: { property: { object: timesheet, key: sacked, value: true } }
+      text: "Gary's clipboard. DOYLE has a line through it, pressed hard enough to tear the paper."
+    - when: { property: { object: timesheet, key: strikes, op: gte, value: 1 } }
+      text: "Gary's clipboard of names and times. Next to DOYLE: {{objects.timesheet.strikes}} in red, each one a time he looked for you and you weren't there."
+    - text: "Gary's clipboard of names and times. DOYLE, NOWAK, RAFFERTY. Your column is clean, for now."
+  properties: { strikes: 0, covered: 0, sacked: false }
 - id: camp-bed
   name: camp bed
   location: site-office
@@ -69,10 +169,16 @@
   properties: { mass: 400, soaked: false }
   uses:
     - on: petrol-can
-      when: { flag: breakdown }
+      when: { all: [ { flag: breakdown }, { property: { object: petrol-can, key: fuel, op: gt, value: 0 } } ] }
       text: "You unscrew the cap and walk the length of the stack, slopping petrol over the canvas and the old wood. Your hands are very steady."
-      effects: [ { set_property: { object: deckchairs, key: soaked, value: true } } ]
+      effects:
+        - { set_property: { object: deckchairs, key: soaked, value: true } }
+        - { set_property: { object: petrol-can, key: fuel, value: 0 } }
+      noise: { loudness: 3, sound: "liquid slopping, and the reek of petrol" }
       minutes: 5
+    - on: petrol-can
+      when: { flag: breakdown }
+      text: "You tip the can over the stack. A dribble, a drip. It's empty. It doesn't matter."
     - on: petrol-can
       text: "You stand with the can in your hand for a long time. Then you put the cap back on. Not yet. Not you."
     - on: matches

@@ -1,0 +1,210 @@
+# Reactions (§4.5): people and things responding to what happens, not to the plot. None of these knows about the
+# ghost story. Gary runs a site, Marek hears things, Tommo does the job Liam doesn't, friends worry, Edith guards
+# her archive; the story happens in the collisions.
+
+# ─── The work ───
+# Gary looks for Liam twice a day. Off site when he looks, unless Marek has covered, is a strike on the timesheet
+# and lost trust; three strikes and he's sacked, which also loses him the right to the site's tools (their
+# `permitted` is Gary's trust). Gary also checks the work itself.
+- id: gary-foreman
+  rules:
+    - when:
+        all:
+          - { time: "10:30" }
+          - { not: { property: { object: timesheet, key: sacked, value: true } } }
+          - { not: { flag: sent_home } }
+          - &off-site
+            not:
+              any:
+                - { in_room: { who: player, where: compound } }
+                - { in_room: { who: player, where: site-office } }
+                - { in_room: { who: player, where: hotel-lobby } }
+                - { in_room: { who: player, where: hotel-corridor } }
+                - { in_room: { who: player, where: room-seven } }
+          - { property: { object: timesheet, key: covered, value: 0 } }
+      do: &strike
+        - { adjust_property: { object: timesheet, key: strikes, by: 1 } }
+        - { adjust_relationship: { who: gary, with: player, trust: -5 } }
+        - { remember: { who: gary, text: "Looked for Doyle at {{clock.time}}. Not on site. That's {{objects.timesheet.strikes}} on his sheet." } }
+        - { set_intent: "on the phone to the agency, about Doyle" }
+    - when:
+        all:
+          - { time: "15:00" }
+          - { not: { property: { object: timesheet, key: sacked, value: true } } }
+          - { not: { flag: sent_home } }
+          - *off-site
+          - { property: { object: timesheet, key: covered, value: 0 } }
+      do: *strike
+    - when: { any: [ { time: "12:00" }, { time: "17:30" } ] }
+      do: [ { set_property: { object: timesheet, key: covered, value: 0 } } ]
+    - when:
+        all:
+          - { property: { object: timesheet, key: strikes, op: gte, value: 3 } }
+          - { not: { property: { object: timesheet, key: sacked, value: true } } }
+      do:
+        - { set_property: { object: timesheet, key: sacked, value: true } }
+        - { adjust_relationship: { who: gary, with: player, trust: -20 } }
+        - { say: "That's it. Doyle's finished. I'm not carrying him another day." }
+        - { remember: { who: gary, text: "Sacked Liam Doyle. Three times I looked and he wasn't there. Told the agency." } }
+      once: true
+    # The jobs themselves.
+    - when: { all: [ { time: "17:00" }, { property: { object: reception-panelling, key: fastened, value: true } } ] }
+      do:
+        - { adjust_relationship: { who: gary, with: player, trust: -3 } }
+        - { remember: { who: gary, text: "Reception panelling's still on. I gave Doyle that on Monday." } }
+    - when: { property: { object: reception-panelling, key: fastened, value: false } }
+      do:
+        - { adjust_relationship: { who: gary, with: player, trust: 5 } }
+        - { remember: { who: gary, text: "Reception panelling's off. Lobby's back to brick." } }
+      once: true
+    - when:
+        all:
+          - { in_room: { who: plasterboard-1, where: hotel-corridor } }
+          - { in_room: { who: plasterboard-2, where: hotel-corridor } }
+          - { in_room: { who: plasterboard-3, where: hotel-corridor } }
+      do:
+        - { adjust_relationship: { who: gary, with: player, trust: 5, affinity: 5 } }
+        - { remember: { who: gary, text: "The plasterboard's up on the first floor. Somebody grafted." } }
+      once: true
+    - when:
+        all:
+          - { time: "17:05" }
+          - { day: { gte: 2 } }
+          - { not: { in_room: { who: plasterboard-1, where: hotel-corridor } } }
+      do:
+        - { adjust_relationship: { who: gary, with: player, trust: -2 } }
+        - { remember: { who: gary, text: "Plasterboard still sat in the compound. Does nobody listen?" } }
+    # Tea.
+    - when: { all: [ { event: { kind: gave, actor: player, target: gary } }, { holds: { who: gary, what: mug-of-tea } } ] }
+      do:
+        - { adjust_relationship: { who: gary, with: player, trust: 1, affinity: 3 } }
+        - { say: "Ta. Milk's off, but ta." }
+      cooldown: 120
+    # The site's petrol, topped up by hand. If the can has walked, he notices on his own (§4.13).
+    - when:
+        all:
+          - { property: { object: generator, key: fuel, op: lte, value: 1 } }
+          - { in_room: { who: gary, where: compound } }
+          - { in_room: { who: petrol-can, where: compound } }
+          - { property: { object: petrol-can, key: fuel, op: gte, value: 2 } }
+      do: [ { act: use, item: petrol-can, on: generator } ]
+    - when: { event: { kind: noticed-missing, actor: self, target: petrol-can } }
+      do:
+        - { say: "Who's had the bloody petrol? It was right here." }
+        - { set_intent: "turning the compound over for the petrol can" }
+        - { remember: { who: gary, text: "The petrol can's gone from by the generator. Someone's had it." } }
+    - when: { event: { kind: noticed-missing, actor: self, target: room-seven-key } }
+      do:
+        - { set_intent: "going through his pockets for the Room 7 key" }
+        - { remember: { who: gary, text: "Room 7 key's gone off the board. The client will have my head." } }
+    - when: { event: { kind: noticed-damage, actor: self, target: door-room-seven } }
+      do:
+        - { say: "Who's forced Room 7? Who's been in there?" }
+        - { set_intent: "staring at the split frame of Room 7" }
+        - { remember: { who: gary, text: "Somebody's forced the door to Room 7 with a bar. Split the frame." } }
+    - when: { event: { kind: transgression, actor: player, target: gary } }
+      do: [ { say: "Oi. Doyle. That's not yours." } ]
+      cooldown: 30
+    # Tommo hands him the register (tommo-at-work): he reads it, and tells it at the Anchor that night.
+    - when: { holds: { who: gary, what: guest-register } }
+      do:
+        - { act: examine, target: guest-register }
+        - { remember: { who: gary, text: "Read the old hotel register Tommo found behind the panelling. 1893, the year the pier burned." } }
+      once: true
+    - when: { all: [ { time: "19:15" }, { believes: { who: gary, belief: ashdowns-stayed } }, { in_room: { who: gary, where: anchor } } ] }
+      do:
+        - { say: "Here, Tommo found the old hotel register behind the panelling. 1893, year the pier burned. 'Mr and Mrs Ashdown and infant, Room 7.' Never paid their bill. Some things don't change." }
+      once: true
+    - when:
+        all:
+          - { time: "19:15" }
+          - { believes: { who: gary, belief: ashdowns-stayed } }
+          - { same_room: { who: gary, with: player } }
+      do: [ { add_belief: { who: player, belief: ashdowns-stayed, confidence: 0.7, source: "overheard Gary" } } ]
+      once: true
+
+# ─── Tommo does the job Liam doesn't ───
+- id: tommo-at-work
+  rules:
+    - when:
+        all:
+          - { day: { gte: 2 } }
+          - { time: "10:15" }
+          - { in_room: { who: tommo, where: hotel-lobby } }
+          - { holds: { who: tommo, what: crowbar } }
+          - { property: { object: reception-panelling, key: fastened, value: true } }
+      do:
+        - { act: use, item: crowbar, on: reception-panelling }
+        - { say: "Gaffer! GAFFER. There's a hole in the wall with a book in it." }
+        - { act: take, item: guest-register }
+        - { act: give, item: guest-register, to: gary }
+      once: true
+
+# ─── Marek hears Room 7 ───
+- id: marek-listens
+  rules:
+    - when: { event: { kind: heard, actor: self, target: floorboard } }
+      do:
+        - { add_belief: { who: self, belief: room-seven-creaks, source: "heard it himself" } }
+        - { set_intent: "standing very still at the end of the corridor, listening to Room 7" }
+        - { remember: { who: self, text: "Heard the board in Room 7 creak again, slow, like someone standing on it. The room is locked. I crossed myself." } }
+      cooldown: 30
+    # He covers for Liam with Gary, if he likes him enough; it costs him a little each time.
+    - when:
+        all:
+          - { any: [ { time: "10:25" }, { time: "14:55" } ] }
+          - *off-site
+          - { relationship: { who: self, with: player, affinity: { gte: 50 } } }
+          - { not: { property: { object: timesheet, key: sacked, value: true } } }
+      do:
+        - { set_property: { object: timesheet, key: covered, value: 1 } }
+        - { adjust_relationship: { who: self, with: player, affinity: -5 } }
+        - { remember: { who: self, text: "Told Gary that Liam was at the van fetching fixings. He was not. God forgive me." } }
+
+# ─── Friends notice, and on the last night go looking ───
+- id: worried-friend
+  rules:
+    - when: { all: [ { flag: obsession }, { same_room: { who: self, with: player } } ] }
+      do:
+        - { add_belief: { who: self, belief: liam-not-right, source: "saw him" } }
+        - { remember: { who: self, text: "Saw Liam. He looks like he hasn't slept in a week, and he keeps looking out at the pier." } }
+      once: true
+- id: goes-looking
+  rules:
+    - when:
+        all:
+          - { flag: breakdown }
+          - { time: "21:30" }
+          - { believes: { who: self, belief: liam-not-right } }
+          - { relationship: { who: self, with: player, affinity: { gte: 50 } } }
+      do:
+        - { act: go, to: pier-head }
+        - { set_intent: "out on the pier in the dark, calling Liam's name" }
+        - { remember: { who: self, text: "Went looking for Liam on the pier. He's always looking at it." } }
+
+# ─── Edith and her archive ───
+- id: edith-keeps-her-things
+  rules:
+    - when: { event: { kind: transgression, actor: player, target: edith } }
+      do:
+        - { say: "Get out. Get OUT. I'll have Gary told, I'll have everyone told." }
+        - { set_intent: "standing in the tollhouse door, shaking, phone in her hand" }
+        - { remember: { who: self, text: "Liam, the builder from the hotel, broke into my archive. I saw him." } }
+      once: true
+    - when: { event: { kind: noticed-missing, actor: self, target: archive-key } }
+      do:
+        - { set_intent: "searching her cardigan pockets for the archive key" }
+        - { remember: { who: self, text: "My archive key is gone off its wool. I never take it off." } }
+
+# ─── Things ───
+# The loose board in Room 7 creaks through the evening, as if someone stood on it. Whoever is near enough hears it.
+- id: board-creaks
+  rules:
+    - when: { time_between: { from: "18:00", to: "23:30" } }
+      do: [ { noise: { source: self, loudness: 8, sound: "a slow creak, like someone shifting their weight on a loose board" } } ]
+      cooldown: 45
+- id: generator-burns
+  rules:
+    - when: { all: [ { time_between: { from: "07:30", to: "17:30" } }, { property: { object: generator, key: fuel, op: gt, value: 0 } } ] }
+      do: [ { adjust_property: { object: generator, key: fuel, by: -1 } } ]
+      cooldown: 150

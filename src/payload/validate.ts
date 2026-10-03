@@ -173,6 +173,42 @@ export function checkPayload(p: Payload, origins: Origins): PayloadIssue[] {
         add("error", ent(col, o.id, "uses", i, "on"), `object '${u.on}' does not exist`, "use an id or 'tag:<tag>'");
       }
     });
+    o.teaches.forEach((b, i) => {
+      if (p.story.beliefs.length && !p.story.beliefs.some((x) => x.id === b)) {
+        add("warning", ent(col, o.id, "teaches", i), `belief '${b}' is not in story.beliefs`);
+      }
+    });
+    if (o.owner && !p.characters.some((c) => c.id === o.owner)) {
+      add("error", ent(col, o.id, "owner"), `owner '${o.owner}' is not a character`);
+    }
+    if (o.permitted && !o.owner) {
+      add("warning", ent(col, o.id, "permitted"), "`permitted` has no effect without an `owner`");
+    }
+    if (o.step_noise && !o.affordances.includes("underfoot")) {
+      add(
+        "warning",
+        ent(col, o.id, "step_noise"),
+        "nobody can walk over this, so its step_noise never sounds",
+        "add the `underfoot` affordance",
+      );
+    }
+    o.force.forEach((m, i) => {
+      const tags = new Set(p.objects.flatMap((x) => x.tags));
+      if (!m.tools.some((t) => tags.has(t))) {
+        add(
+          "warning",
+          ent(col, o.id, "force", i, "tools"),
+          `no object carries any of the tags ${m.tools.join(", ")}, so this can never be forced this way`,
+        );
+      }
+    });
+    if (o.force.length && o.properties.fastened !== true && o.properties.locked !== true) {
+      add(
+        "warning",
+        ent(col, o.id, "force"),
+        "this starts neither fastened nor locked, so there is nothing to force until an effect sets one",
+      );
+    }
     if (o.weapon && !(o.weapon.type in p.combat_text)) {
       add(
         "error",
@@ -356,6 +392,10 @@ export function checkPayload(p: Payload, origins: Origins): PayloadIssue[] {
         checkWho(c.in_room.who, w, "in_room.who");
         ref(rooms.has(c.in_room.where), w, `room '${c.in_room.where}' does not exist`);
       }
+      if ("same_room" in c) {
+        checkWho(c.same_room.who, w, "same_room.who");
+        checkWho(c.same_room.with, w, "same_room.with");
+      }
       if ("holds" in c) {
         checkWho(c.holds.who, w, "holds.who", true);
         ref(isThing(c.holds.what), w, `object '${c.holds.what}' does not exist`);
@@ -403,6 +443,9 @@ export function checkPayload(p: Payload, origins: Origins): PayloadIssue[] {
     effect(e: Effect, w) {
       if ("set_flag" in e) flagsSet.add(typeof e.set_flag === "string" ? e.set_flag : e.set_flag.flag);
       if ("set_property" in e) checkWho(e.set_property.object, w, "set_property.object");
+      if ("adjust_property" in e) checkWho(e.adjust_property.object, w, "adjust_property.object");
+      if ("noise" in e) checkWho(e.noise.source, w, "noise.source");
+      if ("remember" in e) checkWho(e.remember.who, w, "remember.who", true);
       if ("move" in e) {
         checkWho(e.move.object, w, "move.object");
         ref(isPlace(e.move.to) || e.move.to === "player", w, `destination '${e.move.to}' does not exist`);

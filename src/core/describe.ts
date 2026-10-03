@@ -138,6 +138,12 @@ function eventSentence(w: World, e: WorldEvent): string | null {
       return `${a} pushed ${t(0)}.`;
     case "broken":
       return `${t(0)} broke.`;
+    case "forced":
+      return e.targets[1] ? `${a} forced ${t(0)} with ${t(1)}.` : `${a} forced ${t(0)}.`;
+    case "noticed-missing":
+      return `Noticed ${t(0)} was missing from its place.`;
+    case "noticed-damage":
+      return `Noticed ${t(0)} had been forced or broken.`;
     case "gave":
       return `${a} gave ${t(0)} to ${t(1)}.`;
     case "showed":
@@ -184,6 +190,7 @@ export const WITNESSED = new Set([
   "thrown",
   "pushed",
   "broken",
+  "forced",
   "gave",
   "showed",
   "caught-stealing",

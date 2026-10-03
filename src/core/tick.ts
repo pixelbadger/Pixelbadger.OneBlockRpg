@@ -8,6 +8,7 @@ import { describeEvent, WITNESSED } from "./describe.js";
 import { applyEffects, endGame } from "./effects.js";
 import { activeBehaviours, heal } from "./mutate.js";
 import { type Op, push, set } from "./ops.js";
+import { noticeLosses } from "./ownership.js";
 import { endSetPiece, startSetPiece } from "./set-piece.js";
 import { findPath, gridOf, homeTile, occupancy, standable } from "./space.js";
 import type { Cause, World, WorldEvent } from "./world.js";
@@ -202,6 +203,7 @@ function evaluate(w: World, windowFrom: number): void {
     runEndings(w);
     if (w.state.ended) break;
   }
+  noticeLosses(w);
   recordWitnesses(w);
   hostiles(w);
 }

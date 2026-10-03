@@ -66,7 +66,16 @@ export interface CharState {
   sneaking?: { aware: string[] } | null;
 }
 
-export type LogKind = "conversation" | "overheard" | "witnessed" | "action" | "hook" | "set-piece" | "note" | "digest";
+export type LogKind =
+  | "conversation"
+  | "overheard"
+  | "witnessed"
+  | "heard"
+  | "action"
+  | "hook"
+  | "set-piece"
+  | "note"
+  | "digest";
 
 export interface LogEntry {
   at: number;

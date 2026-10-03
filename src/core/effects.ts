@@ -29,6 +29,7 @@ import {
 } from "./mutate.js";
 import { set } from "./ops.js";
 import { advanceBeat, endSetPiece, startSetPiece } from "./set-piece.js";
+import { makeNoise } from "./sound.js";
 import type { Cause, EvalContext, World } from "./world.js";
 
 export function argValue(v: NumArg | undefined, ctx: EvalContext): number {
@@ -99,6 +100,13 @@ export function applyEffect(w: World, e: Effect, cause: Cause, ctx: EvalContext 
     clearFlag(w, e.clear_flag, cause);
   } else if ("set_property" in e) {
     setProp(w, r(e.set_property.object), e.set_property.key, e.set_property.value, cause);
+  } else if ("adjust_property" in e) {
+    const a = e.adjust_property;
+    const id = r(a.object);
+    setProp(w, id, a.key, w.numProp(id, a.key, 0) + argValue(a.by, ctx), cause);
+  } else if ("noise" in e) {
+    const { source, ...noise } = e.noise;
+    makeNoise(w, r(source), noise, cause, { selfHears: true });
   } else if ("move" in e) {
     moveThing(w, r(e.move.object), r(e.move.to), "relocated", cause);
   } else if ("spawn" in e) {
@@ -122,6 +130,8 @@ export function applyEffect(w: World, e: Effect, cause: Cause, ctx: EvalContext 
     w.emit("narrated", { payload: { text }, cause });
     w.say(text);
     w.dayLog(w.playerId, "witnessed", text, cause);
+  } else if ("remember" in e) {
+    w.dayLog(r(e.remember.who), "note", w.interpolate(e.remember.text), cause);
   } else if ("set_intent" in e) {
     const [who, intent] =
       e.set_intent === null || typeof e.set_intent === "string"

@@ -20,20 +20,43 @@
 - id: edith-lends-archive-key
   description: "Lend Liam the key to the archive cupboard, so he can read the 1893 papers himself."
   guard:
-    any:
-      - { relationship: { who: edith, with: player, trust: { gte: 30 } } }
-      - { believes: { who: player, belief: ashdowns-stayed } }
+    all:
+      - { relationship: { who: edith, with: player, trust: { gte: -5 } } }
+      - any:
+          - { relationship: { who: edith, with: player, trust: { gte: 30 } } }
+          - { believes: { who: player, belief: ashdowns-stayed } }
   effects:
     - { move: { object: archive-key, to: player } }
     - { narrate: "Edith works the little key off its loop of wool and presses it into your hand. 'Bring it back, dear. Don't lose it. Don't keep it.'" }
   once: true
 - id: marek-tells-of-room-seven
-  description: "Tell Liam about the singing you hear from Room 7 when you work late, and the board by its window that has been lifted before."
-  guard: { relationship: { who: marek, with: player, trust: { gte: 25 } } }
+  description: "Tell Liam what you have heard from Room 7 when you work late: a board creaking as if someone stood on it, though the room is locked. You know the board: by the window, lifted before."
+  # Only once he has heard it himself (behaviours/reactions.yaml, marek-listens).
+  guard:
+    all:
+      - { believes: { who: marek, belief: room-seven-creaks } }
+      - { relationship: { who: marek, with: player, trust: { gte: 25 } } }
   effects:
-    - { add_belief: { who: player, belief: singing-in-room-seven } }
-    - { set_flag: marek_told }
+    - { add_belief: { who: player, belief: room-seven-creaks, source: "Marek" } }
+    - { add_belief: { who: player, belief: loose-board, source: "Marek" } }
   once: true
+- id: tell-of-the-register
+  description: "Tell Liam about the old hotel register found behind the reception panelling: 1893, 'Mr & Mrs E. Ashdown & infant, Bath, Room 7', never paid."
+  guard: { believes: { who: self, belief: ashdowns-stayed } }
+  effects:
+    - { add_belief: { who: player, belief: ashdowns-stayed, confidence: 0.8, source: conversation } }
+- id: gary-lends-the-key
+  description: "Tell Liam he can take the Room 7 key off the board in the cabin, to get on with stripping it."
+  guard: { relationship: { who: gary, with: player, trust: { gte: 10 } } }
+  effects:
+    - { set_property: { object: room-seven-key, key: lent, value: true } }
+  once: true
+- id: tommo-hands-over-the-bar
+  description: "Hand Liam the crowbar you're carrying."
+  guard: { holds: { who: tommo, what: crowbar } }
+  effects:
+    - { move: { object: crowbar, to: player } }
+    - { narrate: "Tommo spins the bar like a majorette and slaps it into your hand. 'Don't say I never give you nothing.'" }
 - id: shaun-gives-rattle
   description: "Give Liam the silver rattle you found on the beach under the pier. You want rid of it."
   guard: { relationship: { who: shaun, with: player, trust: { gte: 40 } } }

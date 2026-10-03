@@ -34,6 +34,7 @@ outcomes:
   - when: { flag: saw_cradle }
     do:
       - { award_xp: 50 }
-      - { narrate: "The singing stops mid-line. The lamp goes out. Room 7 is bare boards and hanging paper, and you are kneeling on the floor by the window." }
+      - { narrate: "The singing stops mid-line. The lamp goes out. Room 7 is bare boards and hanging paper, and you are kneeling on the floor by the window, your hand flat on a board that gives under it." }
+      - { set_property: { object: floorboard, key: revealed, value: true } }
   - when: { not: { flag: saw_cradle } }
     do: [ { narrate: "The singing stops. The corridor is dark and empty and smells of plaster." } ]

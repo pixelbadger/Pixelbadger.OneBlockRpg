@@ -81,7 +81,7 @@ The split across files is a convention. The loader merges everything, and ids ar
 <code>all</code> / <code>any</code> / <code>not</code><br>
 <code>flag</code>, <code>flag_eq</code><br>
 <code>time</code>, <code>time_between</code>, <code>day</code><br>
-<code>in_room</code> (who, where)<br>
+<code>in_room</code> (who, where), <code>same_room</code> (who, with)<br>
 <code>holds</code> (who, what)<br>
 <code>property</code> (object, key, op, value)<br>
 <code>special</code> / <code>skill</code> thresholds<br>
@@ -94,9 +94,10 @@ The split across files is a convention. The loader merges everything, and ids ar
 <code>asleep</code>, <code>down</code>, <code>dead</code> (who)
 </td><td>
 <code>set_flag</code>, <code>clear_flag</code><br>
-<code>set_property</code>, <code>move</code>, <code>spawn</code>, <code>remove</code><br>
+<code>set_property</code>, <code>adjust_property</code> (add to a number), <code>move</code>, <code>spawn</code>, <code>remove</code><br>
+<code>noise</code> (source, loudness, sound: §4.11)<br>
 <code>act</code> (perform an action as an actor)<br>
-<code>say</code> (authored line), <code>narrate</code><br>
+<code>say</code> (authored line), <code>narrate</code>, <code>remember</code> (a note in a character's day log)<br>
 <code>set_intent</code>, <code>start_behaviour</code>, <code>stop_behaviour</code><br>
 <code>adjust_relationship</code>, <code>add_belief</code>, <code>remove_belief</code><br>
 <code>start_conversation</code>, <code>end_conversation</code><br>
@@ -109,6 +110,10 @@ The split across files is a convention. The loader merges everything, and ids ar
 </td></tr>
 </tbody>
 </table>
+<p>Objects also carry the systemic fields of §4.11–4.13: <code>step_noise</code> (with the <code>underfoot</code> affordance),
+<code>force</code> methods, <code>owner</code> and <code>permitted</code>, and <code>teaches</code>. Use rules may declare a
+<code>noise</code>. Prefer these to triggers: a story piece that is physically somewhere, belongs to someone and can be forced, heard or
+read gives the player ways in that nobody wrote.</p>
 <p>The language is deliberately not Turing-complete: no loops, no variables, no arbitrary code. If an effect is genuinely missing, it gets
 added to the engine and the schema, not scripted around.</p>
 
