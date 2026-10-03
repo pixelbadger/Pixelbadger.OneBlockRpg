@@ -46,7 +46,7 @@ const NAMED = new Set([
 ]);
 
 /** The total of SPECIAL points a made-up character spends. */
-const ALLOT_TOTAL = 40;
+export const ALLOT_TOTAL = 40;
 
 const dist = (a: Tile, b: Tile) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));
 const isEnter = (k: KeyInput) => k.key === "Enter" || k.key === " ";

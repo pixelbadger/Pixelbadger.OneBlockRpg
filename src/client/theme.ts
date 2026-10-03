@@ -88,8 +88,8 @@ export const theme = {
   },
   /** Spacing steps in CSS pixels: `space[2]` is the usual padding. */
   space: [0, 4, 8, 12, 16, 24, 32],
-  /** Panel border width and corner radius, in CSS pixels (square and chunky, like the old games). */
-  border: 2,
+  /** Border width and corner radius, in CSS pixels: hairline frames, square like the old games. */
+  border: 1,
   radius: 2,
   scrimAlpha: 0.55,
   colours,
