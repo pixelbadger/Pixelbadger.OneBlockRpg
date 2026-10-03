@@ -111,14 +111,33 @@
         - { act: examine, target: guest-register }
         - { remember: { who: gary, text: "Read the old hotel register Tommo found behind the panelling. 1893, the year the pier burned." } }
       once: true
-    - when: { all: [ { time: "19:15" }, { believes: { who: gary, belief: ashdowns-stayed } }, { in_room: { who: gary, where: anchor } } ] }
-      do:
-        - { say: "Here, Tommo found the old hotel register behind the panelling. 1893, year the pier burned. 'Mr and Mrs Ashdown and infant, Room 7.' Never paid their bill. Some things don't change." }
-      once: true
+    # He tells it at the Anchor whatever he makes of it (`read`, not `believes`): a find is a find. What he believes
+    # only changes how he tells it (his reading is weighed by the model, §6.11).
     - when:
         all:
           - { time: "19:15" }
+          - { read: { who: gary, document: guest-register } }
           - { believes: { who: gary, belief: ashdowns-stayed } }
+          - { in_room: { who: gary, where: anchor } }
+          - { not: { flag: gary_told_the_pub } }
+      do:
+        - { say: "Here, Tommo found the old hotel register behind the panelling. 1893, year the pier burned. 'Mr and Mrs Ashdown and infant, Room 7.' Never paid their bill. Some things don't change." }
+        - { set_flag: gary_told_the_pub }
+    - when:
+        all:
+          - { time: "19:15" }
+          - { read: { who: gary, document: guest-register } }
+          - { not: { believes: { who: gary, belief: ashdowns-stayed } } }
+          - { in_room: { who: gary, where: anchor } }
+          - { not: { flag: gary_told_the_pub } }
+      do:
+        - { say: "Never guess what Tommo dug out of the wall today. Hotel register, 1893. Ashdown, couple from Bath, and a baby, Room 7, never settled up. Edith'll have it in a glass case by Friday, ghost and all." }
+        - { set_flag: gary_told_the_pub }
+    - when:
+        all:
+          - { time: "19:15" }
+          - { read: { who: gary, document: guest-register } }
+          - { in_room: { who: gary, where: anchor } }
           - { same_room: { who: gary, with: player } }
       do: [ { add_belief: { who: player, belief: ashdowns-stayed, confidence: 0.7, source: "overheard Gary" } } ]
       once: true

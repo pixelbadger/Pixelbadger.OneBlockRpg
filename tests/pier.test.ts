@@ -288,6 +288,23 @@ describe("The Pier (Q22, §7.9)", () => {
     expect(dayLog(w, "gary")).toMatch(/Sacked Liam Doyle/);
   });
 
+  it("has Gary tell the pub what he read even when he won't believe it (§6.11)", async () => {
+    const w = World.create(pier(), "skive");
+    // He reads it as a curiosity, nothing more.
+    const unmoved = { reaction: "Old book. Edith'll love it.", accept: [], revise: [], thoughts: [] };
+    const provider = offlineProvider().enqueue("reading", unmoved, unmoved, unmoved);
+    const session = new Session(w, { provider });
+    session.start();
+    await play(session, w, ["wait until 21:00", "sleep", "wait until 10:30", "down", "north", "west"]);
+    const log = await play(session, w, ["wait until 19:20"]);
+    expect(w.hasRead("gary", "guest-register")).toBe(true);
+    expect(w.believes("gary", "ashdowns-stayed")).toBe(false);
+    expect(log).toMatch(/Never guess what Tommo dug out of the wall today/);
+    expect(log).not.toMatch(/Some things don't change/);
+    expect(w.believes("player", "ashdowns-stayed")).toBe(true);
+    expect(w.log.find((e) => e.kind === "read")?.payload).toEqual({ accepted: [], rejected: ["ashdowns-stayed"] });
+  });
+
   it("sends worried friends out onto the pier on the last night", () => {
     const w = World.create(pier(), "friends");
     w.state.flags.unease = true;
