@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * The `oneblock` CLI (§3.10): validate, schema, play and replay. src/cli holds the frontend adapters (§3.1): this
- * one, and the browser build (src/cli/web, built by `pnpm web`).
+ * The `oneblock` CLI (§3.10): validate, schema, play and replay. The browser build is the web host (src/hosts/web,
+ * built by `pnpm web`).
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";

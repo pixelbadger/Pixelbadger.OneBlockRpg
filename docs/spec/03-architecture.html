@@ -52,8 +52,8 @@ The narrative system only changes the world through the action/hook executor, wh
 conversation options, combat state, the drawn scene and an <code>fx</code> view of what moved and struck) and accepts player intents (a menu pick, an
 option choice, an action, a typed command). It never formats for a particular display. Play is <strong>graphical only</strong>, on two hosts:</p>
 <ul>
-  <li><strong>Web</strong> (<code>pnpm web</code>, a static site): the scene on a <code>&lt;canvas&gt;</code>, every text panel as HTML. Characters are played
-  through the Anthropic API with the player's own key; saves live in IndexedDB.</li>
+  <li><strong>Web</strong> (<code>pnpm web</code>, a static site): the scene on a <code>&lt;canvas&gt;</code>, every text panel as HTML (Preact). Characters are played
+  through the Anthropic API with the player's own key, or offline; saves live in IndexedDB.</li>
   <li><strong>Native</strong> (<code>oneblock play</code>, Linux, run from a checkout): an SDL window (<code>@kmamal/sdl</code>) drawn with Skia's Canvas 2D
   (<code>@napi-rs/canvas</code>). Claude via the player's subscription by default; saves are SQLite files under <code>$XDG_DATA_HOME/oneblock</code>.</li>
 </ul>

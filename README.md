@@ -101,11 +101,11 @@ WezTerm through iTerm2's inline images. `--graphics auto|kitty|iip|none` overrid
 `none`). Anything without a sprite falls back to its glyph art, so payloads without art still play.
 
 **In a browser.** `pnpm web examples/the-pier examples/carver-street` builds a static site in `dist/web` (`--out`
-for elsewhere) that runs the whole engine and the same frontend in the page, drawn by xterm.js and its image addon.
-Nothing runs on a server: host it anywhere static, or open a game's `index.html` from disk. Characters are played
-through the Anthropic API with the player's own key, which the page asks for, checks, and sends only to
-api.anthropic.com (and keeps in the browser if asked to). The game saves in the browser's IndexedDB and resumes when
-the page comes back; *new game* starts over. One tab plays a game at a time.
+for elsewhere) that runs the whole engine in the page: the scene on a canvas, the log, panels and menus as HTML, with
+the keyboard or the mouse. Nothing runs on a server: host it anywhere static, or open a game's `index.html` from disk.
+Characters are played offline (authored options only) or through the Anthropic API with the player's own key, which
+the page checks and sends only to api.anthropic.com (and keeps in the browser if asked to). Games save in the
+browser's IndexedDB, in slots the start screen lists to continue or delete. One tab plays a game at a time.
 
 The [Pages workflow](.github/workflows/pages.yml) publishes both examples to GitHub Pages on every push to `main`. To
 switch it on, set the repository's *Settings → Pages → Source* to *GitHub Actions*.
@@ -136,7 +136,8 @@ the block, writes the payload, validates it to zero warnings and writes a playth
 | `src/llm` | provider interface; `claude-subscription`, `anthropic-api`, scripted, record and replay (§6.9) |
 | `src/narrative` | conversations, hooks, director, callouts, reading, day summaries, context builder (§6) |
 | `src/session` | the loops, UI port, parser, action menu and saves (SQLite on disk) (§3) |
-| `src/cli` | the frontend adapters: the readline CLI, the full-screen TUI (`src/cli/tui`) and the browser build (`src/cli/web`) |
+| `src/hosts/cli` | the `oneblock` command: the readline CLI and the full-screen TUI (`src/hosts/cli/tui`) |
+| `src/hosts/web` | the web host: the scene on a canvas, the HUD in Preact, saves in IndexedDB (`pnpm web` builds it) |
 | `tools` | development tooling: `art.ts` generates sprite art from a payload's art brief; `web.ts` builds the static site |
 | `schema/payload.schema.json` | the published payload JSON Schema (`pnpm schema` regenerates it) |
 | `docs/authoring-guide.md` | how to build a payload from a story brief (§7.9) |
