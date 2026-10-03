@@ -4,8 +4,6 @@
  * A `look.sprite` (§7.10) names any key instead. Like `look`, the engine never reads any of it.
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
 import { decodePng, type Image, image } from "./png.js";
 
 export interface SpriteEntry {
@@ -43,19 +41,15 @@ export class SpriteSet {
 
   constructor(readonly tile: number) {}
 
-  /** Loads `<dir>/sprites.json`, or returns undefined if there is none. */
-  static load(dir: string): SpriteSet | undefined {
-    const path = resolve(dir, "sprites.json");
-    if (!existsSync(path)) return undefined;
-    const manifest = JSON.parse(readFileSync(path, "utf8")) as SpriteManifest;
+  /** Builds a set from a manifest, reading each PNG (a path relative to the manifest) with `read`. */
+  static fromManifest(manifest: SpriteManifest, read: (file: string) => Uint8Array): SpriteSet {
     const set = new SpriteSet(manifest.tile);
     const sheets = new Map<string, Image>();
     for (const [key, e] of Object.entries(manifest.sprites)) {
-      const file = join(dirname(path), e.file);
-      let sheet = sheets.get(file);
+      let sheet = sheets.get(e.file);
       if (!sheet) {
-        sheet = decodePng(readFileSync(file));
-        sheets.set(file, sheet);
+        sheet = decodePng(read(e.file));
+        sheets.set(e.file, sheet);
       }
       set.add(key, sheet, e);
     }

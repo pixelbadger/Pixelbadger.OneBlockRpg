@@ -7,7 +7,7 @@ import { World } from "../src/core/world.js";
 import { RecordingProvider, ScriptedProvider } from "../src/llm/scripted.js";
 import { offlineProvider } from "../src/narrative/offline.js";
 import type { Intent, TurnOutput } from "../src/session/port.js";
-import { SaveStore } from "../src/session/save.js";
+import { openSqliteSave } from "../src/session/save-sqlite.js";
 import { Session } from "../src/session/session.js";
 import { example } from "./helpers.js";
 
@@ -136,7 +136,7 @@ describe("saves and replay (§3.7, §3.8, P11)", () => {
     const dir = mkdtempSync(join(tmpdir(), "oneblock-save-"));
     const path = join(dir, "game.db");
     const payload = example();
-    const store = await SaveStore.open(path);
+    const store = await openSqliteSave(path);
     const w = World.create(payload, "replay-me");
     store.init(payload, w, "scripted");
     store.attach(w);
@@ -151,7 +151,7 @@ describe("saves and replay (§3.7, §3.8, P11)", () => {
     }
     store.close();
 
-    const reopened = await SaveStore.open(path);
+    const reopened = await openSqliteSave(path);
     const loaded = reopened.load(payload);
     expect(loaded.state).toEqual(w.state);
     expect(loaded.log.length).toBe(w.log.length);
@@ -165,7 +165,7 @@ describe("saves and replay (§3.7, §3.8, P11)", () => {
   it("refuses a save from a different payload version", async () => {
     const dir = mkdtempSync(join(tmpdir(), "oneblock-save-"));
     const payload = example();
-    const store = await SaveStore.open(join(dir, "g.db"));
+    const store = await openSqliteSave(join(dir, "g.db"));
     store.init(payload, World.create(payload, "x"), "scripted");
     const changed = { ...payload, game: { ...payload.game, version: "9.9.9" } };
     expect(() => store.load(changed)).toThrow(/does not declare it compatible/);
@@ -180,7 +180,7 @@ describe("compatible payload upgrades (§7.8)", () => {
   it("adds objects a save has never seen when loading it against a compatible newer payload", async () => {
     const dir = mkdtempSync(join(tmpdir(), "oneblock-save-"));
     const payload = example();
-    const store = await SaveStore.open(join(dir, "g.db"));
+    const store = await openSqliteSave(join(dir, "g.db"));
     const w = World.create(payload, "upgrade");
     store.init(payload, w, "scripted");
     store.attach(w);

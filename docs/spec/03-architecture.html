@@ -46,7 +46,7 @@ The narrative system only changes the world through the action/hook executor, wh
 <p>The <strong>frontend is fully decoupled</strong> (Q11). The session exposes a UI port: it emits view models (narration, room view, available actions,
 conversation options, combat state) and accepts player intents (a typed command, a menu pick, an option choice). It never formats text for a
 particular display. Nothing outside <code>src/cli</code> imports from it. v1 ships two adapters: a plain readline CLI and a full-screen TUI
-(<code>play --tui</code>: each room drawn as animated tiles in the manner of <em>Ultima V</em>, played with keys only, or as a picture from the payload's sprite art in terminals that show images). <code>oneblock serve</code> hosts the same TUI in a browser through xterm.js. The TUI reads the same
+(<code>play --tui</code>: each room drawn as animated tiles in the manner of <em>Ultima V</em>, played with keys only, or as a picture from the payload's sprite art in terminals that show images). The browser build (<code>pnpm web</code>) runs the engine and the same TUI in a static page, drawn by xterm.js, with the Anthropic API as its provider (the player's own key) and saves in IndexedDB. The TUI reads the same
 view models, plus read-only scene, sheet and inventory views it polls after each turn and an <code>fx</code> view of what moved and struck,
 which it animates. Every key becomes an ordinary intent, so tiled play saves and replays like typed play. A native web frontend (rather than a terminal in a page) would be another adapter on the same port, with no engine changes.</p>
 
@@ -95,7 +95,7 @@ and a summary goes into participants' day logs.</p>
 <h2>3.7 State &amp; persistence</h2>
 <ul>
   <li><strong>Event-sourced.</strong> An append-only event log, with snapshots. The current state is a fold over it.</li>
-  <li><strong>Save game</strong> = one <strong>SQLite</strong> database (Q12) holding the payload id and version, seed, snapshots, the event log, day summaries and the LLM exchange log.</li>
+  <li><strong>Save game</strong> = one <strong>SQLite</strong> database (Q12) holding the payload id and version, seed, snapshots, the event log, day summaries and the LLM exchange log. The browser build keeps the same rows in IndexedDB.</li>
   <li>The payload is immutable at runtime. State holds only what has changed from it.</li>
 </ul>
 
@@ -120,7 +120,7 @@ and a summary goes into participants' day logs.</p>
 <h2>3.10 Tooling</h2>
 <p>Decided (Q13): Node 22+, TypeScript strict and ESM, <code>pnpm</code>, <code>vitest</code>, <code>zod</code>
 (runtime validation, a generated JSON Schema for payloads, and LLM structured output), and <code>biome</code>.
-A single package with <code>src/{core,mechanics,narrative,llm,payload,session,cli}</code>, plus a CLI with <code>validate</code>, <code>play</code> and <code>replay</code>. <code>src/cli</code> holds the only frontend adapters (3.1).</p>
+A single package with <code>src/{core,mechanics,narrative,llm,payload,session,cli}</code>, plus a CLI with <code>validate</code>, <code>play</code> and <code>replay</code>. <code>src/cli</code> holds the only frontend adapters (3.1). Everything outside <code>src/cli</code> and the SQLite save also runs in a browser: the browser build bundles it with <code>esbuild</code>.</p>
 
 <footer>§3 of the One Block CRPG specification</footer>
 </main>

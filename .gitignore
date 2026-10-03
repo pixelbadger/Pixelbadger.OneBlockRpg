@@ -7,5 +7,4 @@ coverage/
 .scratch/
 # Raw generated art (tools/art.ts caches it here); the cut sprites are committed
 examples/*/assets/.raw/
-# Games played in the browser (oneblock serve)
-saves/
+_site/

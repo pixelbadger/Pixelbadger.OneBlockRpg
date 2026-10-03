@@ -4,7 +4,6 @@
  * save and replay like typed ones.
  */
 
-import { emitKeypressEvents } from "node:readline";
 import { SKILL_NAMES } from "../../mechanics/special.js";
 import type { Intent, Tile, ViewModel } from "../../session/port.js";
 import type { Session } from "../../session/session.js";
@@ -31,11 +30,21 @@ export interface TuiOptions {
   graphics?: Graphics;
   /** True colour (default: from COLORTERM). */
   truecolor?: boolean;
-  /** Ends the game (e.g. its browser tab closed). */
+  /** Ends the game (e.g. the process is told to stop). */
   signal?: AbortSignal;
-  /** Another terminal than this process's (the web frontend's); then process signals are left alone. */
-  input?: NodeJS.ReadStream;
-  output?: NodeJS.WriteStream;
+  /** Where to draw and where keys come from: the process's TTY (node-terminal.ts) or xterm.js in a browser. */
+  terminal: Terminal;
+}
+
+/** What the TUI needs of a terminal. */
+export interface Terminal {
+  readonly columns: number;
+  readonly rows: number;
+  /** Output is backed up: skip a frame rather than queue it. */
+  readonly congested?: boolean;
+  write(text: string): void;
+  /** Starts sending keys (raw mode) and resizes; the returned function stops them. */
+  listen(onKey: (str: string | undefined, key: Key) => void, onResize: () => void): () => void;
 }
 
 const FRAME_MS = 80;
@@ -96,9 +105,7 @@ function push(ui: Ui, paras: Paragraph[]): void {
 }
 
 export async function runTui(opts: TuiOptions): Promise<void> {
-  const input = opts.input ?? process.stdin;
-  const output = opts.output ?? process.stdout;
-  if (!input.isTTY || !output.isTTY) throw new Error("--tui needs an interactive terminal");
+  const term = opts.terminal;
   setColorDepth(opts.truecolor);
   const { session } = opts;
   const emoji = opts.emoji ?? true;
@@ -112,13 +119,14 @@ export async function runTui(opts: TuiOptions): Promise<void> {
     done = resolve;
   });
   let quitting = false;
+  let restored = false;
   const epoch = Date.now();
 
   const draw = () => {
-    // A slow connection: skip frames rather than queue them.
-    if (output.writableNeedDrain) return;
-    const cols = output.columns ?? 80;
-    const rows = output.rows ?? 24;
+    // A slow connection: skip frames rather than queue them. Once the screen is given back, draw nothing.
+    if (term.congested || restored) return;
+    const cols = term.columns || 80;
+    const rows = term.rows || 24;
     const now = Date.now();
     let frame: ReturnType<Timeline["at"]> | undefined;
     if (anim) {
@@ -152,7 +160,7 @@ export async function runTui(opts: TuiOptions): Promise<void> {
     f.canvas.lines(true).forEach((line, i) => {
       out += `\x1b[${i + 1};1H${line}`;
     });
-    output.write(`${out}\x1b[?2026l`);
+    term.write(`${out}\x1b[?2026l`);
   };
 
   const quit = () => {
@@ -197,27 +205,16 @@ export async function runTui(opts: TuiOptions): Promise<void> {
       });
   };
 
+  let unlisten = () => {};
   const restore = () => {
+    restored = true;
     clearInterval(ticker);
-    input.off("keypress", onKey);
-    output.off("resize", draw);
-    if (input.isTTY) input.setRawMode(false);
-    input.pause();
-    output.write(`${painter?.clear() ?? ""}\x1b[0m\x1b[?25h\x1b[?1049l`);
+    unlisten();
+    term.write(`${painter?.clear() ?? ""}\x1b[0m\x1b[?25h\x1b[?1049l`);
   };
-  const onExit = () => restore();
 
-  output.write("\x1b[?1049h\x1b[2J");
-  emitKeypressEvents(input);
-  input.setRawMode(true);
-  input.resume();
-  input.on("keypress", onKey);
-  output.on("resize", draw);
-  const own = !opts.input;
-  if (own) {
-    process.once("exit", onExit);
-    process.once("SIGTERM", quit);
-  }
+  term.write("\x1b[?1049h\x1b[2J");
+  unlisten = term.listen(onKey, draw);
   opts.signal?.addEventListener("abort", quit, { once: true });
   if (opts.signal?.aborted) quit();
   const ticker = setInterval(draw, FRAME_MS);
@@ -230,10 +227,6 @@ export async function runTui(opts: TuiOptions): Promise<void> {
     draw();
     await finished;
   } finally {
-    if (own) {
-      process.off("exit", onExit);
-      process.off("SIGTERM", quit);
-    }
     opts.signal?.removeEventListener("abort", quit);
     restore();
   }

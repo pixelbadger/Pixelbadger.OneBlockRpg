@@ -2,7 +2,8 @@
  * The LLM provider interface (§6.9). Providers turn a request into text (JSON text when a schema is given).
  * Validation, the single retry and the safe fallback happen engine-side in `complete`, regardless of provider.
  */
-import { createHash } from "node:crypto";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import { z } from "zod";
 
 export type Purpose = "conversation" | "director" | "callout" | "day-summary" | "reading";
@@ -115,7 +116,7 @@ export function requestHash(req: CompletionRequest): string {
     messages: req.messages,
     schema: req.schema ? toJsonSchema(req.schema) : null,
   });
-  return createHash("sha256").update(body).digest("hex").slice(0, 32);
+  return bytesToHex(sha256(utf8ToBytes(body))).slice(0, 32);
 }
 
 export interface UsageRecord {
