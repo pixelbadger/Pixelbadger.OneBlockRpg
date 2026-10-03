@@ -82,7 +82,10 @@ export function beliefsText(w: World, who: string): string {
   const bs = w.char(who).beliefs;
   if (!bs.length) return "none";
   return bs
-    .map((b) => `- ${w.ix.beliefs.get(b.id) ?? b.id} [${b.id}] (confidence ${b.confidence}, from ${b.source})`)
+    .map(
+      (b) =>
+        `- ${b.text ?? w.ix.beliefs.get(b.id) ?? b.id} [${b.id}] (${b.text ? "in your own words, " : ""}confidence ${b.confidence}, from ${b.source})`,
+    )
     .join("\n");
 }
 

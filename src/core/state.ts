@@ -16,7 +16,10 @@ export interface ObjState {
 }
 
 export interface Belief {
+  /** A story belief id (§7.3), or `thought-…` for a belief held in the character's own words (`text`). */
   id: string;
+  /** The character's own wording (§4.13, reading): set on thoughts, which conditions cannot test. */
+  text?: string;
   confidence: number;
   source: string;
   day: number;
@@ -52,6 +55,11 @@ export interface CharState {
   equipment: { weapon?: string; armour?: string };
   relationships: Record<string, Rel>;
   beliefs: Belief[];
+  /**
+   * Documents (objects that teach) this character has read (§4.13). Knowing what one says is not believing it: this is
+   * recorded by the engine on examining, whatever the reader then makes of it.
+   */
+  read?: string[];
   modifiers: Modifier[];
   /** Active behaviour ids. */
   behaviours: string[];

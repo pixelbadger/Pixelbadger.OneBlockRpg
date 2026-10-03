@@ -20,15 +20,16 @@
 </nav>
 <main>
 <h1>6 · LLM layer</h1>
-<p class="subtitle">Where the LLM works: conversations, set pieces, callouts and day summaries. Also the memory model and provider interface underneath them.</p>
+<p class="subtitle">Where the LLM works: conversations, set pieces, callouts, reading and day summaries. Also the memory model and provider interface underneath them.</p>
 
 <h2>6.1 Scope</h2>
-<p>The LLM is used in four places only:</p>
+<p>The LLM is used in five places only:</p>
 <ol>
   <li><strong>Conversations</strong> voice a character, choose its actions and hooks, and suggest player options (6.2–6.6).</li>
   <li><strong>Set pieces</strong> run a director that orchestrates a declared scenario (6.7).</li>
   <li><strong>Scripted callouts</strong> are payload-declared one-off generations (6.5).</li>
   <li><strong>Day summaries</strong> condense each character's day when the player sleeps (6.8).</li>
+  <li><strong>Reading</strong>: a character weighs what a document says against what they already believe (6.11).</li>
 </ol>
 <p>All other text is authored in the payload. All other behaviour, including NPC combat decisions, is scripted (P5).</p>
 <p><strong>Content boundaries</strong> (Q14): the engine adds no content filter of its own. LLM output is governed by the payload's tone and
@@ -170,7 +171,7 @@ the cast to make it play out. It is the only place a director exists, and its sc
   complete&lt;T&gt;(req: CompletionRequest&lt;T&gt;): Promise&lt;CompletionResult&lt;T&gt;&gt;;
 }
 interface CompletionRequest&lt;T&gt; {
-  purpose: 'conversation' | 'director' | 'callout' | 'day-summary';
+  purpose: 'conversation' | 'director' | 'callout' | 'day-summary' | 'reading';
   system: PromptPart[];              // ordered stable → volatile
   messages: { role: 'user' | 'assistant'; content: string }[];
   schema?: ZodType&lt;T&gt;;               // validated engine-side regardless of provider
@@ -196,6 +197,35 @@ interface CompletionRequest&lt;T&gt; {
 <p>LLM calls happen once per conversation turn, once per player turn inside a set piece, once per callout, and once per active character each night.
 Exploration and ordinary combat are free. Day summaries keep context growth linear and small, at roughly 250 words per character per day.
 Usage is logged per purpose so that model choice can be based on measurements.</p>
+
+<h2>6.11 Reading: reconciling what a document says</h2>
+<p>A document declares the beliefs it <code>teaches</code> (§4.13). The <strong>player</strong> takes in what they read: the player decides what
+to make of it, and their beliefs drive the story's own triggers. A <strong>character</strong> who reads something new doesn't simply absorb it.
+Examining it raises a <code>read</code> signal, and the narrative layer makes one <code>reading</code> call in that character's perspective:
+the story, their persona and SPECIAL, their memory of previous days, today's log, what they believe now (with confidence and source),
+the document's full text and its propositions (the taught beliefs).</p>
+<p>The prompt frames the decision as <strong>cognitive dissonance</strong>. What fits goes in easily. What contradicts a firm or important belief
+is resisted, and the discomfort is resolved in one of the ways people resolve it: change your mind (accept it, weaken or drop what it
+contradicts), discount the source (a forgery, gossip, an agenda), reinterpret it to fit ("this proves their side is wrong"), or shelve it.
+Intelligence decides how fully the reader follows the text, not how credulous they are. One call does all of it:</p>
+<pre><code>{ "reaction": "Abroad? Convenient. But the deeds, those I believe.",
+  "accept":   [{ "belief": "deeds-forged", "confidence": 0.8 }],               // taught beliefs only
+  "revise":   [{ "belief": "landlord-guilty", "confidence": 1 },               // beliefs already held:
+               { "belief": "pike-is-honest", "drop": true }],                  //   re-weigh or drop
+  "thoughts": [{ "text": "Someone wrote this to clear the landlord's name.", "confidence": 0.7 }] }</code></pre>
+<ul>
+  <li>The engine validates the verdict and applies it as <code>belief-added</code> and <code>belief-removed</code> events (cause <code>reading</code>).
+  Only taught beliefs can be accepted and only held beliefs revised; confidences are clamped to 0–1.</li>
+  <li><strong>Thoughts</strong> (at most two) are beliefs in the character's own words, with ids <code>thought-1</code>, <code>thought-2</code>…
+  They appear in that character's later prompts (conversations, summaries, further reading) but no condition can test them: story ids stay the only
+  mechanical anchor, so the constructed reaches the ground only through beliefs the author declared.</li>
+  <li>A <code>read</code> event (targets: the document; payload: <code>accepted</code>, <code>rejected</code>) lets behaviours react to what was
+  accepted or refused, and the reaction goes in the character's day log.</li>
+  <li><strong>Knowing is not believing.</strong> Whatever the verdict, the engine has already recorded that the character read the document
+  (the <code>read</code> condition, §7.5). Author what they <em>do</em> with what they read on <code>read</code>, and let <code>believes</code>
+  only change how they do it: Gary tells the pub about the register either way, as a ghost story or as a curiosity.</li>
+  <li><strong>Fallback</strong> (6.9; also offline): the character takes in every taught belief at confidence 1, which is how reading worked before.</li>
+</ul>
 
 <footer>§6 of the One Block CRPG specification</footer>
 </main>

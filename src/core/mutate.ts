@@ -87,13 +87,21 @@ export function adjustRelationship(
   });
 }
 
-export function addBelief(w: World, who: string, belief: string, confidence: number, source: string, cause: Cause) {
+export function addBelief(
+  w: World,
+  who: string,
+  belief: string,
+  confidence: number,
+  source: string,
+  cause: Cause,
+  text?: string,
+) {
   const existing = w.char(who).beliefs.findIndex((b) => b.id === belief);
-  const value = { id: belief, confidence, source, day: w.state.day };
+  const value = { id: belief, ...(text ? { text } : {}), confidence, source, day: w.state.day };
   w.emit("belief-added", {
     actor: who,
     targets: [who],
-    payload: { belief, confidence, source },
+    payload: { belief, confidence, source, ...(text ? { text } : {}) },
     cause,
     ops: [existing >= 0 ? set(["chars", who, "beliefs", existing], value) : push(["chars", who, "beliefs"], value)],
   });

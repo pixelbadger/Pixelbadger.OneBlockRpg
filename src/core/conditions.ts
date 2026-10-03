@@ -96,6 +96,10 @@ export function evalCondition(w: World, c: Condition, ctx: CondEnv = {}): boolea
     const id = who(c.believes.who);
     return isChar(id) && w.believes(id, c.believes.belief);
   }
+  if ("read" in c) {
+    const id = who(c.read.who);
+    return isChar(id) && w.hasRead(id, c.read.document);
+  }
   if ("event" in c) {
     const spec = typeof c.event === "string" ? { kind: c.event, actor: c.actor, target: c.target } : c.event;
     const actor = spec.actor ? who(spec.actor) : undefined;

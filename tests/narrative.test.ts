@@ -1,13 +1,19 @@
 import { describe, expect, it } from "vitest";
+import { perform } from "../src/core/actions.js";
+import { addBelief } from "../src/core/mutate.js";
 import { tick } from "../src/core/tick.js";
 import type { CompletionRequest } from "../src/llm/provider.js";
 import { complete, toJsonSchema } from "../src/llm/provider.js";
 import { type Cassette, RecordingProvider, ReplayProvider, ScriptedProvider } from "../src/llm/scripted.js";
 import { runCallout } from "../src/narrative/callouts.js";
+import { beliefsText } from "../src/narrative/context.js";
 import { Conversations } from "../src/narrative/conversation.js";
 import { Director } from "../src/narrative/director.js";
 import { endDay } from "../src/narrative/memory.js";
+import { offlineProvider } from "../src/narrative/offline.js";
+import { reconcileReading } from "../src/narrative/reading.js";
 import { CharacterTurn } from "../src/narrative/schemas.js";
+import { Session } from "../src/session/session.js";
 import { mini, world } from "./helpers.js";
 
 const turn = (over: Partial<CharacterTurn> = {}) => ({
@@ -346,5 +352,97 @@ describe("callouts (§6.5)", () => {
     expect(await runCallout({ w, provider }, "dream")).toBe("You dream of the mug.");
     expect(await runCallout({ w, provider }, "dream")).toBe("You dream of the mug.");
     expect(provider.calls).toHaveLength(1);
+  });
+});
+
+describe("reading (§4.13)", () => {
+  /** Nell already suspects the landlord; the coin, read, says he is innocent and the deeds are forged. */
+  function readingWorld() {
+    const p = mini();
+    p.story.beliefs = [
+      { id: "landlord-guilty", text: "The landlord set the fire." },
+      { id: "landlord-innocent", text: "The landlord was abroad on the night of the fire." },
+      { id: "deeds-forged", text: "The deeds in the basement are forged." },
+    ];
+    p.objects.find((o) => o.id === "coin")!.teaches = ["landlord-innocent", "deeds-forged"];
+    const w = world(p);
+    addBelief(w, "npc", "landlord-guilty", 0.9, "gossip", { by: "engine" });
+    return w;
+  }
+
+  it("asks the model to weigh the document against what the reader believes, and applies its verdict", async () => {
+    const w = readingWorld();
+    const provider = new ScriptedProvider(
+      {},
+      {
+        reading: [
+          {
+            reaction: "Abroad? Convenient. But the deeds, those I believe.",
+            accept: [
+              { belief: "deeds-forged", confidence: 0.8 },
+              { belief: "not-taught", confidence: 1 },
+            ],
+            revise: [{ belief: "landlord-guilty", confidence: 1.4 }],
+            thoughts: [{ text: "Someone wrote this to clear the landlord's name.", confidence: 0.7 }],
+          },
+        ],
+      },
+    );
+    await reconcileReading({ w, provider }, "npc", "coin");
+    const prompt = provider.calls[0]!.messages[0]!.content;
+    expect(prompt).toMatch(/cognitive dissonance/);
+    expect(prompt).toMatch(/The landlord set the fire\. \[landlord-guilty\] \(confidence 0\.9/);
+    expect(prompt).toMatch(/\[landlord-innocent\] The landlord was abroad/);
+    const bs = w.char("npc").beliefs;
+    expect(w.believes("npc", "deeds-forged")).toBe(true);
+    expect(bs.find((b) => b.id === "deeds-forged")?.confidence).toBe(0.8);
+    // Rejected, and only taught propositions can be accepted.
+    expect(w.believes("npc", "landlord-innocent")).toBe(false);
+    expect(w.believes("npc", "not-taught")).toBe(false);
+    // Confidence is clamped; a thought is held in their own words.
+    expect(bs.find((b) => b.id === "landlord-guilty")?.confidence).toBe(1);
+    expect(bs.find((b) => b.id.startsWith("thought-"))).toMatchObject({
+      text: "Someone wrote this to clear the landlord's name.",
+      confidence: 0.7,
+      source: "reading the coin",
+    });
+    const read = w.log.find((e) => e.kind === "read");
+    expect(read?.payload).toEqual({ accepted: ["deeds-forged"], rejected: ["landlord-innocent"] });
+    expect(w.state.dayLogs.npc?.at(-1)?.text).toBe(
+      "Read the coin. Abroad? Convenient. But the deeds, those I believe.",
+    );
+    // Their own-words beliefs reach later prompts.
+    expect(beliefsText(w, "npc")).toMatch(/Someone wrote this .*\[thought-1\] \(in your own words/);
+  });
+
+  it("can change a mind: drop what the document disproves", async () => {
+    const w = readingWorld();
+    const provider = new ScriptedProvider(
+      {},
+      {
+        reading: [
+          {
+            reaction: "So it wasn't him.",
+            accept: [{ belief: "landlord-innocent", confidence: 0.9 }],
+            revise: [{ belief: "landlord-guilty", drop: true }],
+          },
+        ],
+      },
+    );
+    await reconcileReading({ w, provider }, "npc", "coin");
+    expect(w.believes("npc", "landlord-innocent")).toBe(true);
+    expect(w.believes("npc", "landlord-guilty")).toBe(false);
+  });
+
+  it("falls back to taking it in as written, and runs from a read signal in play", async () => {
+    const w = readingWorld();
+    w.state.objects.coin!.location = "hall";
+    const session = new Session(w, { provider: offlineProvider() });
+    session.start();
+    perform(w, "npc", { act: "examine", target: "coin" }, { by: "behaviour" });
+    await session.handle({ type: "action", action: { act: "wait", minutes: 1 } });
+    expect(w.believes("npc", "landlord-innocent")).toBe(true);
+    expect(w.believes("npc", "deeds-forged")).toBe(true);
+    expect(w.believes("npc", "landlord-guilty")).toBe(true);
   });
 });

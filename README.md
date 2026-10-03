@@ -54,7 +54,7 @@ The implementation baseline is in [`docs/spec/`](docs/spec/index.html):
 ## Status
 
 v0.1: the engine implements the spec end to end. The exploration, conversation, combat, set-piece and day loops run
-on a deterministic simulation. Conversations, the director, callouts and day summaries run through the provider
+on a deterministic simulation. Conversations, the director, callouts, characters weighing what they read and day summaries run through the provider
 interface. Saves are SQLite and replay identically. Sneaking is a stance, combat has pursuit, and Luck nudges seeded
 rolls (§5.4, §5.6). Every room is a tile map: actions walk to what they need, and fights are fought on the tiles with
 movement, reach, range and line of sight (§4.10, Q32). Open questions Q30 and Q31 are still open (see §8). Q31 is implemented as its suggested starting
@@ -128,7 +128,7 @@ the block, writes the payload, validates it to zero warnings and writes a playth
 | `src/mechanics` | SPECIAL, skills, checks, combat maths, trade, fatigue, progression, seeded PRNG (§5) |
 | `src/core` | world state, event log and ops, conditions, effects, actions, behaviours, triggers, combat, clock (§4) |
 | `src/llm` | provider interface; `claude-subscription`, `anthropic-api`, scripted, record and replay (§6.9) |
-| `src/narrative` | conversations, hooks, director, callouts, day summaries, context builder (§6) |
+| `src/narrative` | conversations, hooks, director, callouts, reading, day summaries, context builder (§6) |
 | `src/session` | the loops, UI port, parser, action menu and SQLite saves (§3) |
 | `src/cli` | the frontend adapters: the readline CLI, the full-screen TUI (`src/cli/tui`) and its browser host (`src/cli/web`) |
 | `tools` | development tooling: `art.ts` generates sprite art from a payload's art brief |

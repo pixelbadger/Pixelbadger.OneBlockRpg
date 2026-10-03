@@ -109,6 +109,28 @@ describe("playthrough (§3.9)", () => {
   });
 });
 
+describe("the introduction (§7.2)", () => {
+  it("comes before character creation, then the cold open before the first room, and again on request", async () => {
+    const w = World.create(example(), "intro");
+    const session = new Session(w, { provider: offlineProvider() });
+    const start = session.start().views;
+    expect(start.map((v) => v.type)).toEqual(["introduction", "create"]);
+    const intro = start[0]!;
+    expect(intro.type === "introduction" && intro.pages[1]).toMatch(/You are \*\*Sam Reyes\*\*/);
+    const created = (await session.handle({ type: "command", text: "Talker" })).views;
+    expect(created.some((v) => v.type === "introduction")).toBe(false);
+    const coldOpen = created.findIndex((v) => v.type === "narration" && /radiator knocking/.test(v.text));
+    expect(coldOpen).toBeGreaterThanOrEqual(0);
+    expect(created.findIndex((v) => v.type === "room")).toBeGreaterThan(coldOpen);
+    const again = (await session.handle({ type: "command", text: "intro" })).views;
+    expect(again.some((v) => v.type === "introduction")).toBe(true);
+    // A resumed game starts where it was, without the introduction.
+    await session.handle({ type: "command", text: "take kettle" });
+    const resumed = new Session(w, { provider: offlineProvider() });
+    expect(resumed.start().views.some((v) => v.type === "introduction")).toBe(false);
+  });
+});
+
 describe("saves and replay (§3.7, §3.8, P11)", () => {
   it("saves every event, resumes to the same state, and replays identically from cassettes", async () => {
     const dir = mkdtempSync(join(tmpdir(), "oneblock-save-"));

@@ -208,7 +208,10 @@ method has its own tools, time, noise, optional check (a skill or an attribute, 
   <li><strong>Owners notice</strong>: an awake owner in the room where something of theirs belongs, when it isn't there (and isn't with someone
       entitled to it), notices it missing (<code>noticed-missing</code>); finding it forced or broken, <code>noticed-damage</code>. Each is
       noticed once until put right.</li>
-  <li><strong>Reading</strong>: an object can declare beliefs it <code>teaches</code>. Whoever examines it, player or character, learns them.
+  <li><strong>Reading</strong>: an object can declare beliefs it <code>teaches</code>. The player learns them by examining it. A character weighs
+      them against what they already believe (§6.11): they may accept them, reject them, or change other beliefs because of them.
+      Knowing what a document says is not believing it: the engine records that they have <em>read</em> it (the <code>read</code> condition),
+      deterministically, so a character can repeat what a letter says while scoffing at it.
       Knowledge lives in the documents, so it can travel: a character who finds a letter knows what it says, and can tell others.</li>
 </ul>
 <p>What anyone does about any of this is left to behaviours and conversations: the block polices itself.</p>

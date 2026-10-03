@@ -2,7 +2,8 @@
 
 import { ATTRIBUTE_NAMES, SKILL_NAMES } from "../mechanics/special.js";
 import { ATTRIBUTES } from "../payload/schema.js";
-import type { ViewModel } from "../session/port.js";
+import { type MdRun, parseMarkdown } from "../session/markdown.js";
+import type { ViewModel, ViewOf } from "../session/port.js";
 
 const WIDTH = 100;
 
@@ -118,12 +119,77 @@ export function render(views: readonly ViewModel[], color = true): string {
       case "help":
         out.push(v.text);
         break;
+      case "introduction":
+        out.push(v.pages.map((_, i) => renderIntroductionPage(v, i, color)).join(`\n\n${k.dim("───")}\n\n`));
+        break;
       case "ended":
         out.push(`\n${k.bold(`— ${v.title ?? "The End"} —`)}`);
         break;
     }
   }
   return out.join("\n");
+}
+
+/** One page of the introduction (with its title over the first), for frontends that page through it. */
+export function renderIntroductionPage(v: ViewOf<"introduction">, page: number, color = true): string {
+  const head = page === 0 && v.title ? `\n${color ? c.bold(c.yellow(v.title)) : v.title}\n\n` : "";
+  return head + renderMarkdown(v.pages[page] ?? "", color);
+}
+
+/** Light markdown (src/session/markdown.ts) as wrapped text with ANSI styles. */
+export function renderMarkdown(src: string, color = true, width = WIDTH): string {
+  const style = (r: MdRun, base: string) => {
+    if (!color) return r.text;
+    const codes = [base, r.bold ? "1" : "", r.italic ? "3" : ""].filter(Boolean).join(";");
+    return codes ? `\x1b[${codes}m${r.text}\x1b[0m` : r.text;
+  };
+  // Wrap on the plain text, then style word by word, so escape codes never count towards the width.
+  const wrapRuns = (runs: MdRun[], base: string, indent: string, first = indent) => {
+    // Words are groups of styled pieces: "**bold**ly" is one word in two styles, never split across lines.
+    const words: { text: string; run: MdRun }[][] = [[]];
+    for (const r of runs) {
+      for (const part of r.text.split(/(\s+)/)) {
+        if (!part) continue;
+        if (/^\s+$/.test(part)) words.push([]);
+        else words[words.length - 1]!.push({ text: part, run: r });
+      }
+    }
+    const lines: string[] = [];
+    let line = first;
+    let len = first.length;
+    for (const wd of words.filter((x) => x.length)) {
+      const n = wd.reduce((a, x) => a + x.text.length, 0);
+      const fresh = len === indent.length || line === first;
+      if (!fresh && len + 1 + n > width) {
+        lines.push(line);
+        line = indent;
+        len = indent.length;
+      } else if (!fresh) {
+        line += " ";
+        len++;
+      }
+      line += wd.map((x) => style({ ...x.run, text: x.text }, base)).join("");
+      len += n;
+    }
+    lines.push(line);
+    return lines.join("\n");
+  };
+  return parseMarkdown(src)
+    .map((b) => {
+      switch (b.kind) {
+        case "heading":
+          return wrapRuns(b.runs, b.level === 1 ? "1;33" : "1;36", "");
+        case "paragraph":
+          return wrapRuns(b.runs, "", "");
+        case "quote":
+          return wrapRuns(b.runs, "3", "    ");
+        case "item":
+          return wrapRuns(b.runs, "", "    ", `  ${b.marker} `);
+        default:
+          return color ? c.dim("───") : "───";
+      }
+    })
+    .join("\n\n");
 }
 
 function id(s: string) {

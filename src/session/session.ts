@@ -39,6 +39,7 @@ import { runCallout } from "../narrative/callouts.js";
 import { Conversations, type NarrativeDeps } from "../narrative/conversation.js";
 import { Director } from "../narrative/director.js";
 import { compactDayLogs, endDay } from "../narrative/memory.js";
+import { reconcileReading } from "../narrative/reading.js";
 import { ATTRIBUTES, type SkillId, type Special } from "../payload/schema.js";
 import { actionMenu } from "./menu.js";
 import { parseCombat, parseCommand, parseSkill } from "./parser.js";
@@ -51,7 +52,7 @@ const STEP_SECONDS = 10;
 export const HELP = `Type commands like: look, go north (or n), take kettle, open drawer, put key in drawer, use kettle,
 use deed on letters, give letters to dev, show deed to okafor, talk to okafor, buy bandage from ravi,
 throw mug at window, force door with crowbar (or pry, lever, unscrew), attack pike with knife, sneak (toggle), sneak north, wait 30, wait until 22:00, sleep, examine me.
-Also: inventory (i), status, journal, menu (numbered actions available right now), improve <skill> [points].
+Also: inventory (i), status, journal, intro (the introduction again), menu (numbered actions available right now), improve <skill> [points].
 In conversation, pick an option by number. In combat: attack <target>, use <item>, flee <direction>,
 pursue <target>, end.`;
 
@@ -424,13 +425,31 @@ export class Session {
 
   /** The opening views (or the current state, when resuming a save). */
   start(): TurnOutput {
+    if (!this.w.log.some((e) => e.kind !== "rng")) this.introduction();
     if (this.mode !== "create") this.opening();
     return this.finish();
   }
 
+  /** Nothing has happened yet but the dice and character creation. */
+  private fresh(): boolean {
+    return !this.w.log.some((e) => e.kind !== "rng" && e.kind !== "player-created");
+  }
+
+  /** The payload's introduction pages, before character creation (§7.2). Also the `intro` meta command. */
+  private introduction(): void {
+    const w = this.w;
+    const intro = w.payload.game.introduction;
+    if (!intro) return;
+    this.views.push({
+      type: "introduction",
+      ...(intro.title ? { title: intro.title } : {}),
+      pages: intro.pages.map((page) => w.interpolate(page)),
+    });
+  }
+
   private opening(): void {
     const w = this.w;
-    if (w.log.length === 0 || !w.log.some((e) => e.kind !== "rng" && e.kind !== "player-created")) {
+    if (this.fresh()) {
       const intro = w.payload.game.intro;
       if (intro) this.views.push({ type: "narration", kind: "narration", text: w.text(intro) });
     }
@@ -579,6 +598,10 @@ export class Session {
       case "help":
         this.views.push({ type: "help", text: HELP });
         break;
+      case "intro":
+        if (w.payload.game.introduction) this.introduction();
+        else this.views.push({ type: "narration", kind: "system", text: "This story has no introduction." });
+        break;
       case "improve":
         this.improve(arg ?? "");
         break;
@@ -685,6 +708,9 @@ export class Session {
           break;
         case "callout":
           await runCallout(this.narrative, s.id);
+          break;
+        case "read":
+          await reconcileReading(this.narrative, s.who, s.thing);
           break;
         case "sleep":
           await this.sleep(s.quality, s.on);

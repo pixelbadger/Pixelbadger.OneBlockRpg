@@ -5,7 +5,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 
-export type Purpose = "conversation" | "director" | "callout" | "day-summary";
+export type Purpose = "conversation" | "director" | "callout" | "day-summary" | "reading";
 
 /** A system prompt part. Parts are ordered stable → volatile so prompt caching works (§6.3). */
 export interface PromptPart {

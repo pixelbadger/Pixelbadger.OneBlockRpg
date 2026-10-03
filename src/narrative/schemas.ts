@@ -97,3 +97,34 @@ export const DirectorTurn = z.strictObject({
 export type DirectorTurn = z.infer<typeof DirectorTurn>;
 
 export const DaySummary = z.strictObject({ summary: z.string() });
+
+/**
+ * How a character takes in a document (§4.13): which of its propositions they accept, how their existing beliefs
+ * shift, and what they now think in their own words. Validated and applied by the engine (confidences clamped to 0–1).
+ */
+export const ReadingVerdict = z.strictObject({
+  /** Their private reaction, first person; it goes in their day log. */
+  reaction: z.string(),
+  /** The document's propositions (belief ids) they now hold, and how firmly. */
+  accept: z
+    .array(z.strictObject({ belief: z.string(), confidence: z.number() }))
+    .max(8)
+    .default([]),
+  /** Beliefs they already held, re-weighed or dropped in the light of it. */
+  revise: z
+    .array(
+      z.strictObject({
+        belief: z.string(),
+        confidence: z.number().optional(),
+        drop: z.boolean().optional(),
+      }),
+    )
+    .max(6)
+    .default([]),
+  /** New beliefs in their own words: what it proves, who it shows up, why it must be false. */
+  thoughts: z
+    .array(z.strictObject({ text: z.string(), confidence: z.number() }))
+    .max(2)
+    .default([]),
+});
+export type ReadingVerdict = z.infer<typeof ReadingVerdict>;

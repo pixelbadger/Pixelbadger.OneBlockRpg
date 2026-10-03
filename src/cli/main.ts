@@ -15,7 +15,7 @@ import { validatePayloadAt } from "../payload/validate.js";
 import { SaveStore } from "../session/save.js";
 import { Session } from "../session/session.js";
 import { openGame } from "./game.js";
-import { render } from "./render.js";
+import { render, renderIntroductionPage } from "./render.js";
 import { runTui } from "./tui/app.js";
 import { detectGraphics, GRAPHICS, type Graphics } from "./tui/graphics.js";
 import { SpriteSet } from "./tui/sprites.js";
@@ -148,10 +148,19 @@ async function play(args: string[]): Promise<number> {
   console.log(
     `(provider: ${game.providerId}; save: ${savePath}${resuming ? ", resumed" : ""}; type help for commands)`,
   );
-  print(render(session.start().views, color));
-  store.flush(w);
-
   const rl = createInterface({ input: process.stdin, terminal: process.stdin.isTTY });
+  const start = session.start().views;
+  store.flush(w);
+  // At a terminal the introduction is read a page at a time; piped input gets it all at once.
+  for (const v of start) {
+    if (v.type === "introduction" && process.stdin.isTTY) {
+      for (let i = 0; i < v.pages.length; i++) {
+        print(renderIntroductionPage(v, i, color));
+        const last = i === v.pages.length - 1;
+        await rl.question(color ? `\x1b[2m  [Enter${last ? " to begin" : ""}]\x1b[0m` : "  [Enter]");
+      }
+    } else print(render([v], color));
+  }
   const prompt = () => process.stdout.write(color ? "\x1b[36m> \x1b[0m" : "> ");
   try {
     prompt();

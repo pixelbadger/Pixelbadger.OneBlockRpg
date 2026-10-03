@@ -27,7 +27,8 @@ genuinely missing, stop and tell the user what the engine would need.
    For every story piece, plan its systemic flesh (guide: "Systemic flesh"): where it physically is, what holds it
    (fastened, locked, hidden), which tools by tag can force it, who owns it, what noise it makes, and what the
    cast's ordinary routines do to it. Prefer these to triggers.
-2. Write the files in the order `game.yaml`, `story.yaml` (synopsis, beliefs, endings), `rooms/`, `characters/`,
+2. Write the files in the order `game.yaml` (with a multi-page markdown `introduction` setting up the premise and
+   the player's motivation, and a short `intro` cold open), `story.yaml` (synopsis, beliefs, endings), `rooms/`, `characters/`,
    `behaviours/routines.yaml`, `objects/`, `hooks.yaml`, `conversations/`, `story.yaml` triggers, `set_pieces/`,
    `combat_text.yaml`.
 3. Make sure every piece of the critical path has an **authored** route as well as any hook (guide: "Never depend

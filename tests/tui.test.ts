@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { render, renderMarkdown } from "../src/cli/render.js";
 import { absorb } from "../src/cli/tui/app.js";
 import { Canvas, S, wrapSpans } from "../src/cli/tui/canvas.js";
 import { compose } from "../src/cli/tui/layout.js";
@@ -8,6 +9,7 @@ import { Controller, type Key, type Ui } from "../src/cli/tui/ui.js";
 import { World } from "../src/core/world.js";
 import { offlineProvider } from "../src/narrative/offline.js";
 import type { Payload } from "../src/payload/schema.js";
+import { parseInline, parseMarkdown } from "../src/session/markdown.js";
 import type { Tile } from "../src/session/port.js";
 import { Session } from "../src/session/session.js";
 import { example, mini } from "./helpers.js";
@@ -36,6 +38,13 @@ function game(p: Payload = example()) {
     c.sync();
   };
   return { w, session, ui, c, press, said };
+}
+
+/** A game past its introduction: Escape skips the pages. */
+async function begun(p?: Payload) {
+  const g = game(p);
+  if (g.ui.overlay?.pages) await g.press(undefined, { name: "escape" });
+  return g;
 }
 
 describe("TUI text and canvas", () => {
@@ -105,7 +114,7 @@ describe("TUI scene", () => {
 
 describe("TUI frame", () => {
   it("fills the screen exactly at every size, with the scene, character, pack and messages", async () => {
-    const { ui, press } = game();
+    const { ui, press } = await begun();
     await press("2");
     for (const [cols, rows] of [
       [80, 24],
@@ -131,9 +140,81 @@ describe("TUI frame", () => {
   });
 });
 
+describe("light markdown", () => {
+  it("parses headings, paragraphs, quotes, lists and rules", () => {
+    const md = "# Title\n\nOne line\nand the next.\n\n> said\n> twice\n\n- a\n- **b**\n1. c\n\n---\nafter";
+    expect(parseMarkdown(md)).toEqual([
+      { kind: "heading", level: 1, runs: [{ text: "Title" }] },
+      { kind: "paragraph", runs: [{ text: "One line and the next." }] },
+      { kind: "quote", runs: [{ text: "said twice" }] },
+      { kind: "item", marker: "•", runs: [{ text: "a" }] },
+      { kind: "item", marker: "•", runs: [{ text: "b", bold: true }] },
+      { kind: "item", marker: "1.", runs: [{ text: "c" }] },
+      { kind: "rule" },
+      { kind: "paragraph", runs: [{ text: "after" }] },
+    ]);
+  });
+
+  it("parses emphasis, leaving lone markers, snake_case and escapes alone", () => {
+    expect(parseInline("a **bold *both*** and _it_")).toEqual([
+      { text: "a " },
+      { text: "bold ", bold: true },
+      { text: "both", bold: true, italic: true },
+      { text: " and " },
+      { text: "it", italic: true },
+    ]);
+    expect(parseInline("2 * 3 = six, snake_case_name, \\*not\\*")).toEqual([
+      { text: "2 * 3 = six, snake_case_name, *not*" },
+    ]);
+  });
+
+  it("renders for the plain CLI, wrapping on visible width", () => {
+    const out = renderMarkdown("# Hi\n\n**Bold** words that go on and on until they wrap", false, 20);
+    expect(out).toBe("Hi\n\nBold words that go\non and on until they\nwrap");
+    const styled = renderMarkdown("x **y**", true, 20);
+    expect(styled).toBe("x \x1b[1my\x1b[0m");
+    expect(render([{ type: "introduction", title: "T", pages: ["one", "two"] }], false)).toContain("one\n\n───\n\ntwo");
+  });
+});
+
+describe("TUI introduction", () => {
+  it("pages through the introduction over the creation screen, and N brings it back", async () => {
+    const { ui, press } = game();
+    expect(ui.mode).toBe("create");
+    const o = ui.overlay!;
+    expect(o.title).toBe("41 Carver Street");
+    expect(o.pages).toHaveLength(3);
+    // Markdown: the heading is styled, bold runs carry bold.
+    expect(o.lines[0]!.spans[0]).toMatchObject({ text: "The building", sgr: S.boldYellow });
+    expect(o.lines.flatMap((l) => l.spans).find((s) => s.text === "41 Carver Street")?.sgr).toBe(S.bold);
+    let screen = compose(ui, 100, 40, { t: 0, emoji: false }).canvas.lines(false).join("\n");
+    expect(screen).toContain("1/3");
+    expect(screen).toContain("soot-dark brick");
+    await press("x");
+    expect(ui.overlay?.page).toBe(1);
+    await press(undefined, { name: "left" });
+    expect(ui.overlay?.page).toBe(0);
+    await press("x");
+    await press("x");
+    screen = compose(ui, 100, 40, { t: 0, emoji: false }).canvas.lines(false).join("\n");
+    expect(screen).toContain("Any key to begin.");
+    await press("x");
+    expect(ui.overlay).toBeUndefined();
+    await press("1");
+    expect(ui.mode).toBe("explore");
+    await press("n");
+    expect(ui.overlay?.pages).toHaveLength(3);
+  });
+
+  it("keeps the introduction out of the message log", () => {
+    const { ui } = game();
+    expect(ui.log.some((p) => p.spans.some((s) => s.text.includes("soot-dark")))).toBe(false);
+  });
+});
+
 describe("TUI keys (Ultima V style)", () => {
   it("creates a character from the menu and walks with the arrows", async () => {
-    const { ui, press, w } = game();
+    const { ui, press, w } = await begun();
     expect(ui.mode).toBe("create");
     expect(ui.menu?.title).toBe("Who are you?");
     await press("1");
@@ -144,7 +225,7 @@ describe("TUI keys (Ultima V style)", () => {
   });
 
   it("makes your own character with the allotment screen", async () => {
-    const { ui, press } = game();
+    const { ui, press } = await begun();
     await press("3");
     expect(ui.allot).toBeDefined();
     for (let i = 0; i < 5; i++) await press(undefined, { name: "right" });

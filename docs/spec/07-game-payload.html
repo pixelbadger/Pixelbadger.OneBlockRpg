@@ -48,7 +48,7 @@
 
 <h2>7.3 Layout</h2>
 <pre><code>my-block/
-  game.yaml            # id, title, schemaVersion, start room, player character, clock start, style guide
+  game.yaml            # id, title, schemaVersion, start room, player character, clock start, introduction, cold open, style guide
   story.yaml           # synopsis, tensions, triggers, endings
   rooms/*.yaml         # incl. each room's tile map (7.10)
   objects/*.yaml       # incl. use rules; weapons, armour, consumables (§5.7); sleepable furniture
@@ -61,6 +61,24 @@
   combat_text.yaml     # hit / miss / crit / down message templates per weapon type (§5.6)</code></pre>
 <p>Files are YAML (comments help agents and humans) or JSON, validated against one JSON Schema generated from the engine's zod types.
 The split across files is a convention. The loader merges everything, and ids are global.</p>
+
+<h3>The introduction and the cold open</h3>
+<p>Two pieces of <code>game.yaml</code> open the game. The <strong>introduction</strong> is a few pages the player reads before character creation:
+the premise, who they are, and why they are here. Pages are <strong>light markdown</strong>: <code>#</code>–<code>###</code> headings, paragraphs,
+<code>&gt;</code> quotes, <code>-</code> and <code>1.</code> lists, <code>---</code> rules, <code>**bold**</code> and <code>*italic*</code>. Each frontend
+draws it its own way and pages through it; the <code>intro</code> command shows it again. The <strong>cold open</strong> (<code>intro</code>) is
+plain text shown right before the first room: the moment play starts.</p>
+<pre><code>introduction:
+  title: "The Pier"
+  pages:
+    - |
+      # Westcombe, out of season
+      Westcombe is a seaside town that stopped expecting visitors some time around 1975. …
+    - |
+      # You
+      You are **Liam Doyle**, twenty-two. …
+intro: >
+  Monday. Week six on the Grand Atlantic job. The alarm on your phone has been going for a while. …</code></pre>
 
 <h2>7.4 Text variants</h2>
 <p>All flavour text is authored. Any description can be a single string or an ordered list of variants. The first variant whose condition holds is used.</p>
@@ -87,6 +105,7 @@ The split across files is a convention. The loader merges everything, and ids ar
 <code>special</code> / <code>skill</code> thresholds<br>
 <code>relationship</code> thresholds<br>
 <code>believes</code> (who, belief)<br>
+<code>read</code> (who, document): has read it, whether or not they believe it (§4.13)<br>
 <code>event</code> (kind, actor, target)<br>
 <code>turns</code> (in conversation)<br>
 <code>hp</code>, <code>level</code>, <code>money</code> thresholds<br>

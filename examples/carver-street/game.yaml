@@ -3,9 +3,10 @@
 id: carver-street
 title: "41 Carver Street"
 schema_version: "2.0"
-version: "0.2.0"
+version: "0.3.0"
 # 0.2.0 draws every room as a tile map (schema 2.0); 0.1.0 saves load and everyone is put on their authored tile.
-compatible_with: ["0.1.0"]
+# 0.3.0 adds the introduction; it changes nothing a save holds.
+compatible_with: ["0.1.0", "0.2.0"]
 start: flat-2b
 player:
   character: player
@@ -16,6 +17,45 @@ player:
     - name: Bruiser
       special: { ST: 8, PE: 5, EN: 7, CH: 4, IN: 4, AG: 7, LK: 5 }
 clock: { time: "08:00" }
+# The introduction (§7.2): pages of light markdown read before play. The `intro` below is the cold open.
+introduction:
+  title: "41 Carver Street"
+  pages:
+    - |
+      # The building
+
+      **41 Carver Street** is five storeys of soot-dark brick on a street of corner shops and bus stops. Nine
+      flats, a basement nobody goes into, a lobby with a cracked tile floor that Mrs Okafor sweeps every morning
+      at eight. The radiators knock. The lift has been "being looked at" since spring.
+
+      It isn't much. It's home to everyone in it, and none of them could afford anywhere else.
+    - |
+      # You
+
+      You are **Sam Reyes**, of flat 2B. Bike courier. Good at stairs. You've lived here two years, and you owe
+      *three months'* rent.
+
+      Your neighbours, more or less:
+
+      - **Mrs Okafor**, the caretaker, nineteen years in the job. She knows everybody's business and keeps most
+        of it to herself.
+      - **Dev**, in 3B, who teaches music and keeps his door shut.
+      - **Ravi**, who runs the corner shop and knows everyone on the street by what they buy.
+
+      The landlord you have never met. Since his stroke his affairs are handled by an agent, **Mr Pike**.
+    - |
+      # This week
+
+      For a week now the building has felt wrong, in small ways you could explain away one at a time and can't
+      explain all together. Doors that used to stand open are locked. People who used to chat on the stairs go
+      quiet when Mr Pike's car is outside. And late at night, on the stairs, there's a girl you're sure doesn't
+      live here.
+
+      > If the building goes, you go with it. Nobody is going to fight for a courier three months behind.
+
+      So find out what's happening to 41 Carver Street, and whether it can be stopped. Talk to people; they know
+      more than they say. Look at things; paper tells the truth more often than people do. And watch the clock:
+      the week is short.
 intro: >
   You wake in 2B with the radiator knocking. Somewhere below, a broom works the lobby tiles.
   The building has felt wrong all week: new locks on the basement, a man in a good coat
