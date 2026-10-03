@@ -33,7 +33,7 @@ The schema is the source of truth: [`schema/payload.schema.json`](../schema/payl
 
 ```
 <game-id>/
-  game.yaml            # id, title, schema_version, start, player, clock, intro, style_guide, downed, xp
+  game.yaml            # id, title, schema_version, start, player, clock, introduction, intro, style_guide, downed, xp
   story.yaml           # synopsis, tone, tensions, belief catalogue, triggers, endings
   rooms/<area>.yaml    # one file per area of the block (seafront, site, town…)
   objects/<kind>.yaml  # e.g. clues.yaml for the plot's evidence, things.yaml for everything else
@@ -72,7 +72,11 @@ Each brief section (§7.2) maps onto the payload like this. The Pier's choices a
 - **`synopsis`** (≤ 2500 characters) is in every prompt too. It says what is *really* going on, including the hidden
   truth, and what happens if the player does nothing. The LLM needs the truth to keep characters consistent. The
   engine keeps the player from simply being told it, because only hooks and authored text change world state.
-- **`intro`** is the first thing the player reads: 60–100 words, second person, and it should place them in the block.
+- **`introduction`** is what the player reads before creating their character: two to four pages of light markdown
+  (headings, paragraphs, `>` quotes, lists, `**bold**`, `*italic*`), 80–200 words a page, second person. Set up the
+  premise and the player's motivation: the place, who they are, the people around them, and what they want this week.
+  Don't spend the hidden truth; hint at it. One page per idea reads well (The Pier: the town, you, the couple).
+- **`intro`** is the cold open, shown right before the first room: 60–100 words, second person, the moment play starts.
 
 ### The block → `rooms/`
 
@@ -171,8 +175,10 @@ trigger, ask whether the world could do it instead:
 - **Let it make a noise.** `step_noise` on something `underfoot`, a `noise` on use rules and force methods, a
   `noise` effect in an object's behaviour (Room 7's board creaks in the evenings). Whoever is near hears it, and a
   behaviour turns hearing into belief (`event: { kind: heard, actor: self, target: floorboard }`).
-- **Let documents teach** (`teaches: [ashdowns-stayed]`). Whoever reads it learns it, so knowledge can travel: Gary
-  reads the register Tommo found and tells the pub.
+- **Let documents teach** (`teaches: [ashdowns-stayed]`). The player learns what they read. A character weighs it
+  against what they believe (§6.11) and may refuse it, change their mind, or read it as proof of what they already
+  thought, so knowledge travels unevenly: Gary reads the register Tommo found and tells the pub. Give the beliefs a
+  character holds confidences and sources, so the model has something to weigh; offline, everyone simply learns it.
 - **Give people a mundane life with stakes**: a job checked by behaviours (`adjust_property` on a ledger object,
   `remember` notes for their conversations), reactions to `noticed-missing`, `noticed-damage` and `transgression`.
 
