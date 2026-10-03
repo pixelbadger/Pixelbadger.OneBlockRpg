@@ -145,12 +145,14 @@ export type ViewModel =
   | { type: "menu"; items: MenuItem[] }
   | { type: "create"; presets: { name: string; special: Special }[]; points: number; min: number; max: number }
   | { type: "help"; text: string }
+  /** The payload's introduction (§7.2): pages of light markdown (see src/session/markdown.ts), shown one at a time. */
+  | { type: "introduction"; title?: string; pages: string[] }
   | { type: "ended"; ending: string; title?: string; text: string };
 
 /** The view model of one type, e.g. `ViewOf<"map">`. */
 export type ViewOf<T extends ViewModel["type"]> = Extract<ViewModel, { type: T }>;
 
-export type MetaCommand = "look" | "inventory" | "status" | "journal" | "menu" | "help" | "improve";
+export type MetaCommand = "look" | "inventory" | "status" | "journal" | "menu" | "help" | "improve" | "intro";
 
 export type Intent =
   | { type: "command"; text: string }

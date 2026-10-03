@@ -59,6 +59,9 @@ export function walkEffect(e: Effect, w: Where, v: Visitor): void {
 /** Visits every condition, effect and text variant list in the payload. */
 export function walkPayload(p: Payload, v: Visitor): void {
   const g: Where = { in: "game", path: [] };
+  p.game.introduction?.pages.forEach((page, i) => {
+    walkText(page, at(g, "introduction", "pages", i), v);
+  });
   walkText(p.game.intro, at(g, "intro"), v);
   walkText(p.game.downed.text, at(g, "downed", "text"), v);
 

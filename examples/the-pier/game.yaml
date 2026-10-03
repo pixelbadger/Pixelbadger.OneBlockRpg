@@ -5,17 +5,63 @@
 id: the-pier
 title: "The Pier"
 schema_version: "2.0"
-version: "0.4.0"
+version: "0.5.0"
 # 0.2.0 makes everything the room descriptions mention examinable; it only adds objects, so 0.1.0 saves still load.
 # 0.3.0 draws every room as a tile map (schema 2.0); older saves load and everyone is put on their authored tile.
 # 0.4.0 makes the block systemic (sound, forcing, ownership, the work): story pieces move, characters gain
 # behaviours and the clue flags become beliefs, so older saves are not compatible.
-compatible_with: []
+# 0.5.0 adds the introduction; 0.4.0 saves still load.
+compatible_with: ["0.4.0"]
 start: digs
 player:
   character: player
   mode: fixed
 clock: { time: "07:00" }
+# The introduction (§7.2): pages of light markdown read before play. The `intro` below is the cold open.
+introduction:
+  title: "The Pier"
+  pages:
+    - |
+      # Westcombe, out of season
+
+      Westcombe is a seaside town that stopped expecting visitors some time around 1975. The arcades are shuttered
+      until Easter. The chip shop does Fridays. The tide goes out so far you can't see it, and comes back grey.
+
+      What the town still has is **the pier**: a Victorian thing on iron legs, a quarter of a mile out into the
+      estuary, with a tollhouse at one end and, at the other, the *glass house*. A pavilion of iron and glass,
+      empty now, that catches the light at sunset so every pane goes orange.
+
+      Beside the pier stands the **Grand Atlantic Hotel**, shut for twenty years and now, finally, being gutted
+      and done up as luxury flats.
+    - |
+      # You
+
+      You are **Liam Doyle**, twenty-two. You grew up here, left school with nothing, and drifted: agency work,
+      warehouse nights, a summer on the bins. The work brought you back. You lodge at the Seaview with Marek and
+      Tommo, who also labour on the hotel, and you don't say much to either of them.
+
+      **Gary Hollis** runs the site. He has a deadline, a contractor on his back and no patience at all for a lad
+      who wanders off. **Kez** pulls pints at the Anchor and has known you since school; she still talks to the
+      version of you from before you went quiet. Her cousin **Shaun** combs the beach under the pier every
+      morning for anything worth selling.
+
+      > Week six. Forty quid in your pocket. Christmas handover, and the job after this one isn't lined up yet.
+    - |
+      # The couple
+
+      Since the first week on the job you've been seeing them. A **woman in black**, holding something wrapped in
+      lace. A **man in a frock coat**. At the end of the pier, mostly, and once at a window of the hotel, on the
+      first floor, in a room nobody has opened since the place closed.
+
+      Nobody else sees them. You've stopped mentioning it.
+
+      This week you mean to do two things:
+
+      - **get through it**: turn up, keep Gary off your back, keep your mates;
+      - **find out who they are**.
+
+      The block is small. Everything in it can be looked at, picked up, asked about. People here remember what you
+      do and talk about it. What you learn will change you.
 intro: >
   Monday. Week six on the Grand Atlantic job. The alarm on your phone has been going for a while.
   Through the thin curtain the sea is the colour of dishwater, and the pier walks out into it on its

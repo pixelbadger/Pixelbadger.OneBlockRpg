@@ -95,6 +95,7 @@ export function parseCommand(w: World, input: string): ParseResult {
   if (["journal", "j", "diary"].includes(lower)) return ok({ type: "meta", command: "journal" });
   if (["menu", "m", "actions", "?"].includes(lower)) return ok({ type: "meta", command: "menu" });
   if (["help", "h"].includes(lower)) return ok({ type: "meta", command: "help" });
+  if (["intro", "introduction", "premise"].includes(lower)) return ok({ type: "meta", command: "intro" });
   if (verb === "improve" || verb === "train") return ok({ type: "meta", command: "improve", arg: rest });
 
   // Movement.

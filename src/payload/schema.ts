@@ -855,6 +855,16 @@ export const Game = z.strictObject({
     presets: z.array(z.strictObject({ name: z.string().min(1), special: Special })).default([]),
   }),
   clock: z.strictObject({ time: ClockTime }).default({ time: "08:00" }),
+  /**
+   * The introduction (§7.2): pages of light markdown, shown one at a time before character creation, that set up the
+   * premise and why the player is here. `intro` is the cold open, shown right before the first room.
+   */
+  introduction: z
+    .strictObject({
+      title: z.string().min(1).optional(),
+      pages: z.array(z.string().min(1)).min(1),
+    })
+    .optional(),
   intro: TextVariants.optional(),
   style_guide: z.string().default(""),
   downed: z

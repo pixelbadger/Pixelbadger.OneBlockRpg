@@ -2,6 +2,7 @@
 
 import { ATTRIBUTE_NAMES, SKILL_NAMES } from "../../mechanics/special.js";
 import { ATTRIBUTES } from "../../payload/schema.js";
+import { type MdRun, parseMarkdown } from "../../session/markdown.js";
 import type { ViewModel } from "../../session/port.js";
 import { S, type Span } from "./canvas.js";
 
@@ -21,7 +22,17 @@ export function toParagraphs(views: readonly ViewModel[], opts: { compact?: bool
     if (out.length && out[out.length - 1]!.spans.length) p([]);
   };
   // The tiled frontend shows choices, sheets and exits elsewhere; the log keeps the prose.
-  const elsewhere = new Set(["conversation", "menu", "create", "combat", "inventory", "sheet", "journal", "help"]);
+  const elsewhere = new Set([
+    "conversation",
+    "menu",
+    "create",
+    "combat",
+    "inventory",
+    "sheet",
+    "journal",
+    "help",
+    "introduction",
+  ]);
   for (const v of views) {
     if (opts.compact && elsewhere.has(v.type)) continue;
     switch (v.type) {
@@ -169,6 +180,13 @@ export function toParagraphs(views: readonly ViewModel[], opts: { compact?: bool
       case "help":
         p([{ text: v.text, sgr: S.grey }]);
         break;
+      case "introduction":
+        if (v.title) p([{ text: v.title, sgr: S.boldYellow }]);
+        v.pages.forEach((page, i) => {
+          if (i) p([{ text: "───", sgr: S.grey }]);
+          out.push(...markdownParagraphs(page));
+        });
+        break;
       case "ended":
         blank();
         p([{ text: `— ${v.title ?? "The End"} —`, sgr: S.boldYellow }]);
@@ -177,6 +195,37 @@ export function toParagraphs(views: readonly ViewModel[], opts: { compact?: bool
       case "map":
       case "scene":
       case "fx":
+        break;
+    }
+  }
+  return out;
+}
+
+/** Light markdown (src/session/markdown.ts) as paragraphs, with a blank line between blocks. */
+export function markdownParagraphs(src: string): Paragraph[] {
+  const out: Paragraph[] = [];
+  const runs = (rs: MdRun[], base = "") =>
+    rs.map((r) => ({
+      text: r.text,
+      sgr: [base, r.bold ? S.bold : "", r.italic ? S.italic : ""].filter(Boolean).join(";"),
+    }));
+  for (const b of parseMarkdown(src)) {
+    if (out.length) out.push({ spans: [] });
+    switch (b.kind) {
+      case "heading":
+        out.push({ spans: runs(b.runs, b.level === 1 ? S.boldYellow : S.boldCyan) });
+        break;
+      case "paragraph":
+        out.push({ spans: runs(b.runs) });
+        break;
+      case "quote":
+        out.push({ spans: runs(b.runs, S.italic), indent: 4 });
+        break;
+      case "item":
+        out.push({ spans: [{ text: `${b.marker} `, sgr: S.grey }, ...runs(b.runs)], indent: 2 });
+        break;
+      case "rule":
+        out.push({ spans: [{ text: "───", sgr: S.grey }] });
         break;
     }
   }

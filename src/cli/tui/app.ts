@@ -11,7 +11,7 @@ import type { Session } from "../../session/session.js";
 import { setColorDepth } from "./color.js";
 import { type Graphics, Painter } from "./graphics.js";
 import { compose } from "./layout.js";
-import { type Paragraph, toParagraphs } from "./log.js";
+import { markdownParagraphs, type Paragraph, toParagraphs } from "./log.js";
 import { Timeline } from "./scene.js";
 import type { SpriteSet } from "./sprites.js";
 import { Controller, type Key, type Ui } from "./ui.js";
@@ -61,7 +61,10 @@ export function absorb(ui: Ui, session: Session, views: readonly ViewModel[]): T
       };
     } else if (v.type === "journal") ui.overlay = { title: "Journal", lines: toParagraphs([v]) };
     else if (v.type === "help") ui.overlay = { title: "Help", lines: toParagraphs([v]) };
-    else if (v.type === "combat") ui.combat = v;
+    else if (v.type === "introduction") {
+      const pages = v.pages.map(markdownParagraphs);
+      ui.overlay = { title: v.title ?? ui.title, lines: pages[0]!, pages, page: 0, offset: 0 };
+    } else if (v.type === "combat") ui.combat = v;
     else if (v.type === "conversation") {
       ui.conversation = v;
       ui.menu = undefined;

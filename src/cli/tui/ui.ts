@@ -69,7 +69,17 @@ export interface Ui {
   scroll: number;
   menu?: UiMenu;
   targeting?: Targeting;
-  overlay?: { title: string; lines: Paragraph[]; skills?: { id: string; label: string }[]; index?: number };
+  overlay?: {
+    title: string;
+    lines: Paragraph[];
+    skills?: { id: string; label: string }[];
+    index?: number;
+    /** A paged overlay (the introduction): `lines` is pages[page]; keys turn the page, the last one closes. */
+    pages?: Paragraph[][];
+    page?: number;
+    /** Lines scrolled down within the current page. */
+    offset?: number;
+  };
   /** Custom character creation: SPECIAL being allocated. */
   allot?: { special: Special; index: number };
   busy: boolean;
@@ -120,7 +130,7 @@ export const HELP_LINES = [
   "A attack   T talk     L look     G get       D drop     U use      O open/close",
   "K lock     P push     R ready    H hurl      V give     F filch    B barter",
   "W wait     S sneak    Space pass (end turn in a fight)",
-  "Z stats    J journal  M every action here     PgUp/PgDn scroll     ? help     Q quit",
+  "Z stats    J journal  N introduction   M every action here   PgUp/PgDn scroll   ? help   Q quit",
   "Picking a target: arrows move the cursor, Tab cycles targets, Enter acts, Esc cancels.",
   "Menus: arrows or numbers, Enter chooses, Esc goes back.",
 ];
@@ -290,6 +300,8 @@ export class Controller {
         return this.meta("status");
       case "j":
         return this.meta("journal");
+      case "n":
+        return this.meta("intro");
       case "i":
         return this.pickItem(
           "Your pack",
@@ -657,6 +669,21 @@ export class Controller {
 
   private async overlayKey(str: string | undefined, k: Key): Promise<void> {
     const o = this.ui.overlay!;
+    if (o.pages) {
+      if (k.name === "up" || k.name === "down") {
+        o.offset = Math.max(0, (o.offset ?? 0) + (k.name === "up" ? -1 : 1));
+        return;
+      }
+      const page = (o.page ?? 0) + (k.name === "left" || k.name === "backspace" ? -1 : 1);
+      if (k.name === "escape" || page >= o.pages.length) {
+        this.ui.overlay = undefined;
+        return;
+      }
+      o.page = Math.max(0, page);
+      o.lines = o.pages[o.page]!;
+      o.offset = 0;
+      return;
+    }
     if (o.skills?.length) {
       const n = o.skills.length;
       if (k.name === "up") {

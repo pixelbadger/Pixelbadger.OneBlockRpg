@@ -140,6 +140,27 @@
           ],
           "additionalProperties": false
         },
+        "introduction": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pages": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "pages"
+          ],
+          "additionalProperties": false
+        },
         "intro": {
           "anyOf": [
             {

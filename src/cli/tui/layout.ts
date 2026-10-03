@@ -296,6 +296,21 @@ function overlayBox(cv: Canvas, ui: Ui, r: Rect): void {
       lines.push([{ text: ` ${s.label}`.padEnd(width), sgr: i === (o.index ?? 0) ? S.inverse : "" }]);
     });
   }
+  if (o.pages) {
+    // Paged text reads from the top; the footer stays put while ↑↓ scroll a page too tall for the box.
+    const n = o.pages.length;
+    const at = o.page ?? 0;
+    const footer: Span[] = [
+      { text: n > 1 ? `${at + 1}/${n}  ` : "", sgr: S.grey },
+      { text: at + 1 < n ? "Any key: next page · ← back · Esc skip" : "Any key to begin.", sgr: S.grey },
+    ];
+    const inner = floating(cv, r, width, Math.min(lines.length + 2, r.h - 4), [{ text: o.title, sgr: S.boldYellow }]);
+    const room = Math.max(1, inner.h - 2);
+    o.offset = Math.min(o.offset ?? 0, Math.max(0, lines.length - room));
+    const shown = lines.slice(o.offset, o.offset + room);
+    cv.clip(inner, () => cv.block(inner.x, inner.y, [...shown, ...Array(room - shown.length).fill([]), [], footer]));
+    return;
+  }
   lines.push([{ text: "Any key to close.", sgr: S.grey }]);
   const inner = floating(cv, r, width, Math.min(lines.length, r.h - 4), [{ text: o.title, sgr: S.boldYellow }]);
   cv.clip(inner, () => cv.block(inner.x, inner.y, lines.slice(Math.max(0, lines.length - inner.h))));
