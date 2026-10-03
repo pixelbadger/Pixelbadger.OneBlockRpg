@@ -4,9 +4,8 @@
  * cells that text never writes to (Canvas.punch); it is sent again only when it changes.
  */
 
-import { crc32 } from "node:zlib";
 import type { Rect } from "./canvas.js";
-import { encodePng, type Image } from "./png.js";
+import { crc32, encodePng, type Image } from "./png.js";
 
 export type Graphics = "kitty" | "iip" | "none";
 
@@ -25,13 +24,20 @@ export function detectGraphics(env: NodeJS.ProcessEnv = process.env): Graphics {
 }
 
 const ESC = "\x1b";
+
+/** Base64 without Buffer, so this runs in a browser too. */
+export function base64(bytes: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
 const ST = `${ESC}\\`;
 /** Below cells with a non-default background, so menus drawn over the scene hide it (kitty's z-index rule). */
 const UNDER_TEXT = -1_073_741_825;
 
 /** Shows a PNG over `cols`×`rows` cells at the cursor, without moving it, as kitty image `id`. */
 export function kittyImage(png: Uint8Array, id: number, cols: number, rows: number): string {
-  const data = Buffer.from(png).toString("base64");
+  const data = base64(png);
   const parts: string[] = [];
   for (let i = 0; i < data.length; i += 4096) parts.push(data.slice(i, i + 4096));
   if (!parts.length) parts.push("");
@@ -51,7 +57,7 @@ export const kittyDelete = (id?: number): string =>
 
 /** Shows a PNG stretched over `cols`×`rows` cells at the cursor (iTerm2's inline image protocol). */
 export function iipImage(png: Uint8Array, cols: number, rows: number): string {
-  const data = Buffer.from(png).toString("base64");
+  const data = base64(png);
   return `${ESC}]1337;File=inline=1;size=${png.length};width=${cols};height=${rows};preserveAspectRatio=0:${data}\x07`;
 }
 

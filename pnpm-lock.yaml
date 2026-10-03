@@ -14,6 +14,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.131.0
         version: 0.131.0(zod@4.6.5)
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
       '@xterm/addon-fit':
         specifier: ^0.11.0
         version: 0.11.0
@@ -23,6 +26,9 @@ importers:
       '@xterm/xterm':
         specifier: ^6.0.0
         version: 6.0.0
+      fflate:
+        specifier: 0.8.3
+        version: 0.8.3
       ws:
         specifier: ^8.22.0
         version: 8.22.0
@@ -349,6 +355,10 @@ packages:
     peerDependenciesMeta:
       '@cfworker/json-schema':
         optional: true
+
+  '@noble/hashes@2.4.0':
+    resolution: {integrity: sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==}
+    engines: {node: '>= 20.19.0'}
 
   '@oxc-project/types@0.152.0':
     resolution: {integrity: sha512-oM/5rLBm2tPkg0iBgkH/FOeR3PCDpY19GTgAZjMFM8h9WI9VW7cLgzp6nwtarYKmovavIQZ+Fe/RKX/8C8O/Rw==}
@@ -771,6 +781,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   finalhandler@2.1.1:
     resolution: {integrity: sha512-S8KoZgRZN+a5rNwqTxlZZePjT/4cnm0ROV70LedRHZ0p8u9fRID0hJUZQpkKLzro8LfmC8sx23bY6tVNxv8pQA==}
@@ -1449,6 +1462,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@noble/hashes@2.4.0': {}
+
   '@oxc-project/types@0.152.0': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.12':
@@ -1784,6 +1799,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
       picomatch: 4.0.7
+
+  fflate@0.8.3: {}
 
   finalhandler@2.1.1:
     dependencies:

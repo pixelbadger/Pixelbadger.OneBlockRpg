@@ -1,6 +1,7 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { crc32, inflateSync } from "node:zlib";
 import { afterAll, describe, expect, it } from "vitest";
 import { WebSocket } from "ws";
 import { absorb } from "../src/cli/tui/app.js";
@@ -74,6 +75,20 @@ describe("PNG and sprites", () => {
     expect(back.w).toBe(5);
     expect(back.h).toBe(3);
     expect([...back.data]).toEqual([...img.data]);
+  });
+
+  it("writes PNGs other decoders read, and reads theirs", () => {
+    const img = image(4, 2);
+    for (let i = 0; i < img.data.length; i++) img.data[i] = (i * 53) % 256;
+    const png = encodePng(img);
+    // The image data is a zlib stream, CRC-checked: Node's zlib inflates it to a row filter byte plus RGBA per row.
+    const idat = Buffer.from(png).indexOf("IDAT");
+    const len = Buffer.from(png).readUInt32BE(idat - 4);
+    expect(inflateSync(png.subarray(idat + 4, idat + 4 + len)).length).toBe(2 * (1 + 4 * 4));
+    expect(Buffer.from(png).readUInt32BE(idat + 4 + len)).toBe(crc32(png.subarray(idat, idat + 4 + len)) >>> 0);
+    // A sprite from the repo, written by another encoder.
+    const sprite = decodePng(readFileSync(new URL("../examples/the-pier/assets/terrain/water.png", import.meta.url)));
+    expect(sprite.w).toBeGreaterThan(0);
   });
 
   it("cuts a strip into frames and steps through them at the sprite's rate", () => {
