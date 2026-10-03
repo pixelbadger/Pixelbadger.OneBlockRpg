@@ -3,7 +3,7 @@
  * bigger than the screen. Animations (walks, shots, hits) come from a timeline built from the turn's fx (port.ts).
  */
 
-import type { Fx, SceneThing, Tile, ViewOf } from "../../session/port.js";
+import type { Fx, SceneThing, Tile, ViewOf } from "../../../engine/session/port.js";
 import type { Canvas, Rect } from "./canvas.js";
 import { mix, type RGB, style } from "./color.js";
 import { type Art, exitArt, lighting, nightTint, terrainArt, thingArt } from "./tiles.js";

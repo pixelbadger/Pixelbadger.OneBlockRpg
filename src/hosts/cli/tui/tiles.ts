@@ -4,8 +4,8 @@
  * things are dressed by keyword, so any payload looks reasonable without authoring art.
  */
 
-import type { Look, Terrain } from "../../payload/schema.js";
-import type { SceneThing, ViewOf } from "../../session/port.js";
+import type { Look, Terrain } from "../../../engine/payload/schema.js";
+import type { SceneThing, ViewOf } from "../../../engine/session/port.js";
 import { mix, parseColor, type RGB, scale } from "./color.js";
 
 export interface Art {

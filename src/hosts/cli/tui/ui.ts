@@ -4,10 +4,10 @@
  * TUI saves and replays like typed play.
  */
 
-import type { CombatIntent } from "../../core/combat.js";
-import type { ActionRequest, Special } from "../../payload/schema.js";
-import { ATTRIBUTES } from "../../payload/schema.js";
-import type { Intent, MenuItem, MetaCommand, Mode, SceneThing, Tile, ViewOf } from "../../session/port.js";
+import type { CombatIntent } from "../../../engine/core/combat.js";
+import type { ActionRequest, Special } from "../../../engine/payload/schema.js";
+import { ATTRIBUTES } from "../../../engine/payload/schema.js";
+import type { Intent, MenuItem, MetaCommand, Mode, SceneThing, Tile, ViewOf } from "../../../engine/session/port.js";
 import type { Paragraph } from "./log.js";
 
 export interface UiMenuItem {

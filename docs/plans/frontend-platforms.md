@@ -1,7 +1,17 @@
 # Frontend platforms: decisions and layering plan
 
-Status: proposal. Nothing here is implemented yet. Once agreed, §3.1, §3.7, §3.10 and Q11/Q12 in the spec are
-updated to match, in the same PR as phase 0.
+Status: agreed, in progress on `claude/frontend-platform-decoupling-xc54ta`.
+
+Decided after review:
+
+- **Fully graphical.** The TUI and the readline `play` go. Play is the web page or the native window only. The
+  `oneblock` command stays as authoring and dev tooling (`validate`, `schema`, `replay`), and `oneblock play` opens
+  the native window.
+- **HTML text panels on the web**, a canvas widget kit natively, but **one visual style everywhere**: a single
+  monospace font (JetBrains Mono, from `@fontsource/jetbrains-mono`, loaded by CSS on the web and registered with
+  Skia natively) and one set of theme tokens (`src/client/theme.ts`: colours, sizes, spacing, semantic text styles)
+  that both hosts render from.
+- **Native runs from a checkout** (`pnpm oneblock play <payload>`); no packaging.
 
 ## Where we are
 
@@ -76,9 +86,8 @@ supplied by the browser on the web and by Skia natively.
 
 ### The terminal frontends
 
-- The **readline CLI** stays: it is the headless/dev/test adapter, and `replay`, `validate` and `schema` live with it.
-- The **TUI** (`--tui`, cell canvas, kitty/iTerm2 images) is superseded by the native window. Proposal: freeze it now
-  and delete it once the native client reaches parity (phase 5). See open question 2.
+- Both go (decided): the readline play loop and the TUI (`--tui`, cell canvas, kitty/iTerm2 images). The `oneblock`
+  command keeps `validate`, `schema` and `replay`.
 
 ## Layering
 

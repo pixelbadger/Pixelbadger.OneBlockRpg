@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { perform } from "../src/core/actions.js";
-import { applyEffect } from "../src/core/effects.js";
-import { makeNoise, propagate } from "../src/core/sound.js";
-import { tick } from "../src/core/tick.js";
-import type { World } from "../src/core/world.js";
-import { COLLECTIONS, type Origins } from "../src/payload/loader.js";
-import { Payload } from "../src/payload/schema.js";
-import { checkPayload } from "../src/payload/validate.js";
-import { parseCommand } from "../src/session/parser.js";
+import { perform } from "../src/engine/core/actions.js";
+import { applyEffect } from "../src/engine/core/effects.js";
+import { makeNoise, propagate } from "../src/engine/core/sound.js";
+import { tick } from "../src/engine/core/tick.js";
+import type { World } from "../src/engine/core/world.js";
+import { COLLECTIONS, type Origins } from "../src/engine/payload/loader.js";
+import { Payload } from "../src/engine/payload/schema.js";
+import { checkPayload } from "../src/engine/payload/validate.js";
+import { parseCommand } from "../src/engine/session/parser.js";
 import { mini, world } from "./helpers.js";
 
 const P = { by: "player" as const };

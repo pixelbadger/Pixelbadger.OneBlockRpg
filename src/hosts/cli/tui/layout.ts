@@ -3,8 +3,8 @@
  * and the party panel (character, pack, time or the fight) on the right. Menus and sheets float over the scene.
  */
 
-import { ATTRIBUTE_NAMES } from "../../mechanics/special.js";
-import { ATTRIBUTES } from "../../payload/schema.js";
+import { ATTRIBUTE_NAMES } from "../../../engine/mechanics/special.js";
+import { ATTRIBUTES } from "../../../engine/payload/schema.js";
 import { Canvas, type Rect, S, type Span, truncate, wrapSpans } from "./canvas.js";
 import { style } from "./color.js";
 import { attrSgr, bar } from "./log.js";

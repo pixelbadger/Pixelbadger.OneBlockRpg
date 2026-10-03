@@ -1,12 +1,12 @@
 /** Opening a game in the terminal: a SQLite save on disk and a provider chosen by id. */
 
 import { rmSync } from "node:fs";
-import { AnthropicApiProvider } from "../llm/anthropic-api.js";
-import { ClaudeSubscriptionProvider } from "../llm/claude-subscription.js";
-import type { LlmProvider } from "../llm/provider.js";
-import { offlineProvider } from "../narrative/offline.js";
-import type { Payload } from "../payload/schema.js";
-import { openSqliteSave, saveExists } from "../session/save-sqlite.js";
+import { AnthropicApiProvider } from "../../engine/llm/anthropic-api.js";
+import type { LlmProvider } from "../../engine/llm/provider.js";
+import { offlineProvider } from "../../engine/narrative/offline.js";
+import type { Payload } from "../../engine/payload/schema.js";
+import { ClaudeSubscriptionProvider } from "../node/claude-subscription.js";
+import { openSqliteSave, saveExists } from "../node/save-sqlite.js";
 import { type Game, startGame } from "./start-game.js";
 
 export type { Game } from "./start-game.js";

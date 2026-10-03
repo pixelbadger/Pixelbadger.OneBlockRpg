@@ -3,7 +3,7 @@
  * (main.ts, bundled) and xterm.js's stylesheet beside it. Nothing is fetched, so it also plays from a file:// URL.
  */
 
-import type { Payload } from "../../payload/schema.js";
+import type { Payload } from "../../../engine/payload/schema.js";
 import type { SpriteManifest } from "../tui/sprites.js";
 
 /** What the page embeds. */

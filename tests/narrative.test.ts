@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { perform } from "../src/core/actions.js";
-import { addBelief } from "../src/core/mutate.js";
-import { tick } from "../src/core/tick.js";
-import type { CompletionRequest } from "../src/llm/provider.js";
-import { complete, toJsonSchema } from "../src/llm/provider.js";
-import { type Cassette, RecordingProvider, ReplayProvider, ScriptedProvider } from "../src/llm/scripted.js";
-import { runCallout } from "../src/narrative/callouts.js";
-import { beliefsText } from "../src/narrative/context.js";
-import { Conversations } from "../src/narrative/conversation.js";
-import { Director } from "../src/narrative/director.js";
-import { endDay } from "../src/narrative/memory.js";
-import { offlineProvider } from "../src/narrative/offline.js";
-import { reconcileReading } from "../src/narrative/reading.js";
-import { CharacterTurn } from "../src/narrative/schemas.js";
-import { Session } from "../src/session/session.js";
+import { perform } from "../src/engine/core/actions.js";
+import { addBelief } from "../src/engine/core/mutate.js";
+import { tick } from "../src/engine/core/tick.js";
+import type { CompletionRequest } from "../src/engine/llm/provider.js";
+import { complete, toJsonSchema } from "../src/engine/llm/provider.js";
+import { type Cassette, RecordingProvider, ReplayProvider, ScriptedProvider } from "../src/engine/llm/scripted.js";
+import { runCallout } from "../src/engine/narrative/callouts.js";
+import { beliefsText } from "../src/engine/narrative/context.js";
+import { Conversations } from "../src/engine/narrative/conversation.js";
+import { Director } from "../src/engine/narrative/director.js";
+import { endDay } from "../src/engine/narrative/memory.js";
+import { offlineProvider } from "../src/engine/narrative/offline.js";
+import { reconcileReading } from "../src/engine/narrative/reading.js";
+import { CharacterTurn } from "../src/engine/narrative/schemas.js";
+import { Session } from "../src/engine/session/session.js";
 import { mini, world } from "./helpers.js";
 
 const turn = (over: Partial<CharacterTurn> = {}) => ({

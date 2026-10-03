@@ -1,9 +1,9 @@
 /** The message log: session view models as styled paragraphs, re-wrapped to the pane on every frame. */
 
-import { ATTRIBUTE_NAMES, SKILL_NAMES } from "../../mechanics/special.js";
-import { ATTRIBUTES } from "../../payload/schema.js";
-import { type MdRun, parseMarkdown } from "../../session/markdown.js";
-import type { ViewModel } from "../../session/port.js";
+import { ATTRIBUTE_NAMES, SKILL_NAMES } from "../../../engine/mechanics/special.js";
+import { ATTRIBUTES } from "../../../engine/payload/schema.js";
+import { type MdRun, parseMarkdown } from "../../../engine/session/markdown.js";
+import type { ViewModel } from "../../../engine/session/port.js";
 import { S, type Span } from "./canvas.js";
 
 /** One logical block of the scrollback, re-wrapped to the pane width on every frame. */
@@ -201,7 +201,7 @@ export function toParagraphs(views: readonly ViewModel[], opts: { compact?: bool
   return out;
 }
 
-/** Light markdown (src/session/markdown.ts) as paragraphs, with a blank line between blocks. */
+/** Light markdown (src/engine/session/markdown.ts) as paragraphs, with a blank line between blocks. */
 export function markdownParagraphs(src: string): Paragraph[] {
   const out: Paragraph[] = [];
   const runs = (rs: MdRun[], base = "") =>

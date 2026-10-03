@@ -881,7 +881,7 @@ export const Game = z.strictObject({
   xp: z
     .strictObject({ check: z.number().int().min(0).default(5), fight: z.number().int().min(0).default(25) })
     .default({ check: 5, fight: 25 }),
-  /** Overrides for engine message templates (see src/core/messages.ts). */
+  /** Overrides for engine message templates (see src/engine/core/messages.ts). */
   messages: z.record(z.string(), z.string()).default({}),
   conversation_minutes_per_turn: z.number().min(0).default(1),
 });

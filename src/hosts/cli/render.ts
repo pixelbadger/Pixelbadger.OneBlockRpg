@@ -1,9 +1,9 @@
 /** Plain-text rendering of view models for the readline CLI. The only place that formats for a display (§3.1). */
 
-import { ATTRIBUTE_NAMES, SKILL_NAMES } from "../mechanics/special.js";
-import { ATTRIBUTES } from "../payload/schema.js";
-import { type MdRun, parseMarkdown } from "../session/markdown.js";
-import type { ViewModel, ViewOf } from "../session/port.js";
+import { ATTRIBUTE_NAMES, SKILL_NAMES } from "../../engine/mechanics/special.js";
+import { ATTRIBUTES } from "../../engine/payload/schema.js";
+import { type MdRun, parseMarkdown } from "../../engine/session/markdown.js";
+import type { ViewModel, ViewOf } from "../../engine/session/port.js";
 
 const WIDTH = 100;
 
@@ -136,7 +136,7 @@ export function renderIntroductionPage(v: ViewOf<"introduction">, page: number, 
   return head + renderMarkdown(v.pages[page] ?? "", color);
 }
 
-/** Light markdown (src/session/markdown.ts) as wrapped text with ANSI styles. */
+/** Light markdown (src/engine/session/markdown.ts) as wrapped text with ANSI styles. */
 export function renderMarkdown(src: string, color = true, width = WIDTH): string {
   const style = (r: MdRun, base: string) => {
     if (!color) return r.text;

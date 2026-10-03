@@ -1,6 +1,14 @@
 import { EVENT_KINDS } from "../core/event-kinds.js";
 import type { PayloadIssue } from "./issues.js";
-import { type Collection, type LoadResult, loadPayload, locate, locateEntity, type Origins } from "./loader.js";
+import {
+  type Collection,
+  type LoadResult,
+  loadPayload,
+  locate,
+  locateEntity,
+  type Origins,
+  type PayloadFiles,
+} from "./loader.js";
 import { checkMaps } from "./maps.js";
 import {
   type Condition,
@@ -17,8 +25,8 @@ export interface ValidationResult extends LoadResult {
 }
 
 /** Loads and fully validates a payload: schema, references and lints (§7.7). */
-export function validatePayloadAt(path: string): ValidationResult {
-  const loaded = loadPayload(path);
+export function validatePayloadAt(path: string, fs: PayloadFiles): ValidationResult {
+  const loaded = loadPayload(path, fs);
   if (loaded.payload) loaded.issues.push(...checkPayload(loaded.payload, loaded.origins));
   return { ...loaded, ok: !loaded.issues.some((i) => i.severity === "error") };
 }

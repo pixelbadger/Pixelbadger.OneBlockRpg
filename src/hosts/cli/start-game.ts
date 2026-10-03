@@ -3,12 +3,12 @@
  * is recorded for replay (§3.8), and inputs and usage go to the save.
  */
 
-import { World } from "../core/world.js";
-import type { LlmProvider } from "../llm/provider.js";
-import { RecordingProvider } from "../llm/scripted.js";
-import type { Payload } from "../payload/schema.js";
-import type { SaveStore } from "../session/save.js";
-import { Session } from "../session/session.js";
+import { World } from "../../engine/core/world.js";
+import type { LlmProvider } from "../../engine/llm/provider.js";
+import { RecordingProvider } from "../../engine/llm/scripted.js";
+import type { Payload } from "../../engine/payload/schema.js";
+import type { SaveStore } from "../../engine/session/save.js";
+import { Session } from "../../engine/session/session.js";
 
 export interface Game {
   session: Session;

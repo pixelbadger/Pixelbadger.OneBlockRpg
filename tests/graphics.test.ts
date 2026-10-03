@@ -1,16 +1,16 @@
 import { readFileSync } from "node:fs";
 import { crc32, inflateSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
-import { absorb } from "../src/cli/tui/app.js";
-import { Canvas } from "../src/cli/tui/canvas.js";
-import { detectGraphics, iipImage, kittyImage, Painter } from "../src/cli/tui/graphics.js";
-import { compose } from "../src/cli/tui/layout.js";
-import { decodePng, encodePng, type Image, image } from "../src/cli/tui/png.js";
-import { frameAt, SpriteSet } from "../src/cli/tui/sprites.js";
-import { Controller, type Ui } from "../src/cli/tui/ui.js";
-import { World } from "../src/core/world.js";
-import { offlineProvider } from "../src/narrative/offline.js";
-import { Session } from "../src/session/session.js";
+import { World } from "../src/engine/core/world.js";
+import { offlineProvider } from "../src/engine/narrative/offline.js";
+import { Session } from "../src/engine/session/session.js";
+import { absorb } from "../src/hosts/cli/tui/app.js";
+import { Canvas } from "../src/hosts/cli/tui/canvas.js";
+import { detectGraphics, iipImage, kittyImage, Painter } from "../src/hosts/cli/tui/graphics.js";
+import { compose } from "../src/hosts/cli/tui/layout.js";
+import { decodePng, encodePng, type Image, image } from "../src/hosts/cli/tui/png.js";
+import { frameAt, SpriteSet } from "../src/hosts/cli/tui/sprites.js";
+import { Controller, type Ui } from "../src/hosts/cli/tui/ui.js";
 import { bbox, cutCharacter, cutObject, manifestEntry, removeBackground, seamless } from "../tools/art.js";
 import { mini } from "./helpers.js";
 

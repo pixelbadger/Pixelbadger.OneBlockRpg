@@ -4,9 +4,9 @@
  * save and replay like typed ones.
  */
 
-import { SKILL_NAMES } from "../../mechanics/special.js";
-import type { Intent, Tile, ViewModel } from "../../session/port.js";
-import type { Session } from "../../session/session.js";
+import { SKILL_NAMES } from "../../../engine/mechanics/special.js";
+import type { Intent, Tile, ViewModel } from "../../../engine/session/port.js";
+import type { Session } from "../../../engine/session/session.js";
 import { setColorDepth } from "./color.js";
 import { type Graphics, Painter } from "./graphics.js";
 import { compose } from "./layout.js";

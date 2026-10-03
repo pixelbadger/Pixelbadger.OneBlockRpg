@@ -14,12 +14,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { build } from "esbuild";
-import { readSpriteFiles } from "../src/cli/tui/sprite-files.js";
-import { indexPage, page, type WebGame } from "../src/cli/web/page.js";
-import { formatIssue } from "../src/payload/issues.js";
-import { validatePayloadAt } from "../src/payload/validate.js";
+import { formatIssue } from "../src/engine/payload/issues.js";
+import { readSpriteFiles } from "../src/hosts/cli/tui/sprite-files.js";
+import { indexPage, page, type WebGame } from "../src/hosts/cli/web/page.js";
+import { validatePayloadAt } from "../src/hosts/node/payload.js";
 
-const ENTRY = fileURLToPath(new URL("../src/cli/web/main.ts", import.meta.url));
+const ENTRY = fileURLToPath(new URL("../src/hosts/cli/web/main.ts", import.meta.url));
 const require = createRequire(import.meta.url);
 
 export interface WebBuild {

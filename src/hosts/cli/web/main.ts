@@ -8,7 +8,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { FitAddon } from "@xterm/addon-fit";
 import { ImageAddon } from "@xterm/addon-image";
 import { Terminal } from "@xterm/xterm";
-import { AnthropicApiProvider, DEFAULT_MODEL } from "../../llm/anthropic-api.js";
+import { AnthropicApiProvider, DEFAULT_MODEL } from "../../../engine/llm/anthropic-api.js";
 import { startGame } from "../start-game.js";
 import { runTui } from "../tui/app.js";
 import { SpriteSet } from "../tui/sprites.js";

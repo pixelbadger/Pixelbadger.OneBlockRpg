@@ -10,7 +10,7 @@ import {
   SaveStore,
   type SnapshotRow,
   type UsageRow,
-} from "../../session/save.js";
+} from "../../../engine/session/save.js";
 
 const DB_NAME = "oneblock";
 /** One record per save: its meta and latest snapshot. */

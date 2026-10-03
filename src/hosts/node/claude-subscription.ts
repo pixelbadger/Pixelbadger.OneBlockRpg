@@ -4,8 +4,8 @@
  *
  * Open question Q30: confirm the subscription terms allow this use from a personal app before release.
  */
-import type { CompletionRequest, LlmProvider, RawCompletion } from "./provider.js";
-import { renderMessages } from "./provider.js";
+import type { CompletionRequest, LlmProvider, RawCompletion } from "../../engine/llm/provider.js";
+import { renderMessages } from "../../engine/llm/provider.js";
 
 export interface ClaudeSubscriptionOptions {
   model?: string;

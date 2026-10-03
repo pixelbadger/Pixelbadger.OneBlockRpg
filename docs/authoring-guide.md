@@ -13,7 +13,7 @@ Read these spec chapters first. This guide assumes them:
 - [§7 Game payload](spec/07-game-payload.html): layout, text variants, the condition/effect language, validation
 
 The schema is the source of truth: [`schema/payload.schema.json`](../schema/payload.schema.json), generated from
-[`src/payload/schema.ts`](../src/payload/schema.ts). When this guide and the schema disagree, the schema wins.
+[`src/engine/payload/schema.ts`](../src/engine/payload/schema.ts). When this guide and the schema disagree, the schema wins.
 
 ## 1. The loop
 

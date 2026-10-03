@@ -4,7 +4,7 @@
  * glyph art on a coloured tile, so a payload without art still plays.
  */
 
-import type { Tile } from "../../session/port.js";
+import type { Tile } from "../../../engine/session/port.js";
 import { mix, type RGB } from "./color.js";
 import { type Image, image } from "./png.js";
 import { type AnimFrame, apparitionShows, type Scene, type Viewport } from "./scene.js";

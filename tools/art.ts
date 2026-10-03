@@ -12,8 +12,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { parse } from "yaml";
-import { decodePng, encodePng, type Image, image } from "../src/cli/tui/png.js";
-import type { SpriteEntry, SpriteManifest } from "../src/cli/tui/sprites.js";
+import { decodePng, encodePng, type Image, image } from "../src/hosts/cli/tui/png.js";
+import type { SpriteEntry, SpriteManifest } from "../src/hosts/cli/tui/sprites.js";
 
 export type ArtKind = "texture" | "object" | "character" | "effect";
 

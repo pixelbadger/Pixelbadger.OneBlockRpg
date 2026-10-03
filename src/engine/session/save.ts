@@ -1,7 +1,7 @@
 /**
  * Saves (§3.7, Q12): one save per game, holding the payload id and version, seed, snapshots, the event log, player
  * inputs and the LLM exchange log (cassettes for replay, §3.8). Day summaries live in the state. Where a save is kept
- * is a backend: a SQLite database on disk (save-sqlite.ts) or the browser's IndexedDB (src/cli/web).
+ * is a backend: a SQLite database on disk (save-sqlite.ts) or the browser's IndexedDB (src/hosts/web).
  */
 import { applyOps, clone } from "../core/ops.js";
 import type { WorldState } from "../core/state.js";

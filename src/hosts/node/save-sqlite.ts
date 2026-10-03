@@ -1,8 +1,8 @@
 /** Saves on disk (§3.7, Q12): one SQLite database per save game. */
 import { existsSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
-import type { EventRow, ExchangeRow, SaveBackend, SnapshotRow, UsageRow } from "./save.js";
-import { SaveStore } from "./save.js";
+import type { EventRow, ExchangeRow, SaveBackend, SnapshotRow, UsageRow } from "../../engine/session/save.js";
+import { SaveStore } from "../../engine/session/save.js";
 
 /** node:sqlite is still flagged experimental on Node 22; load it lazily and without the warning. */
 async function openDb(path: string): Promise<DatabaseSync> {
