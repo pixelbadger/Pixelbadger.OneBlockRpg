@@ -63,6 +63,30 @@
       }
     },
     {
+      "includes": ["src/hosts/web/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["node:*"],
+                    "message": "the web host runs in the browser: no Node built-ins."
+                  },
+                  {
+                    "group": ["**/hosts/node/**", "**/hosts/cli/**", "**/hosts/native/**"],
+                    "message": "the web host imports no other host."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/engine/**"],
       "linter": {
         "rules": {

@@ -111,6 +111,7 @@ async function play(args: string[]): Promise<number> {
   const payload = loadPayload(path, true);
   const savePath = values.save ?? `${payload.game.id}.db`;
   const game = await openGame(payload, {
+    payloadDir: path,
     savePath,
     fresh: !!values.new,
     provider: values.provider!,

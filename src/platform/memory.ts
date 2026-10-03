@@ -62,6 +62,14 @@ export class MemorySettings implements Settings {
   }
 }
 
+/** `base` with some keys fixed for this run (e.g. a command-line `--model`): reads see them, writes go to `base`. */
+export function overlaySettings(base: Settings, fixed: Partial<Record<SettingKey, string>>): Settings {
+  return {
+    get: (key) => fixed[key] ?? base.get(key),
+    set: (key, value) => base.set(key, value),
+  };
+}
+
 /** Assets from a map of path → bytes. */
 export function mapAssets(files: ReadonlyMap<string, Uint8Array> = new Map()): Assets {
   return {
